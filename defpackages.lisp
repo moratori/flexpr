@@ -18,21 +18,6 @@
 (load "./constant.lisp")
 
 
-(in-package :cl-user)
-(defpackage types 
-  (:use :cl :constant)
-  (:export 
-	:vterm
-	:fterm
-	:atomic-lexpr
-	:operator
-	:normal-lexpr
-	:quant
-	:quantsp
-	:lexpr
-	))
-(in-package :types)
-(load "./types.lisp")
 
 
 
@@ -43,10 +28,27 @@
 (defpackage methods
   (:use :cl
 		:optima
-		:constant
-		:types)
+		:constant)
   (:export
-	)
-  )
+	:vterm
+	:fterm
+	:atomic-lexpr
+	:operator
+	:normal-lexpr
+	:quant
+	:quantsp
+	:lexpr
+
+	:term->string
+	:lexpr->string
+	:opr->string
+	:opr->strength
+	:opr-strong?
+	:opr-equal?
+	:quant->string
+	:quantsp->string
+	))
 (in-package :methods)
+(load "./methods.lisp")
+
 

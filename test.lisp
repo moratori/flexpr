@@ -7,14 +7,14 @@
 (defpackage test 
   (:use :cl :lisp-unit
 		:constant
-		:methods
-		:types))
+		:methods))
 (in-package test)
 
 
 
-
 (print 
+  
+(lexpr->string 
   (lexpr 
 	(quantsp 
 	  (quant +FORALL+ (vterm 'x))
@@ -27,5 +27,4 @@
 	  (lexpr 
 		(quantsp 
 		  (quant +FORALL+ (vterm 'z)))
-		(atomic-lexpr 'R (vterm 'z))))))
-
+		(atomic-lexpr 'R (vterm 'z)))))))

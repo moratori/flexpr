@@ -29,6 +29,7 @@
 	:normal-lexpr
 	:quant
 	:quantsp
+	:lexpr
 	))
 (in-package :types)
 (load "./types.lisp")

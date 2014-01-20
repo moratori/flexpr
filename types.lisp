@@ -1,4 +1,14 @@
 
+#|
+
+	(atomic-lexpr pred-sym term1 ...)
+	(normal-lexpr operator left-lexpr rigt-lexpr)
+	(quant qnt var)
+	(quantsp (quant qnt var) ...)
+	(lexpr qpart expr)
+	
+|#
+
 
 (deftype operator-type ()
   `(satisfies operator-pred))
@@ -14,6 +24,9 @@
 
 (deftype quantsp-type ()
   `(satisfies quantsp-pred))
+
+(deftype lexpr-type ()
+  `(satisfies lexpr-pred))
 
 
 ;; 最も基本となる 変数のみからなる項
@@ -40,25 +53,9 @@
 			:type term-type))
 
 
-(defun terms-pred (terms)
-  (and 
-	(listp terms)
-	(every (lambda (x)
-			 (or (vterm-p x)
-				 (fterm-p  x))) terms)))
-
-
-
 (defstruct (operator (:constructor operator (opr)))
   (opr (error "operator: operator required") 
 	   :type operator-type))
-
-(defun operator-pred (op)
-  (member op +OPERATOR+ 
-		  :test (lambda (x y) 
-				  (declare (ignore x))
-				  (eq op (car y)))))
-
 
 
 
@@ -72,11 +69,6 @@
   (r-lexpr nil 
 		    :type normal-lexpr-type))
 
-(defun normal-lexpr-pred (nlexpr)
-  (or (null nlexpr)
-	  (atomic-lexpr-p nlexpr)
-	  (normal-lexpr-p nlexpr)))
-
 
 
 (defstruct (quant (:constructor quant (qnt var &optional (neg nil))))
@@ -84,16 +76,54 @@
   (qnt (error "quants: qnt required") :type quant-type)
   (var (error "quants: var required") :type vterm))
 
+
+(defstruct (quantsp (:constructor quantsp (&rest each-quant)))
+  (each-quant nil :type quantsp-type))
+
+
+
+(defstruct (lexpr (:constructor lexpr (qpart expr)))
+  (qpart nil :type quantsp)
+  (expr (error "logical expression required")
+		:type lexpr-type))
+
+
+
+(defun terms-pred (terms)
+  (and 
+	(listp terms)
+	(every (lambda (x)
+			 (or (vterm-p x)
+				 (fterm-p  x))) terms)))
+
+(defun operator-pred (op)
+  (member op +OPERATOR+ 
+		  :test (lambda (x y) 
+				  (declare (ignore x))
+				  (eq op (car y)))))
+
+(defun normal-lexpr-pred (nlexpr)
+  (or (null nlexpr)
+	  (atomic-lexpr-p nlexpr)
+	  (normal-lexpr-p nlexpr)
+	  (lexpr-p nlexpr)))
+
 (defun quant-pred (q)
   (member q +QUANTS+ :test 
 		  (lambda (x y) 
 			(declare (ignore x))
 			(eq q (car y)))))
 
-
-
-(defstruct (quantsp (:constructor quantsp (&rest each-quant)))
-  (each-quant nil :type quantsp-type))
-
 (defun quantsp-pred (ls)
   (every #'quant-p ls))
+
+
+(defun lexpr-pred (l)
+  (or (atomic-lexpr-p l)
+	  (normal-lexpr-p l)
+	  (lexpr-p l)))
+
+
+
+
+

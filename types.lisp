@@ -9,6 +9,12 @@
 (deftype normal-lexpr-type ()
   `(satisfies normal-lexpr-pred))
 
+(deftype quant-type ()
+  `(satisfies quant-pred))
+
+(deftype quantsp-type ()
+  `(satisfies quantsp-pred))
+
 
 ;; 最も基本となる 変数のみからなる項
 (defstruct (vterm  (:constructor vterm (var)))
@@ -71,3 +77,23 @@
 	  (atomic-lexpr-p nlexpr)
 	  (normal-lexpr-p nlexpr)))
 
+
+
+(defstruct (quant (:constructor quant (qnt var &optional (neg nil))))
+  (neg nil :type boolean) ;; 奇数回、量化子を否定するならここがt
+  (qnt (error "quants: qnt required") :type quant-type)
+  (var (error "quants: var required") :type vterm))
+
+(defun quant-pred (q)
+  (member q +QUANTS+ :test 
+		  (lambda (x y) 
+			(declare (ignore x))
+			(eq q (car y)))))
+
+
+
+(defstruct (quantsp (:constructor quantsp (&rest each-quant)))
+  (each-quant nil :type quantsp-type))
+
+(defun quantsp-pred (ls)
+  (every #'quant-p ls))

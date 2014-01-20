@@ -27,6 +27,8 @@
 	:atomic-lexpr
 	:operator
 	:normal-lexpr
+	:quant
+	:quantsp
 	))
 (in-package :types)
 (load "./types.lisp")

@@ -1,4 +1,6 @@
 
+
+
 #|
 
 	(atomic-lexpr pred-sym term1 ...)
@@ -13,7 +15,10 @@
 (deftype operator-type ()
   `(satisfies operator-pred))
 
-(deftype term-type ()
+(deftype vterm-type ()
+  `(satisfies vterm-pred))
+
+(deftype terms-type ()
   `(satisfies terms-pred))
 
 (deftype normal-lexpr-type ()
@@ -30,10 +35,11 @@
 
 
 ;; 最も基本となる 変数のみからなる項
-(defstruct (vterm  (:constructor vterm (var)))
+(defstruct (vterm  (:constructor vterm (var freev)))
   (var (error "vterm: variable symbol required") 
-	   :type t ;;symbol ここをsymbolにしちゃうと 1とか2とかのシンボルで無いのが扱えなくなる
-	   ))
+	   :type vterm-type ;;symbol ここをsymbolにしちゃうと 1とか2とかのシンボルで無いのが扱えなくなる
+	   )
+  (freev nil :type boolean))
 
 
 
@@ -43,14 +49,14 @@
   (fsymbol (error "fterm: function symbol required") 
 		   :type symbol)
   (terms   nil
-		   :type term-type))
+		   :type terms-type))
 
 
 (defstruct (atomic-lexpr (:constructor atomic-lexpr (pred-sym &rest terms)))
   (pred-sym (error "atomic-lexpr: predicate symbol required")
 			:type symbol)
   (terms    nil
-			:type term-type))
+			:type terms-type))
 
 
 (defstruct (operator (:constructor operator (opr)))
@@ -90,6 +96,8 @@
 		:type lexpr-type))
 
 
+(defun vterm-pred (term)
+  (or (symbolp term) (numberp term)))
 
 (defun terms-pred (terms)
   (and 
@@ -125,17 +133,7 @@
 	  (normal-lexpr-p l)
 	  (lexpr-p l)))
 
-
-
-
-
-
-
-
-
-
-
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 
@@ -188,6 +186,9 @@
 
 
 
+
+
+
 (defmethod quant->string ((quant quant))
   (match quant
 	((quant qnt var neg)
@@ -201,6 +202,7 @@
 (defmethod quantsp->string ((quantsp quantsp))
   (format nil "~{~A~}." 
 		  (mapcar #'quant->string (quantsp-each-quant quantsp))))
+
 
 
 
@@ -240,7 +242,6 @@
 
 
 
-
 (defmethod lexpr->string ((lexpr lexpr))
   (match lexpr
 	((lexpr qpart expr)
@@ -248,6 +249,251 @@
 			 (quantsp->string qpart)
 			 (lexpr->string expr)))
 	(otherwise (error "lexpr->string(lexpr): invalid data structure"))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#|
+
+	*一階述語論理の文字列表現の定義
+
+	<BOUND-VAR>  ::= <LISP-CAPITAL-SYMBOL>
+	<FREE-VAR>   ::= <LISP-SMALL-SYMBOL>
+
+	<FUNC-SYM>   ::= <LISP-SMALL-SYMBOL>
+	<PRED-SYM>   ::= <LISP-CAPITAL-SYMBOL>	
+
+	<TERM>       ::= <BOUND-VAR> | <FREE-VAR> | <FUNC-SYM> "(" <TERM>,+  ")"
+
+	<OPERATOR>   ::= > | & | V | ~ | -
+	
+	<QUANTIFIER> ::= A | E
+	<QUANTS>     ::= <QUANTIFIER> <BOUND-VAR>
+	<QUANTS-PART>::= <QUANTS>+ "."
+
+	<ATOMIC>     ::= <PRED-SYM> "(" <FREE-VAR>,+ ")"
+	<EXPR>       ::= 
+		<ATOMIC> | "(" <EXPR> <OPERATOR> <EXPR> ")" | <QUANTS-PART> <EXPR> 
+
+|#
+
+
+
+
+(defun next-paren-acc (acc c sc ec)
+  (cond 
+	((char= c sc) (1+ acc))
+	((char= c ec) (1- acc))
+	(t acc)))
+
+(defun innerparen? (str sc ec)
+  ;; これが呼ばれたという事は少なくとも
+  ;; 始めが ( で始まり 最後が ) で終わるような文字列であるということ
+  (labels 
+	((main (str acc)
+		(cond
+		  ((string= str "")
+			(if (zerop acc) 
+		 	 	t 
+		  		(error "parenthesis error!")))
+		  ((zerop acc) nil)
+		  (t 
+		 	(let ((head (char str 0)))
+		   		(main (subseq str 1)
+					  (next-paren-acc acc head sc ec))))))) 
+	(main (subseq str 1) 1)))
+
+
+;;;最初と最後がカッコ(sc ecで文字コード)でなくなるまで、意味のないカッコを剥ぐ
+(defun strip-paren (str sc ec)
+  (cond 
+	((or (not (char= (char str 0) sc)) 
+		 (not (char= (char str (1- (length str))) ec))) str)
+	((innerparen? str sc ec)
+	 (strip-paren (subseq str 1 (1- (length str))) sc ec))
+	(t str)))
+
+
+;;; ゴミのスペースを除去っていらないカッコ(sc ec)を剥ぐ
+(defun init (str sc ec) 
+  (if (string=  str "")
+	str
+	(strip-paren 
+		(string-trim 
+	  		'(#\space #\Newline #\Return) str) 
+		(char sc 0) 
+		(char ec 0))))
+
+
+(defun tokenize (str)
+  (labels 
+	((main (str paren each  result)
+	  (if (string= str "") 
+		(reverse 
+		  (if (string= each "") 
+			result 
+			(cons (init each +PAREN-START+ +PAREN-END+) result)))
+		(let ((head (subseq str 0 1)))
+		  (cond 
+			((and (member-if 
+					(lambda (x) 
+					  (string= head (second x))) +OPERATOR+)
+				  (zerop paren)
+				  (string/= head +NEG-STR+)) 
+			 (main (subseq str 1) 0 "" 
+				   (if (string= each "") 
+					 (cons head result)
+					 (cons head (cons (init each +PAREN-START+ +PAREN-END+) result)))))
+
+			((string= head +PAREN-START+)
+			 (main (subseq str 1) (1+ paren) 
+				   (concatenate 'string each head) result))
+
+			((string= head +PAREN-END+)
+			 (main (subseq str 1) (1- paren) 
+				   (concatenate 'string each head) result))
+			  
+			(t (main (subseq str 1) paren 
+					 (concatenate 'string each head) result)))))))
+	(main str 0 "" nil)))
+
+(defun split (str spliter)
+  (labels 
+	((main (str acc  result)
+	 (if (string= "" str) (reverse (cons acc result))
+	 	(if (char= (char str 0) spliter)
+	   		(main (subseq str 1) "" (cons acc result))
+	   		(main (subseq str 1) 
+			 (concatenate 'string acc (string (char str 0))) result)))))
+	(main str "" nil)))
+
+
+
+(defun express-opr? (str)
+  ;; 文字列がオペレータを表しているか?
+  (some 
+	(lambda (x)
+	  (string= str (second x))) +OPERATOR+))
+
+
+(defun expess-quant? (str)
+  (some 
+	(lambda (x) 
+	  (string= str (second x))) +QUANTS+))
+
+
+(defun string->operator (str)
+  (if (null (express-opr? str))
+	(error "string->operator: invalid string")
+	(operator 
+	  (second 
+		(assoc str 
+			   (mapcar 
+				 (lambda (x) 
+				   (reverse (butlast x)))  +OPERATOR+) :test #'string=)))))
+
+
+(defun weak-point (tklst)
+  (let ((oporder 
+ 			(sort 
+			  (mapcar 
+				(lambda (x) 
+				  (string->operator x))
+				(remove-if 
+				  (lambda (each)
+					(not (express-opr? each))) tklst))
+			  (lambda (x y) 
+				(> (opr->strength x) (opr->strength y))))))
+	(if (null oporder) nil
+		(position-if #'express-opr?  tklst
+		  :from-end 
+		  (every 
+			(lambda (x) 
+			  (= (opr->strength (car oporder))
+				 (opr->strength x))) oporder)))))
+
+
+(defun string->atomic (str)
+  ;; P(x,f(x,g(y,z))) => (atomic-lexpr 'P ...)
+  )
+
+
+(defun string->quantsp (str)
+  ;; AxAyAz~Ew => (quantsp (quant +FORALL+ (vterm )))
+  ;;
+  )
+
+
+;; leaf となりうるのは
+;; 1. 元から括弧を付けられていて優先度の高い論理式
+;; 2. 先頭に否定がついてる場合 +
+;; 3. 先頭が量化されてる場合 +
+;; 4. 原子式	
+
+(defun string->lexpr (str)
+  (let*  ((tklst (tokenize str))
+		  (wp    (weak-point tklst)))
+	(if (null wp)
+	  (let* ((target (car tklst))
+			 (head (subseq target 0 1)))
+		(cond 
+			  ((string= +NEG-STR+ head)
+			   (normal-lexpr 
+				 (string->operator head)
+				 (string->lexpr (subseq str 1))
+				 nil))
+
+			  ((express-quant? head)
+			   (let ((dot-pos (position-if 
+								(lambda (x)
+								  (string= x +DELIMITER+)) target)))
+				 	(when (null dot-pos)
+					  (error "string->lexpr: parse error delimiter required"))
+					(lexpr 
+					  (string->quantsp 
+						(subseq target 0 dotpos))
+					  (string->lexpr 
+						(subseq target (1+ dot-pos))))))	
+
+			  (t 
+				 ;; 原子式なら tokenize してもバラけないはず
+				(let ((rtklst (tokenize target)))
+				  (if (and (= 1 (length rtklst))
+						   (string= target (car rtklst)))
+					  (string->atomic target)
+					  ;; target はバラける系の式だった(原子式でない)	
+					  (string->lexpr target))))))
+	  
+	  )))
+
+
+
+
+
 
 
 

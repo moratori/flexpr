@@ -11,6 +11,7 @@
 	:+EQ+
 	:+FORALL+
 	:+EXISTS+
+	:+NEG-STR+
 	:+OPERATOR+
 	:+QUANTS+
 	))

@@ -14,6 +14,9 @@
 	:+NEG-STR+
 	:+OPERATOR+
 	:+QUANTS+
+	:+DELIMITER+
+	:+PAREN-START+
+	:+PAREN-END+
 	))
 (in-package :constant)
 (load "./constant.lisp")

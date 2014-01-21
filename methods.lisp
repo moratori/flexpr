@@ -400,7 +400,7 @@
 	  (string= str (second x))) +OPERATOR+))
 
 
-(defun expess-quant? (str)
+(defun express-quant? (str)
   (some 
 	(lambda (x) 
 	  (string= str (second x))) +QUANTS+))
@@ -475,7 +475,7 @@
 					  (error "string->lexpr: parse error delimiter required"))
 					(lexpr 
 					  (string->quantsp 
-						(subseq target 0 dotpos))
+						(subseq target 0 dot-pos))
 					  (string->lexpr 
 						(subseq target (1+ dot-pos))))))	
 

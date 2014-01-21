@@ -437,14 +437,28 @@
 				 (opr->strength x))) oporder)))))
 
 
+(defun upper-str? (str)
+  (upper-case-p (char str 0)))
+
+
 (defun string->atomic (str)
   ;; P(x,f(x,g(y,z))) => (atomic-lexpr 'P ...)
   )
 
 
 (defun string->quantsp (str)
-  ;; AxAyAz~Ew => (quantsp (quant +FORALL+ (vterm )))
-  ;;
+  ;; AxAyAy~Ew => (quantsp (quant +FORALL+ (vterm )))
+  ;; AxAy~~Az~~~Ez
+  (labels 
+	((main (str result)
+		(if (string= str "") (reverse result)
+
+		  )
+	 ))
+
+	(apply #'quantsp (main str nil)))
+
+
   )
 
 
@@ -488,6 +502,8 @@
 					  ;; target はバラける系の式だった(原子式でない)	
 					  (string->lexpr target))))))
 	  
+		;; normal-lexpr への変換
+
 	  )))
 
 

@@ -12,6 +12,8 @@
 
 
 (defconstant +NEG-STR+ "~")
+(defconstant +FORALL-STR+ "A")
+(defconstant +EXISTS-STR+ "E")
 
 (defconstant +OPERATOR+
 			 `((,+IMPL+ ">" 3)
@@ -24,8 +26,8 @@
 (defconstant +PAREN-END+ ")")
 
 (defconstant +QUANTS+ 
-			 `((,+FORALL+ "A" "∀")
-			   (,+EXISTS+ "E" "∃")))
+			 `((,+FORALL+ ,+FORALL-STR+ "∀")
+			   (,+EXISTS+ ,+EXISTS-STR+ "∃")))
 
 
 

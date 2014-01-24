@@ -35,11 +35,11 @@
 
 
 ;; 最も基本となる 変数のみからなる項
-(defstruct (vterm  (:constructor vterm (var freev)))
+(defstruct (vterm  (:constructor vterm (var const)))
   (var (error "vterm: variable symbol required") 
 	   :type vterm-type ;;symbol ここをsymbolにしちゃうと 1とか2とかのシンボルで無いのが扱えなくなる
 	   )
-  (freev nil :type boolean))
+  (const nil :type boolean))
 
 
 
@@ -77,10 +77,11 @@
 
 
 
-(defstruct (quant (:constructor quant (qnt var &optional (neg nil))))
+(defstruct (quant (:constructor quant (qnt var neg)))
   (qnt (error "quants: qnt required") :type quant-type)
   (var (error "quants: var required") :type vterm)
-  (neg nil :type boolean) ;; 奇数回、量化子を否定するならここがt
+  (neg 0 :type integer) ;; 奇数回、量化子を否定するならここがt
+  						;; にしようと思ったけどそれだとはじめから 2n重否定除去をリーダが行っちゃうことになるからよろしくない
   )
 
 
@@ -441,25 +442,97 @@
   (upper-case-p (char str 0)))
 
 
+(defun place (target src)
+  (position-if
+	(lambda (x) 
+	  (string= x target)) src))
+
+
+
+
+;; (atomic-lexpr pred-sym term1 term2 ... )
+;; (fterm func-sym term1 term2 ... )
+;; (vterm sym const?)
 (defun string->atomic (str)
   ;; P(x,f(x,g(y,z))) => (atomic-lexpr 'P ...)
+  
+
+
   )
+
+
+(defun string->quant (str neg-cnt)
+  ; Avar -> (quant +FORALL+ (vterm 'var))
+  (labels
+	((s->q (s)
+		(cond 
+		  ((string= s +FORALL-STR+) 
+		   +FORALL+)
+		  ((string= s +EXISTS-STR+)
+		   +EXISTS+)
+		  (t (error "s->q: unexpected error"))))
+	 (main ()
+		(let ((var (subseq str 1)))
+		  (quant 
+		  	(s->q (subseq str 0 1))
+			 (vterm (intern var) (upper-str? var))
+		 	 neg-cnt))))
+	(main)))
+
+
+(defun split-quant (str neg)
+  ;; quant 一個分だけ (quant )型にして切り出す
+  ;; あと次に回す文字列も
+	(let ((nextpos
+				(position-if 
+					(lambda (x) 
+						(or (string= x +NEG-STR+)
+							(string= x +FORALL-STR+)
+							(string= x +EXISTS-STR+))) (subseq str 1))))
+	  (values 
+		(string->quant 
+		  (subseq str 0 
+				  (if (null nextpos) 
+					nil 
+					(1+ nextpos))) neg)
+		(if (null nextpos) 
+		  "" 
+		  (subseq str (1+ nextpos))))))
 
 
 (defun string->quantsp (str)
   ;; AxAyAy~Ew => (quantsp (quant +FORALL+ (vterm )))
   ;; AxAy~~Az~~~Ez
+  ;; Ax~Ey
   (labels 
 	((main (str result)
-		(if (string= str "") (reverse result)
+		(if (string= str "") 
+		  (reverse result)
+		  (let ((head (subseq str 0 1)))
 
-		  )
-	 ))
+				(cond 
+				  ((express-quant? head)
+				   	(multiple-value-bind (q n) (split-quant str 0)
+					  (main n (cons q result))))
+				 
+				  ((string= +NEG-STR+ head)
+				   		;; ~AxEy
+						;; ~~~AxEy
+				   		(let ((quant-pos 
+								(position-if 
+								  (lambda (x)
+									(or (string= x +FORALL-STR+)
+										(string= x +EXISTS-STR+))) str)))
+						  		
+						  		(when (null quant-pos)
+								  (error "string->quants: quantifier required"))
 
-	(apply #'quantsp (main str nil)))
-
-
-  )
+								(multiple-value-bind (q n) 
+								  (split-quant (subseq str quant-pos) quant-pos)
+								  (main n (cons q result)))))
+				  (t 
+					(error "string->quants: invalid character found")))))))
+	(apply #'quantsp (main str nil))))
 
 
 ;; leaf となりうるのは
@@ -482,9 +555,7 @@
 				 nil))
 
 			  ((express-quant? head)
-			   (let ((dot-pos (position-if 
-								(lambda (x)
-								  (string= x +DELIMITER+)) target)))
+			   (let ((dot-pos (place +DELIMITER+ target)))
 				 	(when (null dot-pos)
 					  (error "string->lexpr: parse error delimiter required"))
 					(lexpr 

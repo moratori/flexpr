@@ -12,6 +12,8 @@
 	:+FORALL+
 	:+EXISTS+
 	:+NEG-STR+
+	:+FORALL-STR+
+	:+EXISTS-STR+
 	:+OPERATOR+
 	:+QUANTS+
 	:+DELIMITER+
@@ -43,6 +45,7 @@
 	:quantsp
 	:lexpr
 
+	:tokenize
 	:term->string
 	:lexpr->string
 	:opr->string
@@ -51,6 +54,9 @@
 	:opr-equal?
 	:quant->string
 	:quantsp->string
+	:string->lexpr
+	:string->quantsp
+	:string->atomic
 	))
 (in-package :methods)
 (load "./methods.lisp")

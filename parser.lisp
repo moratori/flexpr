@@ -51,10 +51,11 @@
 	((main (str acc)
 		(cond
 		  ((string= str "")
-			(if (zerop acc) 
-		 	 	t 
-		  		(error "parenthesis error!")))
-		  ((zerop acc) nil)
+		    (unless (zerop acc)
+			  (error "innerparen?: parenthesis error"))
+			t)
+		  ((zerop acc) 
+		   nil)
 		  (t 
 		 	(let ((head (char str 0)))
 		   		(main (subseq str 1)

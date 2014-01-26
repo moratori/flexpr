@@ -1,5 +1,29 @@
 
 
+(defpackage constant
+  (:use :cl)
+  (:export 
+	:+IMPL+
+	:+NEG+
+	:+AND+
+	:+OR+
+	:+EQ+
+	
+	:+FORALL+
+	:+EXISTS+
+	:+DELIMITER+
+	:+NEG-STR+
+	:+FORALL-STR+
+	:+EXISTS-STR+
+	:+OPERATOR+
+	:+PAREN-START+
+	:+PAREN-END+
+	:+QUANTS+
+	))
+(in-package constant)
+
+
+
 (defconstant +IMPL+ 'impl)
 (defconstant +NEG+  'neg)
 (defconstant +AND+  'and)
@@ -8,12 +32,14 @@
 
 (defconstant +FORALL+ 'forall)
 (defconstant +EXISTS+ 'exists)
-(defconstant +DELIMITER+ ".")
 
 
 (defconstant +NEG-STR+ "~")
 (defconstant +FORALL-STR+ "A")
 (defconstant +EXISTS-STR+ "E")
+
+
+(defconstant +DELIMITER+ ".")
 
 (defconstant +OPERATOR+
 			 `((,+IMPL+ ">" 3)

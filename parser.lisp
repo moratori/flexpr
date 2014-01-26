@@ -192,8 +192,28 @@
 ;; (fterm func-sym term1 term2 ... )
 ;; (vterm sym const?)
 (defun string->atomic (str)
-  ;; P(x,f(x,g(y,z))) => (atomic-lexpr 'P ...)
-  ;; 0
+  ;; P(x,f(3,g(y,1))) => (atomic-lexpr 'P ...)
+  ;; 0項述語に対応するなら以下のエラーを削除するべき
+
+  (let ((p-s (position +PAREN-START+ str :test #'string=))
+		(p-e (position +PAREN-END+ str :test #'string= :from-end t)))
+		
+		(when (or (null p-s)
+				  (null p-e))
+		  (error "string->atomic: parentheses not found"))
+
+		;; Pred(x,y)
+		;; PRED: Pred
+		;; terms: x,y
+		(let ((pred  (strip-bug (subseq str 0 p-s)))
+			  (terms (subseq str (1+ p-s) p-e)))
+
+
+
+		  )
+
+	)
+
   )
 
 

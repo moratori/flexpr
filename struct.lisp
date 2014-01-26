@@ -1,33 +1,34 @@
 
 
 
-(defpackage struct 
-  (:use :cl
-		:constant)
-  (:export 
-		:vterm
+(ns:defns struct
+	(:use :cl :constant)
+	(:export 
+	  ;; defstruct で暗黙的に定義される関数が
+	  ;; @exportではエクスポートできないみたいなので
+	  ;; 手動でexportするのと、optimaのマッチでスロットを表すシンボルが
+	  ;; 定義されたパッケージのシンボルでなければいけない?ようなので手動export
+	  ;; 後者はわざわざexport しなくても struct::foo みたいな感じに強制的にこっちのパッケージを
+	  ;; 参照させてしまえばいいけど (match (c-ructor struct::slot1 struct::slot2 ...))
+	  ;; みたいにするのは嫌なので...
 		:vterm-var
 		:vterm-const
 		:var
 		:const
 		
-		:fterm
 		:fterm-fsymbol
 		:fterm-terms
 		:fsymbol
 		:terms
 		
-		:atomic-lexpr
 		:atomic-lexpr-pred-sym
 		:atomic-lexpr-terms
 		:pred-sym
 		:terms
 
-		:operator
 		:operator-opr
 		:opr
 
-		:normal-lexpr
 		:normal-lexpr-operator
 		:normal-lexpr-l-lexpr
 		:normal-lexpr-r-lexpr
@@ -35,7 +36,6 @@
 		:l-lexpr
 		:r-lexpr
 
-		:quant
 		:quant-qnt
 		:quant-var
 		:quant-neg
@@ -43,17 +43,15 @@
 		:var
 		:neg
 
-		:quantsp
 		:quantsp-each-quant
 		:each-quant
 
-		:lexpr
 		:lexpr-qpart
 		:lexpr-expr
 		:qpart
 		:expr
-		))
-(in-package struct)
+	  ))
+
 
 
 #|
@@ -95,6 +93,7 @@
 
 
 ;; 最も基本となる 変数のみからなる項
+@export
 (defstruct (vterm  (:constructor vterm (var const)))
   (var (error "vterm: variable symbol required") 
 	   :type vterm-type ;;symbol ここをsymbolにしちゃうと 1とか2とかのシンボルで無いのが扱えなくなる
@@ -105,20 +104,21 @@
 
 ;; 一つの関数記号と、その引数 terms をとる
 ;; terms は 各要素が fterm または vterm 型である
+@export
 (defstruct (fterm (:constructor fterm (fsymbol &rest terms)))
   (fsymbol (error "fterm: function symbol required") 
 		   :type symbol)
   (terms   nil
 		   :type terms-type))
 
-
+@export
 (defstruct (atomic-lexpr (:constructor atomic-lexpr (pred-sym &rest terms)))
   (pred-sym (error "atomic-lexpr: predicate symbol required")
 			:type symbol)
   (terms    nil
 			:type terms-type))
 
-
+@export
 (defstruct (operator (:constructor operator (opr)))
   (opr (error "operator: operator required") 
 	   :type operator-type))
@@ -126,6 +126,7 @@
 
 
 ;;; normal-lexpr とは 量化子のないような論理式のこと
+@export
 (defstruct (normal-lexpr (:constructor normal-lexpr (operator l-lexpr r-lexpr)))
   (operator (error "normal-lexpr: operator required") 
 			:type operator)
@@ -136,7 +137,7 @@
 		    :type normal-lexpr-type))
 
 
-
+@export
 (defstruct (quant (:constructor quant (qnt var neg)))
   (qnt (error "quants: qnt required") :type quant-type)
   (var (error "quants: var required") :type vterm)
@@ -144,12 +145,12 @@
   						;; にしようと思ったけどそれだとはじめから 2n重否定除去をリーダが行っちゃうことになるからよろしくない
   )
 
-
+@export
 (defstruct (quantsp (:constructor quantsp (&rest each-quant)))
   (each-quant nil :type quantsp-type))
 
 
-
+@export
 (defstruct (lexpr (:constructor lexpr (qpart expr)))
   (qpart (error "lexpr: qpart required") 
 		 :type quantsp)

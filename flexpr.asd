@@ -8,11 +8,11 @@
 
 
 (defsystem flexpr
-	:depends-on (:optima)
+	:depends-on (:optima :namespace)
+	:serial t
 	:components 
 		((:file "constant")
 		 (:file "struct")
 		 (:file "util")
 		 (:file "dump")
-		 (:file "parser"))
-	:serial t)
+		 (:file "parser")))

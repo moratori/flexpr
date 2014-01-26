@@ -1,19 +1,17 @@
 
 
-(defpackage dump
-  (:use :cl
-		:optima
-		:constant
-		:struct
-		:util)
-  (:export 
-	:opr->string
-	:term->string
-	:quant->string
-	:quantsp->string
-	:lexpr->string))
-(in-package dump)
+(ns:defns dump
+	(:use :cl 
+		  :constant
+		  :struct
+		  :util)
+	(:import-from :optima
+				  :match))
 
+
+@export
+(defgeneric opr->string (opr)
+	(:documentation "convert operator 2 string expression"))
 
 
 (defmethod opr->string ((opr operator))
@@ -21,8 +19,11 @@
 
 
 
+
+
+@export
 (defgeneric term->string (a)
-	(:documentation "convert term to string"))
+	(:documentation "convert term to string expression"))
 
 
 (defmethod term->string ((term vterm))
@@ -37,6 +38,13 @@
 			 (mapcar #'term->string terms)))
 	(otherwise (error "term->string: invalid data structure"))))
 
+
+
+
+
+@export
+(defgeneric quant->string (quant)
+	(:documentation "convert quantifier to string expression"))
 
 
 (defmethod quant->string ((quant quant))
@@ -56,6 +64,13 @@
 	(otherwise (error "quant->string: invalid data structure"))))
 
 
+
+
+
+@export
+(defgeneric quantsp->string (quantsp)
+	(:documentation "convert quantifier part to string expression"))
+
 (defmethod quantsp->string ((quantsp quantsp))
   (format nil "~{~A~}." 
 		  (mapcar #'quant->string (quantsp-each-quant quantsp))))
@@ -64,6 +79,9 @@
 
 
 
+
+
+@export
 (defgeneric lexpr->string (a)
 	(:documentation "convert logical expr to string"))
 

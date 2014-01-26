@@ -1,17 +1,11 @@
 
 
 
-
-(defpackage parser 
-  (:use :cl
-		:constant
-		:struct
-		:util)
-  (:export 
-		:string->lexpr
-		))
-(in-package parser)
-
+(ns:defns parser
+	(:use :cl
+		  :constant
+		  :struct
+		  :util))
 
 
 #|
@@ -296,7 +290,10 @@
 ;; 2. 先頭に否定がついてる場合 +
 ;; 3. 先頭が量化されてる場合 +
 ;; 4. 原子式	
+;; string->lexpr と言ってるけど
+;; lexpr型で返ってくるわけじゃないので注意
 
+@export
 (defun string->lexpr (str)
   (let*  ((tklst (tokenize str))
 		  (wp    (weak-point tklst)))

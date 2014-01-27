@@ -35,10 +35,10 @@
 
 
 
-(defun next-paren-acc (acc c sc ec)
+(defun next-paren-acc (acc head sc ec)
   (cond 
-	((char= c sc) (1+ acc))
-	((char= c ec) (1- acc))
+	((string= head sc) (1+ acc))
+	((string= head ec) (1- acc))
 	(t acc)))
 
 (defun strip-bug (str)
@@ -57,17 +57,16 @@
 		  ((zerop acc) 
 		   nil)
 		  (t 
-		 	(let ((head (char str 0)))
-		   		(main (subseq str 1)
-					  (next-paren-acc acc head sc ec))))))) 
+			(main (subseq str 1)
+				  (next-paren-acc acc (subseq str 0 1) sc ec)))))) 
 	(main (subseq str 1) 1)))
 
 
 ;;;最初と最後がカッコ(sc ecで文字コード)でなくなるまで、意味のないカッコを剥ぐ
 (defun strip-paren (str sc ec)
   (cond 
-	((or (not (char= (char str 0) sc)) 
-		 (not (char= (char str (1- (length str))) ec))) str)
+	((or (not (char= (char str 0) (char sc 0))) 
+		 (not (char= (char str (1- (length str))) (char ec 0)))) str)
 	((innerparen? str sc ec)
 	 (strip-paren (subseq str 1 (1- (length str))) sc ec))
 	(t str)))
@@ -78,19 +77,25 @@
   (if (string=  str "")
 	str
 	(strip-paren 
-		(strip-bug str) 
-		(char sc 0) 
-		(char ec 0))))
+		(strip-bug str) sc ec)))
 
 
-(defun tokenize (str)
+(defun tokenize-lexpr (str)
   (labels 
 	((main (str paren each  result)
 	  (if (string= str "") 
-		(reverse 
-		  (if (string= each "") 
-			result 
-			(cons (init each +PAREN-START+ +PAREN-END+) result)))
+		(progn 
+	
+		  	(unless (zerop paren)
+			  (error "tokenize-lexpr: an unmatched parenthesis"))
+
+			(reverse 
+			  (if (string= each "") 
+				result 
+				(cons 
+				  (init each +PAREN-START+ +PAREN-END+) 
+				  result))))
+	
 		(let ((head (subseq str 0 1)))
 		  (cond 
 			((and (member-if 
@@ -171,9 +176,9 @@
 						 (= (opr->strength (car oporder))
 							(opr->strength x))) oporder)))))
 
-
 (defun upper-str? (str)
   (upper-case-p (char str 0)))
+
 
 
 (defun place (target src)
@@ -183,6 +188,84 @@
 
 
 
+(defun func-format? (str)
+  (and
+	(position +PAREN-START+ str :test #'string=)
+	(position +PAREN-END+ str :test #'string= :from-end t)))
+
+
+
+;;; a,b,f(a,g(b)),h(f(b)) => (a b f(a,g(b)) h(f(b)))
+(defun tokenize-term (str)
+  (labels 
+	((main (str paren each result)
+		   (if (string= str "") 
+			 (progn 
+
+			   (unless (zerop paren)
+				 (error "tokenize-lexpr: an unmatched parenthesis"))
+			   
+			   (reverse 
+				 (if (string= each "") 
+				   result 
+				   (cons 
+					 (init each +PAREN-START+ +PAREN-END+) 
+					 result))))
+			 (let ((head (subseq str 0 1)))
+			   (cond
+
+				 ((or (string= head +PAREN-START+)
+					  (string= head +PAREN-END+))
+ 					(main 
+						(subseq str 1) 
+						(next-paren-acc 
+						  paren head +PAREN-START+ +PAREN-END+)
+						(concatenate 'string each head) result))
+
+				 ((string= head +ARG-DELIMITER+)
+				  (if (zerop paren)
+					(main 
+					  (subseq str 1) 0 "" 
+					  (cons 
+						(init each +PAREN-START+ +PAREN-END+) 
+						result))
+					(main 
+					  (subseq str 1) 
+					  paren 
+					  (concatenate 'string each head) 
+					  result)))
+				 
+				 (t (main (subseq str 1) paren (concatenate 'string each head) result)))))))
+	(main str 0 "" nil)))
+
+
+
+;;; symbol(term1 , term2 , term3 ...)
+;;; のような文字列を
+;;; symbol と term1 , term2 , term3 ... の形に分ける
+(defun split-func-format (str)
+  	(unless (func-format? str)
+	  (error "split-func-format: parentheses not found"))
+	(let* ((p-s   (position +PAREN-START+ str :test #'string=))
+		   (p-e   (position +PAREN-END+ str :test #'string= :from-end t))
+		   (sym   (strip-bug (subseq str 0 p-s)))
+		   (terms (subseq str (1+ p-s) p-e)))
+	  	(values sym (tokenize-term terms))))
+
+
+;;; x -> (vterm 'x nil)
+;;; f(g(x)) -> (fterm 'f (fterm 'g (vterm 'x)))
+(defun string->term (str)
+  (if (func-format? str)
+	(multiple-value-bind (fsym terms) (split-func-format str)
+	  (apply #'fterm 
+			 (intern fsym)
+			 (mapcar #'string->term terms)))
+	(vterm 
+	  (intern str) 
+	  (upper-str? str))))
+
+
 
 ;; (atomic-lexpr pred-sym term1 term2 ... )
 ;; (fterm func-sym term1 term2 ... )
@@ -190,28 +273,14 @@
 (defun string->atomic (str)
   ;; この辺の低レイヤな関数には、ゴミがついてくることってあったか確認 -> tokenize で綺麗にされる?
   ;; P(x,f(3,g(y,1))) => (atomic-lexpr 'P ...)
-  ;; 0項述語に対応するなら以下のエラーを削除するべき
-
-  (let ((p-s (position +PAREN-START+ str :test #'string=))
-		(p-e (position +PAREN-END+ str :test #'string= :from-end t)))
-		
-		(when (or (null p-s)
-				  (null p-e))
-		  (error "string->atomic: parentheses not found"))
-
-		;; Pred(x,y)
-		;; PRED: Pred
-		;; terms: x,y
-		(let ((pred  (strip-bug (subseq str 0 p-s)))
-			  (terms (subseq str (1+ p-s) p-e)))
-
-
-
-		  )
-
-	)
-
-  )
+  (if (func-format? str)
+	(multiple-value-bind (pred-sym terms) (split-func-format str)
+	  (apply #'atomic-lexpr 
+		(intern pred-sym)
+		(mapcar #'string->term terms)))
+	;; 関数の形をしてなかったら(括弧がなかったら),そのままインターン
+	;; 命題変数として扱うということ
+	(atomic-lexpr (intern str))))
 
 
 (defun string->quant (str neg-cnt)
@@ -298,7 +367,7 @@
 
 @export
 (defun string->lexpr (str)
-  (let*  ((tklst (tokenize str))
+  (let*  ((tklst (tokenize-lexpr str))
 		  (wp    (weak-point tklst)))
 	(if (null wp)
 	  (let* ((target (car tklst))
@@ -322,7 +391,7 @@
 
 			  (t 
 				 ;; 原子式なら tokenize してもバラけないはず
-				(let ((rtklst (tokenize target)))
+				(let ((rtklst (tokenize-lexpr target)))
 				  (if (and (= 1 (length rtklst))
 						   (string= target (car rtklst)))
 					  (string->atomic target)

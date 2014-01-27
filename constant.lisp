@@ -39,6 +39,9 @@
 (defconstant +DELIMITER+ ".")
 
 @export
+(defconstant +ARG-DELIMITER+ ",")
+
+@export
 (defconstant +OPERATOR+
 			 `((,+IMPL+ ">" 3)
 			   (,+NEG+  ,+NEG-STR+ 1)

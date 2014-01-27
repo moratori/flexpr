@@ -141,14 +141,14 @@
 
 
 (defun string->operator (str)
-  (if (null (express-opr? str))
-	(error "string->operator: invalid string")
-	(operator 
+  (when (null (express-opr? str))
+	(error "string->operator: invalid string"))
+  (operator 
 	  (second 
 		(assoc str 
 			   (mapcar 
 				 (lambda (x) 
-				   (reverse (butlast x)))  +OPERATOR+) :test #'string=)))))
+				   (reverse (butlast x)))  +OPERATOR+) :test #'string=))))
 
 
 (defun weak-point (tklst)
@@ -162,13 +162,14 @@
 					(not (express-opr? each))) tklst))
 			  (lambda (x y) 
 				(> (opr->strength x) (opr->strength y))))))
-	(if (null oporder) nil
+
+	(unless (null oporder)
 		(position-if #'express-opr?  tklst
-		  :from-end 
-		  (every 
-			(lambda (x) 
-			  (= (opr->strength (car oporder))
-				 (opr->strength x))) oporder)))))
+					 :from-end 
+					 (every 
+					   (lambda (x) 
+						 (= (opr->strength (car oporder))
+							(opr->strength x))) oporder)))))
 
 
 (defun upper-str? (str)
@@ -187,6 +188,7 @@
 ;; (fterm func-sym term1 term2 ... )
 ;; (vterm sym const?)
 (defun string->atomic (str)
+  ;; この辺の低レイヤな関数には、ゴミがついてくることってあったか確認 -> tokenize で綺麗にされる?
   ;; P(x,f(3,g(y,1))) => (atomic-lexpr 'P ...)
   ;; 0項述語に対応するなら以下のエラーを削除するべき
 
@@ -242,10 +244,10 @@
 							(string= x +EXISTS-STR+))) (subseq str 1))))
 	  (values 
 		(string->quant 
-		  (subseq str 0 
-				  (if (null nextpos) 
-					nil 
-					(1+ nextpos))) neg)
+		  (strip-bug
+			(subseq str 0 
+					(unless (null nextpos)
+					  (1+ nextpos)))) neg)
 		(if (null nextpos) 
 		  "" 
 		  (subseq str (1+ nextpos))))))

@@ -90,8 +90,10 @@
   ;; 実質的に 原始論理式は 関数記号を含んだ項と同型なのでその処理でいく
   (match lexpr
 	((atomic-lexpr pred-sym terms)
-	 (term->string 
-	   (apply #'fterm pred-sym terms)))
+	 (if (null terms) 
+	   (format nil "~A" pred-sym)
+	   (term->string 
+		 (apply #'fterm pred-sym terms))))
 	(otherwise 
 	  (error "lexpr->string(atomic-lexpr): invalid data structure"))))
 

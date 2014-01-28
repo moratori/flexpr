@@ -159,22 +159,27 @@
 (defun weak-point (tklst)
   (let ((oporder 
  			(sort 
-			  (mapcar 
-				(lambda (x) 
-				  (string->operator x))
-				(remove-if 
+			  (remove-if 
 				  (lambda (each)
-					(not (express-opr? each))) tklst))
+					(not (express-opr? each))) tklst)
 			  (lambda (x y) 
-				(> (opr->strength x) (opr->strength y))))))
+				(> (opr->strength 
+					 (string->operator x)) 
+				   (opr->strength 
+					 (string->operator y)))))))
 
 	(unless (null oporder)
-		(position-if #'express-opr?  tklst
+		(position-if (lambda (x)
+					   (and (express-opr? x)
+							(string= x (car oporder))))  tklst
 					 :from-end 
 					 (every 
 					   (lambda (x) 
-						 (= (opr->strength (car oporder))
-							(opr->strength x))) oporder)))))
+						 (= (opr->strength 
+							  (string->operator (car oporder)))
+							(opr->strength 
+							  (string->operator x)))) oporder)))))
+
 
 (defun upper-str? (str)
   (upper-case-p (char str 0)))
@@ -294,7 +299,7 @@
 		   +EXISTS+)
 		  (t (error "s->q: unexpected error"))))
 	 (main ()
-		(let ((var (subseq str 1)))
+		(let ((var (strip-bug (subseq str 1))))
 		  (quant 
 		  	(s->q (subseq str 0 1))
 			 (vterm (intern var) (upper-str? var))
@@ -350,11 +355,31 @@
 								  (error "string->quants: quantifier required"))
 
 								(multiple-value-bind (q n) 
-								  (split-quant (subseq str quant-pos) quant-pos)
+								  (split-quant 
+									(subseq str quant-pos)
+									(count +NEG-STR+ 
+										   (subseq str 0 quant-pos) 
+										   :test #'string=))
 								  (main n (cons q result)))))
 				  (t 
 					(error "string->quants: invalid character found")))))))
 	(apply #'quantsp (main str nil))))
+
+
+
+
+(defun string->lexpr% (tklst)
+  (let ((weak (weak-point tklst)))
+	
+	(if (null weak) 
+	  (string->lexpr (car tklst))
+	(let ((left  (subseq tklst 0 weak))
+		  (op    (nth weak tklst))
+		  (right (subseq tklst (1+ weak))))
+	  (normal-lexpr 
+		(string->operator op)
+		(string->lexpr% left)
+		(string->lexpr% right))))))
 
 
 ;; leaf となりうるのは
@@ -376,7 +401,7 @@
 			  ((string= +NEG-STR+ head)
 			   (normal-lexpr 
 				 (string->operator head)
-				 (string->lexpr (subseq str 1))
+				 (string->lexpr (subseq target 1))
 				 nil))
 
 			  ((express-quant? head)
@@ -399,8 +424,7 @@
 					  (string->lexpr target))))))
 	  
 		;; normal-lexpr への変換
-
-	  )))
+		(string->lexpr% tklst))))
 
 
 

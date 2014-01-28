@@ -15,4 +15,6 @@
 		 (:file "struct")
 		 (:file "util")
 		 (:file "dump")
-		 (:file "parser")))
+		 (:file "parser")
+		 (:file "unifier")
+		 (:file "infer")))

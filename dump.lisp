@@ -32,7 +32,7 @@
 
 (defmethod term->string ((term fterm))
   (match term
-	((fterm fsymbol terms)
+	((fterm :fsymbol fsymbol :terms terms)
 	 (format nil "~A(~{~A~^,~})" 
 			 fsymbol 
 			 (mapcar #'term->string terms)))
@@ -49,7 +49,7 @@
 
 (defmethod quant->string ((quant quant))
   (match quant
-	((quant qnt var neg)
+	((quant :qnt qnt :var var :neg neg)
 	 (format nil "~A~A~A"
 			 (if (not (zerop neg)) 
 			   (make-sequence 'string
@@ -89,7 +89,7 @@
 (defmethod lexpr->string ((lexpr atomic-lexpr))
   ;; 実質的に 原始論理式は 関数記号を含んだ項と同型なのでその処理でいく
   (match lexpr
-	((atomic-lexpr pred-sym terms)
+	((atomic-lexpr :pred-sym pred-sym :terms terms)
 	 (if (null terms) 
 	   (format nil "~A" pred-sym)
 	   (term->string 
@@ -100,7 +100,7 @@
 
 (defmethod lexpr->string ((lexpr normal-lexpr))
   (match lexpr
-	((normal-lexpr operator l-lexpr r-lexpr)
+	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
 	 ;;	オペレータの強さと
 	 ;;	l-lexprとr-lexprの関係から適当に括弧を省く処理が必要
 	 (cond 
@@ -119,7 +119,7 @@
 
 (defmethod lexpr->string ((lexpr lexpr))
   (match lexpr
-	((lexpr qpart expr)
+	((lexpr :qpart qpart :expr expr)
 	 (format nil "~A(~A)" 
 			 (quantsp->string qpart)
 			 (lexpr->string expr)))

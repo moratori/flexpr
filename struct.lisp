@@ -6,50 +6,30 @@
 	(:export 
 	  ;; defstruct で暗黙的に定義される関数が
 	  ;; @exportではエクスポートできないみたいなので
-	  ;; 手動でexportするのと、optimaのマッチでスロットを表すシンボルが
-	  ;; 定義されたパッケージのシンボルでなければいけない?ようなので手動export
-	  ;; 後者はわざわざexport しなくても struct::foo みたいな感じに強制的にこっちのパッケージを
-	  ;; 参照させてしまえばいいけど (match (c-ructor struct::slot1 struct::slot2 ...))
-	  ;; みたいにするのは嫌なので...
+	  ;; 手動でexportする	  
 		:vterm-var
 		:vterm-const
-		:var
-		:const
 		
 		:fterm-fsymbol
 		:fterm-terms
-		:fsymbol
-		:terms
 		
 		:atomic-lexpr-pred-sym
 		:atomic-lexpr-terms
-		:pred-sym
-		:terms
 
 		:operator-opr
-		:opr
 
 		:normal-lexpr-operator
 		:normal-lexpr-l-lexpr
 		:normal-lexpr-r-lexpr
-		:operator
-		:l-lexpr
-		:r-lexpr
 
 		:quant-qnt
 		:quant-var
 		:quant-neg
-		:qnt
-		:var
-		:neg
 
 		:quantsp-each-quant
-		:each-quant
 
 		:lexpr-qpart
 		:lexpr-expr
-		:qpart
-		:expr
 	  ))
 
 

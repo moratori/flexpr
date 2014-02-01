@@ -34,10 +34,18 @@
 	(:documentation "prenex normal formalizetion"))
 
 
+(defmethod  lexpr->prenex ((lexpr atomic-lexpr))
+  lexpr)
+
+
 ;;; スコーレム標準形にする
 @export
 (defgeneric lexpr->skolem (a)
 	(:documentation "skolemization"))
+
+
+(defmethod  lexpr->skolem ((lexpr atomic-lexpr))
+  lexpr)
 
 
 ;;; 節形式に変換する(連言標準形(CNF) (L V L ...) & (L V L ...) & ... (L V L ...) )
@@ -46,6 +54,7 @@
 	(:documentation "clause formalization"))
 
 
-
+(defmethod  lexpr->clause-form ((lexpr atomic-lexpr))
+  lexpr)
 
 

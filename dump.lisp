@@ -3,8 +3,11 @@
 (ns:defns dump
 	(:use :cl 
 		  :constant
-		  :struct
-		  :util)
+		  :struct)
+	(:import-from :util
+				  :opr-equal?
+				  :opr->strength
+				  :opr-strong?)
 	(:import-from :optima
 				  :match))
 

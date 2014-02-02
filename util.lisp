@@ -24,6 +24,34 @@
 
 
 
+@export
+(defgeneric term= (a b)
+	;;統語論的に完全に一致するかを確かめる
+	;;だから 変数 x と 変数 yは一致しないし
+	;;f(x) と f(z)も同一でない. シンボルが違うから
+	(:documentation "identity predicate"))
+
+
+(defmethod term= ((t1 vterm) (t2 vterm))
+  (and
+	(eq (vterm-var t1) (vterm-var t2))
+	(eq (vterm-const t1) (vterm-const t2))))
+
+
+(defmethod term= ((t1 fterm) (t2 fterm))
+  (and 
+	(eq (fterm-fsymbol t1) 
+		(fterm-fsymbol t2))
+	(every 
+	  (lambda (x y)
+		(term= x y)) 
+	  (fterm-terms t1) 
+	  (fterm-terms t2))))
+
+
+(defmethod term= (a b) nil)
+
+
 
 ;;; normalization 
 

@@ -4,8 +4,9 @@
 (ns:defns parser
 	(:use :cl
 		  :constant
-		  :struct
-		  :util))
+		  :struct)
+	(:import-from :util
+				  :opr->strength))
 
 
 #|
@@ -265,7 +266,13 @@
 	(multiple-value-bind (fsym terms) (split-func-format str)
 	  (apply #'fterm 
 			 (intern fsym)
-			 (mapcar #'string->term terms)))
+			 (let ((argvs  (mapcar #'string->term terms)))
+			   (when (and (null argvs)
+						  (not (upper-str? fsym)))
+				 ;; ここのエラーは些か抽象度低い.リーダの役割であるstring->...系の関数で
+				 ;; 発生させるべきエラーでないかもしれない
+				 (error "string->term: constant function must be start in capitals string"))
+			   argvs)))
 	(vterm 
 	  (intern str) 
 	  (upper-str? str))))

@@ -48,11 +48,14 @@
 
 	(vterm var const)
 	(fterm fsymbol terms)
+	
 	(atomic-lexpr pred-sym terms)
 	(operator opr)
+
 	(normal-lexpr operator l-lexpr r-lexpr)
 	(quant qnt var neg)
 	(quantsp each-quant)
+	
 	(lexpr qpart expr)
 
 |#

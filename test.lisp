@@ -11,10 +11,13 @@
 (defun vt (&rest arg)
   (apply #'struct:vterm arg))
 
+(defun al (&rest arg)
+  (apply #'struct:atomic-lexpr arg))
+
 
 (print 
-  (unifier:mgu 
-	(ft 'f  (vt 'x nil) (ft 'C ) (ft 'g (vt 'z nil)))
-	(ft 'f  (ft 'h (vt 'y nil) (vt 'w nil)) (vt 'y nil) (vt 'w nil))
-	)
-  )
+  (dump:lexpr->string
+	(util::remove-disuse-quant 
+	  (print 
+		(parser:string->lexpr
+		"Ax.(Ay.(P(y) > Q(w) & R(z)))")))))

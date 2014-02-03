@@ -154,3 +154,27 @@
 
 
 
+
+(defmethod remove-operator ((lexpr atomic-lexpr))
+  lexpr)
+
+
+
+
+(defmethod remove-operator ((lexpr normal-lexpr))
+
+  )
+
+
+(defmethod remove-operator ((lexpr lexpr))
+  (match lexpr
+	((lexpr :qpart qpart :expr expr)
+	 (lexpr qpart
+			(remove-operator expr)))	 
+	(otherwise (error "remove-operator(lexpr): unexpected error"))))
+
+
+
+
+
+

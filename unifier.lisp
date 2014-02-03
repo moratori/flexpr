@@ -11,7 +11,6 @@
 ;;;; 単一化の実装
 
 
-;;; 関数記号を含まない、変数定数に対する単一化だけ先に書いてしまう
 
 
 @export
@@ -42,7 +41,6 @@
 
 
 (defmethod mgu ((t1 fterm) (t2 vterm))
-  ;; 0引数関数に対応しなければならない
   (cond 
 	((vterm-const t2)
 	 (eq (fterm-fsymbol t1)
@@ -149,6 +147,12 @@
 
 
 
-
+(defmethod mgu ((lexpr1 atomic-lexpr) (lexpr2 atomic-lexpr))
+  ;; 実際には関数項と同じ扱い
+  ;; だけど命題変数への扱いをかんがえなければならない
+  (mgu (apply #'fterm (atomic-lexpr-pred-sym lexpr1)
+			  		  (atomic-lexpr-terms    lexpr1))
+	   (apply #'fterm (atomic-lexpr-pred-sym lexpr2)
+			  		  (atomic-lexpr-terms    lexpr2))))
 
 

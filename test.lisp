@@ -12,9 +12,9 @@
   (apply #'struct:vterm arg))
 
 
-
 (print 
   (unifier:mgu 
-	(ft 'f (vt 'x nil) (ft 'g (vt 'x nil)))
-	(ft 'f (vt 'C t)   (vt 'y nil) )
-	))
+	(ft 'f  (vt 'x nil) (vt 'C t) (ft 'g (vt 'z nil)))
+	(ft 'f  (ft 'h (vt 'y nil) (vt 'w nil)) (vt 'y nil) (vt 'w nil))
+	)
+  )

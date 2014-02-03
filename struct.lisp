@@ -7,27 +7,35 @@
 	  ;; defstruct で暗黙的に定義される関数が
 	  ;; @exportではエクスポートできないみたいなので
 	  ;; 手動でexportする	  
+	  	:vterm-p
 		:vterm-var
 		:vterm-const
 		
+		:fterm-p
 		:fterm-fsymbol
 		:fterm-terms
 		
+		:atomic-lexpr-p
 		:atomic-lexpr-pred-sym
 		:atomic-lexpr-terms
 
+		:operator-p
 		:operator-opr
 
+		:normal-lexpr-p
 		:normal-lexpr-operator
 		:normal-lexpr-l-lexpr
 		:normal-lexpr-r-lexpr
 
+		:quant-p
 		:quant-qnt
 		:quant-var
 		:quant-neg
 
+		:quantsp-p
 		:quantsp-each-quant
 
+		:lexpr-p
 		:lexpr-qpart
 		:lexpr-expr
 	  ))

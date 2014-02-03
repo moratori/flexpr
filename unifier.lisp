@@ -59,6 +59,33 @@
   (substitute-if new (lambda (x) (term= x old)) seq))
 
 
+;;; 新しいルールを今までに見つかった置換規則に適用する
+(defun subst-old-rule (old-rules new-rules)
+  ;; new-rules = ((old . new))
+  ;; old-rules = ((old1 . new1) (old2 . new2) ...)
+  (destructuring-bind ((old . new)) new-rules
+	(mapcar 
+	  (lambda (x)
+		(destructuring-bind (each-old . each-new) x
+		 (cons each-old
+			   (cond 
+				 ((vterm-p each-new)
+					(car (subst-term new old (list each-new))))
+				 ((fterm-p each-new)
+					(apply #'fterm (fterm-fsymbol each-new) 
+						   (subst-term new old (fterm-terms each-new))))
+				 (t (error "subst-rule: unexpected error"))))))
+	  old-rules)))
+
+;;; 新しいルールを更に今まで見つかったので置換
+(defun subst-new-rule (old-rules new-rules)
+  ;; new-rules = ((old . new))
+  ;; old-rules = ((old1 . new1) (old2 . new2) ...)
+  (reduce 
+	(lambda (x y)
+	  (subst-old-rule x (list y))) 
+	old-rules :initial-value new-rules))
+
 
 ;; 前に得られた置換にも遡って置換した方がいいかもしれない
 ;; いまのだと 
@@ -71,6 +98,13 @@
 ;; 同じ結果になるような気がする
 ;; つまり、g(x) のxはx -> C に依存してるような感じにどれもなる?
 ;; ==> ならないので修正
+;;     つまり以前に得られた規則に最新の置換を施さなきゃだめだ
+;;     しかも逆に最新の置換規則に、今まで見つかったやつも施さないとだめだ
+;;
+;; 無限ループする例: P(x,C,f(z,x)) 
+;; 					 P(g(y,w),y,w)
+;; x -> f(x)
+;; みたいにsrc と ranどちらにも同じシンボルが出てたら無限ループ
 (defmethod mgu ((t1 fterm) (t2 fterm))
   (cond 
 	;; 変数の場合と同様、全く同一なら単一化の処理は必要ない
@@ -88,11 +122,13 @@
 			  (let ((unifier (mgu (car argv1) 
 								  (car argv2))))
 					(cond 
+					  ;; 単一化は失敗
 					  ((null unifier) nil)
 					  
 					  ((listp unifier)
 						(apply #'main 
-							   (append result unifier)
+							   (append (subst-old-rule result unifier) 
+									   (subst-new-rule result unifier))
 							   (reduce 
 								 (lambda (x y)
 								   (destructuring-bind (old . new) y

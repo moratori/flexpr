@@ -5,9 +5,7 @@
 		  :constant
 		  :struct)
 	(:import-from :util
-				  :term=)
-	(:import-from :optima
-				  :match))
+				  :term=))
 
 
 ;;;; 単一化の実装
@@ -45,23 +43,34 @@
 
 (defmethod mgu ((t1 fterm) (t2 vterm))
   ;; 0引数関数に対応しなければならない
-  )
+  (cond 
+	((vterm-const t2)
+	 (eq (fterm-fsymbol t1)
+		 (vterm-var t2)))
+	(t (acons t2 t1 nil))))
 
 (defmethod mgu ((t1 vterm) (t2 fterm))
   (mgu t2 t1))
 
 
 
-#|
-	
-	f(x,y,x)
-	f(a,b,g(a,b))
-	
+
+(defun subst-term (new old seq)
+  (substitute-if new (lambda (x) (term= x old)) seq))
 
 
-|#
 
-
+;; 前に得られた置換にも遡って置換した方がいいかもしれない
+;; いまのだと 
+;; f(g(x),x) と f(y,C) のMGUを求めると
+;; <y -> g(x) , x -> C>
+;; を返すけど
+;; {x -> C , y -> g(C)}
+;; を返すようにしたほうがいいのかな?
+;; 今のでも先頭から置換を施せば
+;; 同じ結果になるような気がする
+;; つまり、g(x) のxはx -> C に依存してるような感じにどれもなる?
+;; ==> ならないので修正
 (defmethod mgu ((t1 fterm) (t2 fterm))
   (cond 
 	;; 変数の場合と同様、全く同一なら単一化の処理は必要ない
@@ -73,26 +82,33 @@
 		 (length (fterm-terms t2)))
 	 nil)
 	(t
-	  #|
-	  ;;; 不一致なのを求めて単一化
-	  ;;; f(a,b)
-	  ;;; f(x,y)
-	  (loop named exit
-			with result = nil
-			for arg-t1 in (fterm-terms t1)
-			for arg-t2 in (fterm-terms t2)
-			finally (return result)
-			do
-			(let ((unifier (mgu arg-t1 arg-t2)))
-			  (when (null unifier)
-				(return-from exit nil))
-
-			  (when (listp unifier)
-				(push unifier result)
-				;; substしてmguに回す
-				)))
-	  |#
-	  )))
+	  (labels 
+		((main (result argv1 argv2)
+			(if (null argv1) result
+			  (let ((unifier (mgu (car argv1) 
+								  (car argv2))))
+					(cond 
+					  ((null unifier) nil)
+					  
+					  ((listp unifier)
+						(apply #'main 
+							   (append result unifier)
+							   (reduce 
+								 (lambda (x y)
+								   (destructuring-bind (old . new) y
+									 (destructuring-bind (a1 a2) x
+									   (list 
+										 (subst-term new old a1)
+										 (subst-term new old a2))))) 
+								 unifier :initial-value (list (cdr argv1) (cdr argv2)))))
+					  
+					  (t (main result
+						   	   (cdr argv1)
+							   (cdr argv2))))))))
+		
+		(main nil
+		  	  (fterm-terms t1)
+			  (fterm-terms t2))))))
 
 
 

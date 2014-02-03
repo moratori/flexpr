@@ -42,11 +42,13 @@
   (and 
 	(eq (fterm-fsymbol t1) 
 		(fterm-fsymbol t2))
-	(every 
-	  (lambda (x y)
-		(term= x y)) 
-	  (fterm-terms t1) 
-	  (fterm-terms t2))))
+	(let ((argv1 (fterm-terms t1))
+		  (argv2 (fterm-terms t2)))
+	  (and 
+		(= (length argv1) 
+		   (length argv2))
+		(every 
+		  (lambda (x y) (term= x y)) argv1 argv2)))))
 
 
 (defmethod term= (a b) nil)

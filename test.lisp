@@ -4,7 +4,6 @@
 
 
 
-
 (defun ft (&rest arg)
   (apply #'struct:fterm arg))
 

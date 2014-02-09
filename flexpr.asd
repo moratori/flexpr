@@ -17,4 +17,5 @@
 		 (:file "dump")
 		 (:file "parser")
 		 (:file "unifier")
-		 (:file "infer")))
+		 (:file "infer")
+		 (:file "formalize")))

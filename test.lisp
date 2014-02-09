@@ -14,9 +14,11 @@
   (apply #'struct:atomic-lexpr arg))
 
 
+
+
+
 (print 
-  (dump:lexpr->string
-	(util::remove-disuse-quant 
-	  (print 
-		(parser:string->lexpr
-		"Ax.(Ay.(P(y) > Q(w) & R(z)))")))))
+  (dump:lexpr->string 
+	(formalize:remove-disuse-quant
+	  (parser:string->lexpr 
+		"AxAyAz.P(w)"))))

@@ -58,14 +58,8 @@
 
 
 
-
-
-#|
-
-	normalization 
-
-|#
-
+(defgeneric term-using? (a b)
+	(:documentation "check whether term occurred in b"))
 
 
 (defmethod term-using? ((vterm vterm) (term vterm))
@@ -111,70 +105,5 @@
 		 (quantsp-each-quant qpart))
 	   (term-using? vterm expr)))	 
 	(otherwise (error "term-using?(lexpr): unexpected error"))))
-
-
-
-
-
-
-(defmethod remove-disuse-quant ((lexpr atomic-lexpr))
-  lexpr)
-
-
-(defmethod remove-disuse-quant ((lexpr normal-lexpr))
-	(match lexpr
-		((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
-		 (normal-lexpr 
-		   operator
-		   (remove-disuse-quant l-lexpr)
-		   (remove-disuse-quant r-lexpr)))	 
-		(otherwise (error "term-using?(normal-lexpr): unexpected error"))))
-
-
-(defmethod remove-disuse-quant ((lexpr lexpr))
-  (match lexpr
-	((lexpr :qpart qpart :expr expr)
-	 ;; まずどうでもいい束縛を除去
-	 ;; (Qτ ).φ についてτ が φ 中で自由出現しないなら(Qτ)を除去レ
-	 (let ((new-qpart 
-			 (remove-if 
-			   (lambda (qnt)
-				 (not (term-using? (quant-var qnt) expr)))
-			   (quantsp-each-quant qpart))))
-	   
-	   (if (null new-qpart)
-		 (remove-disuse-quant expr)
-		 (lexpr (apply #'quantsp new-qpart) 
-				(remove-disuse-quant expr)))))
-	(otherwise (error "normalize-lexpr(lexpr): unexpected error"))))
-
-
-
-
-
-
-
-
-(defmethod remove-operator ((lexpr atomic-lexpr))
-  lexpr)
-
-
-
-
-(defmethod remove-operator ((lexpr normal-lexpr))
-
-  )
-
-
-(defmethod remove-operator ((lexpr lexpr))
-  (match lexpr
-	((lexpr :qpart qpart :expr expr)
-	 (lexpr qpart
-			(remove-operator expr)))	 
-	(otherwise (error "remove-operator(lexpr): unexpected error"))))
-
-
-
-
 
 

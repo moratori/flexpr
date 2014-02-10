@@ -1,10 +1,10 @@
 
 
-(ns:defns infer
+(ns:defns flexpr.infer
 	(:use :cl
-		  :constant
-		  :struct
-		  :unifier))
+		  :flexpr.constant
+		  :flexpr.struct
+		  :flexpr.unifier))
 
 
 ;;;  効率的な導出を実装

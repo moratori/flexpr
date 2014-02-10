@@ -1,8 +1,9 @@
 
 
 
-(ns:defns struct
-	(:use :cl :constant)
+(ns:defns flexpr.struct
+	(:use :cl 
+		  :flexpr.constant)
 	(:export 
 	  ;; defstruct で暗黙的に定義される関数が
 	  ;; @exportではエクスポートできないみたいなので

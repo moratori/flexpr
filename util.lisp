@@ -1,10 +1,10 @@
 
 
 
-(ns:defns util
+(ns:defns flexpr.util
 	(:use :cl
-		  :constant
-		  :struct)
+		  :flexpr.constant
+		  :flexpr.struct)
 	(:import-from :optima
 				  :match))
 
@@ -22,6 +22,20 @@
   (eq (operator-opr opr1)
 	  (operator-opr opr2)))
 
+@export
+(defmethod qnt-equal? ((q1 quant) (q2 quant))
+  (eq (quant-qnt q1)
+	  (quant-qnt q2)))
+
+
+@export
+(defmethod opposite-qnt ((quant quant))
+  (cond 
+	((qnt-equal? quant (quant +FORALL+ (vterm '|dummy| nil) 0))
+	 +EXISTS+)
+	((qnt-equal? quant (quant +EXISTS+  (vterm '|dummy| nil) 0))
+	 +FORALL+)
+	(t (error "opposite-qnt: unbelievable quantifier"))))
 
 
 

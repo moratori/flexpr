@@ -1,10 +1,10 @@
 
 
-(ns:defns dump
+(ns:defns flexpr.dump
 	(:use :cl 
-		  :constant
-		  :struct)
-	(:import-from :util
+		  :flexpr.constant
+		  :flexpr.struct)
+	(:import-from :flexpr.util
 				  :opr-equal?
 				  :opr->strength
 				  :opr-strong?)

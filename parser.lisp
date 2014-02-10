@@ -1,11 +1,11 @@
 
 
 
-(ns:defns parser
+(ns:defns flexpr.parser
 	(:use :cl
-		  :constant
-		  :struct)
-	(:import-from :util
+		  :flexpr.constant
+		  :flexpr.struct)
+	(:import-from :flexpr.util
 				  :opr->strength))
 
 

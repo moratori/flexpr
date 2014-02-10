@@ -1,18 +1,18 @@
 
 
-(ns:defns formalize
+(ns:defns flexpr.formalize
 	(:use :cl
-		  :constant
-		  :struct)
+		  :flexpr.constant
+		  :flexpr.struct)
 	(:import-from :optima
 				  :match)
-	(:import-from :util
+	(:import-from :flexpr.util
 				  :term-using?
-				  :opr-equal?))
+				  :opr-equal?
+				  :opposite-qnt))
 
 
 
-@export
 (defgeneric remove-disuse-quant (a)
 	(:documentation "remove disuse quantifier in expression a"))
 
@@ -50,7 +50,6 @@
 
 
 
-@export
 (defgeneric remove-operator (a)
 	(:documentation "remove operator other than NOT or OR or AND"))
 
@@ -64,11 +63,24 @@
   (match lexpr
 	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
 	 (cond 
+
+	   ((opr-equal? operator (operator +NEG+))
+		(normal-lexpr operator
+		  (remove-operator l-lexpr)
+		  nil))
+
+	   ((or (opr-equal? operator (operator +OR+))
+			(opr-equal? operator (operator +AND+)))
+		(normal-lexpr operator
+			(remove-operator l-lexpr)		  
+			(remove-operator r-lexpr)))
+
 	   ((opr-equal? operator (operator +IMPL+))
 		(normal-lexpr (operator +OR+)
 			(normal-lexpr (operator +NEG+)
 			  (remove-operator l-lexpr) nil)
 			(remove-operator r-lexpr)))
+	   
 	   ((opr-equal? operator (operator +EQ+))
 		(normal-lexpr (operator +AND+)
 			(remove-operator 
@@ -92,9 +104,101 @@
 
 
 
-@export
+
+(defun remove-quant-negation (lexpr)
+  (assert (typep lexpr 'lexpr))
+
+  (match lexpr
+    ((lexpr :qpart qpart :expr expr)
+		(lexpr
+			(apply #'quantsp
+				   (labels 
+					 ((main (lst result acc)
+						(if (null lst) (reverse result)
+						  (match (car lst)
+						    ((quant :qnt qnt :var var :neg neg)
+							 (if (evenp (+ neg acc)) 
+							   (main 
+								 (cdr lst)
+								 (cons (quant qnt var 0) result) 
+								 0)
+							   (main 
+								 (cdr lst)
+								 (cons (quant (opposite-qnt (car lst)) var 0) result) 
+								 1)))
+							(otherwise 
+							  (error "remove-quant-negation: unexpected error"))))))
+					 (main (quantsp-each-quant qpart) nil 0)))
+			
+			  (if (evenp 
+					(reduce 
+					  (lambda (x y) (+ x (quant-neg y))) 
+					  (quantsp-each-quant qpart) :initial-value 0))
+				expr
+				(normal-lexpr (operator +NEG+) expr nil))))
+	(otherwise (error "remove-quant-negation: unexpected error"))))
+
+
+
+;; 否定を内側に移動して全てリテラルの選言か連言にする
+
 (defgeneric literalize (a)
  	(:documentation "move to the inside"))
+
+
+(defmethod literalize ((lexpr atomic-lexpr))
+  lexpr)
+
+(defmethod literalize ((lexpr normal-lexpr))
+  ;; 既にremove-operatorされた式が来ることを意図する
+  ;; つまりlexpr中に > や - が含まれていたらエラー
+  (match lexpr
+	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
+	 
+	 (cond 
+
+	   ((or (opr-equal? operator (operator +AND+))
+			(opr-equal? operator (operator +OR+)))		
+			(normal-lexpr operator
+				(literalize l-lexpr)		  
+				(literalize r-lexpr)))
+
+	   ((opr-equal? operator (operator +NEG+))
+		;; r-lexprはnilだから気にすること無い
+		;; l-lexprだけみてればいい
+		(match l-lexpr
+			
+			((normal-lexpr :operator operator_ :l-lexpr l-lexpr_ :r-lexpr r-lexpr_)
+			 ;; operator_ は V,&,~のどれか
+			 )
+			
+			((lexpr :qpart qpart_ :expr expr_)
+			 ;; ~AxAy...の形
+			 
+				(quantsp-each-quant qpart_)
+
+
+			 )
+			
+			(otherwise 
+			  (unless (typep l-lexpr 'atomic-lexpr)
+				(error "literalize(normal-lexpr): unexpected error"))
+			  lexpr ;; 負リテラル
+			  )))
+		
+	   (t (error "literalize(normal-lexpr): removed operator lexpr required"))))	 
+	(otherwise (error "literalize(normal-lexpr): unexpected error"))))
+
+
+(defmethod literalize ((lexpr lexpr))
+  (match lexpr
+	((lexpr :qpart qpart :expr expr)
+	 (lexpr qpart (literalize expr)))
+	(otherwise (error "literalize(lepxr): unexpected error"))))
+
+
+
+
 
 
 

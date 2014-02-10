@@ -1,8 +1,7 @@
 
 
-(ns:defns constant
-	(:use :cl)
-	(:nicknames :const))
+(ns:defns flexpr.constant
+	(:use :cl))
 
 ;; defconstant でやると再定義エラーが起きてしまう -> asdファイルの書き方おかしいのかな?
 

@@ -4,64 +4,62 @@
 	(:use :cl)
 	(:nicknames :const))
 
-@export
-(defconstant +IMPL+ 'impl)
+;; defconstant でやると再定義エラーが起きてしまう -> asdファイルの書き方おかしいのかな?
 
 @export
-(defconstant +NEG+  'neg)
+(defvar +IMPL+ 'impl)
 
 @export
-(defconstant +AND+  'and)
+(defvar +NEG+  'neg)
 
 @export
-(defconstant +OR+   'or)
+(defvar +AND+  'and)
 
 @export
-(defconstant +EQ+   'eq)
+(defvar +OR+   'or)
 
 @export
-(defconstant +FORALL+ 'forall)
+(defvar +EQ+   'eq)
 
 @export
-(defconstant +EXISTS+ 'exists)
+(defvar +FORALL+ 'forall)
+
+@export
+(defvar +EXISTS+ 'exists)
 
 
 @export
-(defconstant +NEG-STR+ "~")
+(defvar +NEG-STR+ "~")
 
 @export
-(defconstant +FORALL-STR+ "A")
+(defvar +FORALL-STR+ "A")
 
 @export
-(defconstant +EXISTS-STR+ "E")
+(defvar +EXISTS-STR+ "E")
 
 @export
-(defconstant +DELIMITER+ ".")
+(defvar +DELIMITER+ ".")
 
 @export
-(defconstant +ARG-DELIMITER+ ",")
+(defvar +ARG-DELIMITER+ ",")
 
 @export
-(defconstant +OPERATOR+
+(defvar +OPERATOR+
 			 `((,+IMPL+ ">" 3)
 			   (,+NEG+  ,+NEG-STR+ 1)
 			   (,+AND+  "&" 2)
 			   (,+OR+   "V" 2)
 			   (,+EQ+   "-" 3)))
 @export
-(defconstant +PAREN-START+ "(")
+(defvar +PAREN-START+ "(")
 
 @export
-(defconstant +PAREN-END+ ")")
+(defvar +PAREN-END+ ")")
 
 @export
-(defconstant +QUANTS+ 
+(defvar +QUANTS+ 
 			 `((,+FORALL+ ,+FORALL-STR+ "∀")
 			   (,+EXISTS+ ,+EXISTS-STR+ "∃")))
-
-
-
-
 
 
 

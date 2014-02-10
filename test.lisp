@@ -22,3 +22,8 @@
 	(formalize:remove-disuse-quant
 	  (parser:string->lexpr 
 		"AxAyAz.P(w)"))))
+
+(print (dump:lexpr->string 
+		 (print 
+		   (formalize:remove-operator
+		   (parser:string->lexpr "P(x) - Q(x)")))))

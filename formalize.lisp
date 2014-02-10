@@ -60,18 +60,26 @@
 
 
 
-
 (defmethod remove-operator ((lexpr normal-lexpr))
   (match lexpr
-	((lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
-	 (cond
-	   ((opr-equal? operator +IMPL+)
-		)
-	   ((opr-equal? operator +EQ+)
-		)
-	   ;; add another operator
-	   )
-	 )	 
+	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
+	 (cond 
+	   ((opr-equal? operator (operator +IMPL+))
+		(normal-lexpr (operator +OR+)
+			(normal-lexpr (operator +NEG+)
+			  (remove-operator l-lexpr) nil)
+			(remove-operator r-lexpr)))
+	   ((opr-equal? operator (operator +EQ+))
+		(normal-lexpr (operator +AND+)
+			(remove-operator 
+			  (normal-lexpr (operator +IMPL+)
+					l-lexpr
+					r-lexpr))		  
+			(remove-operator 
+			  (normal-lexpr (operator +IMPL+)
+					r-lexpr
+					l-lexpr))))
+	   (t (error "remove-operator(normal-lexpr): conversion rule is not defined"))))
 	(otherwise (error "remove-operator(normal-lexpr): unexpected error"))))
 
 
@@ -81,6 +89,13 @@
 	 (lexpr qpart
 			(remove-operator expr)))	 
 	(otherwise (error "remove-operator(lexpr): unexpected error"))))
+
+
+
+@export
+(defgeneric literalize (a)
+ 	(:documentation "move to the inside"))
+
 
 
 

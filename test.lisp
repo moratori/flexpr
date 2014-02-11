@@ -36,6 +36,14 @@
 (print 
   (flexpr.dump:lexpr->string 
 	(flexpr.formalize::remove-quant-negation 
-	  (flexpr.parser:string->lexpr "Ax~~Ey~Aw~Ez.P(x)"))))
+	  (flexpr.parser:string->lexpr "AxAyAw.P(x)"))))
+
+
+(print 
+  (flexpr.dump:lexpr->string 
+	(print 
+	  (flexpr.formalize::literalize 
+	  (flexpr.formalize::remove-operator
+		(flexpr.parser:string->lexpr "~Ey~Ax.(P(x) - ~Q(x))"))))))
 
 

@@ -9,7 +9,8 @@
 	(:import-from :flexpr.util
 				  :term-using?
 				  :opr-equal?
-				  :opposite-qnt))
+				  :opposite-qnt
+				  :opposite-opr))
 
 
 
@@ -105,6 +106,82 @@
 
 
 
+
+
+
+
+;; 否定を内側に移動して全てリテラルの選言か連言にする
+
+(defgeneric literalize (a)
+ 	(:documentation "move to the inside"))
+
+
+(defmethod literalize ((lexpr atomic-lexpr))
+  lexpr)
+
+(defmethod literalize ((lexpr normal-lexpr))
+  ;; 既にremove-operatorされた式が来ることを意図する
+  ;; つまりlexpr中に > や - が含まれていたらエラー
+  (match lexpr
+	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
+	 
+	 (cond 
+
+	   ((or (opr-equal? operator (operator +AND+))
+			(opr-equal? operator (operator +OR+)))		
+			(normal-lexpr operator
+				(literalize l-lexpr)		  
+				(literalize r-lexpr)))
+
+	   ((opr-equal? operator (operator +NEG+))
+		;; r-lexprはnilだから気にすること無い
+		;; l-lexprだけみてればいい
+		(match l-lexpr
+			
+			((normal-lexpr :operator operator_ :l-lexpr l-lexpr_ :r-lexpr r-lexpr_)
+			 ;; operator_ は V,&,~のどれか
+			 (cond 
+			   
+			   ((opr-equal? operator_ (operator +NEG+))
+				(literalize l-lexpr_))
+
+			   ;; どモルガン
+			   ((or (opr-equal? operator_ (operator +AND+))
+					(opr-equal? operator_ (operator +OR+)))
+				(normal-lexpr (operator (opposite-opr operator_))
+					(literalize 
+					  (normal-lexpr (operator +NEG+) l-lexpr_ nil))
+					(literalize
+					  (normal-lexpr (operator +NEG+) r-lexpr_ nil))))
+	
+			   (t (error "literalize(normal-lexpr): removed operator lexpr required"))))
+			
+			((lexpr :qpart qpart_ :expr expr_)
+			 ;; ~AxAy...の形
+				(let* ((quant-lst (quantsp-each-quant qpart_))
+					   (head      (car quant-lst)))
+
+				  (literalize
+					(lexpr
+					  (apply #'quantsp 
+							 (cons (quant (quant-qnt head)
+										  (quant-var head)
+										  (1+ (quant-neg head))) 
+								   (cdr quant-lst)))
+					  expr_))))
+			
+			(otherwise 
+			  (unless (typep l-lexpr 'atomic-lexpr)
+				(error "literalize(normal-lexpr): l-lexpr must be atomic"))
+			  lexpr ;; 負リテラル
+			  )))
+		
+	   (t (error "literalize(normal-lexpr): removed operator lexpr required"))))	 
+	(otherwise (error "literalize(normal-lexpr): unexpected error"))))
+
+
+
+
 (defun remove-quant-negation (lexpr)
   (assert (typep lexpr 'lexpr))
 
@@ -139,67 +216,10 @@
 	(otherwise (error "remove-quant-negation: unexpected error"))))
 
 
-
-;; 否定を内側に移動して全てリテラルの選言か連言にする
-
-(defgeneric literalize (a)
- 	(:documentation "move to the inside"))
-
-
-(defmethod literalize ((lexpr atomic-lexpr))
-  lexpr)
-
-(defmethod literalize ((lexpr normal-lexpr))
-  ;; 既にremove-operatorされた式が来ることを意図する
-  ;; つまりlexpr中に > や - が含まれていたらエラー
-  (match lexpr
-	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
-	 
-	 (cond 
-
-	   ((or (opr-equal? operator (operator +AND+))
-			(opr-equal? operator (operator +OR+)))		
-			(normal-lexpr operator
-				(literalize l-lexpr)		  
-				(literalize r-lexpr)))
-
-	   ((opr-equal? operator (operator +NEG+))
-		;; r-lexprはnilだから気にすること無い
-		;; l-lexprだけみてればいい
-		(match l-lexpr
-			
-			((normal-lexpr :operator operator_ :l-lexpr l-lexpr_ :r-lexpr r-lexpr_)
-			 ;; operator_ は V,&,~のどれか
-			 )
-			
-			((lexpr :qpart qpart_ :expr expr_)
-			 ;; ~AxAy...の形
-			 
-				(quantsp-each-quant qpart_)
-
-
-			 )
-			
-			(otherwise 
-			  (unless (typep l-lexpr 'atomic-lexpr)
-				(error "literalize(normal-lexpr): unexpected error"))
-			  lexpr ;; 負リテラル
-			  )))
-		
-	   (t (error "literalize(normal-lexpr): removed operator lexpr required"))))	 
-	(otherwise (error "literalize(normal-lexpr): unexpected error"))))
-
-
 (defmethod literalize ((lexpr lexpr))
-  (match lexpr
-	((lexpr :qpart qpart :expr expr)
-	 (lexpr qpart (literalize expr)))
-	(otherwise (error "literalize(lepxr): unexpected error"))))
-
-
-
-
-
-
+  (let ((tmp (remove-quant-negation lexpr)))
+	(lexpr 
+	  (lexpr-qpart tmp)
+	  (literalize (lexpr-expr tmp)))))
 
 

@@ -38,6 +38,15 @@
 	(t (error "opposite-qnt: unbelievable quantifier"))))
 
 
+@export
+(defmethod opposite-opr ((opr operator))
+  (cond
+	((opr-equal? opr (operator +AND+))
+	 +OR+)
+	((opr-equal? opr (operator +OR+))
+	 +AND+)
+	(t (error "opposite-opr(operator): undefined operator"))))
+
 
 @export
 (defgeneric term= (a b)

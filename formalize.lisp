@@ -223,3 +223,51 @@
 	  (literalize (lexpr-expr tmp)))))
 
 
+
+
+
+
+
+
+(defgeneric rename-bound-var (a)
+	(:documentation "rename bound variable"))
+
+
+
+
+
+
+(defmethod %rename-bound-var ((lexpr atomic-lexpr) (old vterm) (new vterm))
+  
+  )
+
+
+(defmethod %rename-bound-var ((lexpr normal-lexpr) (old vterm) (new vterm))
+   
+  )
+
+
+(defmethod rename-bound-var ((lexpr lexpr))
+  ;;remove-disuse-quantやった後じゃないとだめ
+  (match lexpr
+	((lexpr :qpart qpart :expr expr)
+	 (let ((quants (quantsp-each-quant qpart)))
+	   ;; quants is quant lst
+	   ;; below lst is rule for rename
+	   (loop for each in quants
+			 collect (cons (quant-var each)
+						   (gensym "RNM-")))
+
+
+
+	   )
+	 ) 
+	(otherwise (error "rename-bound-var(lexpr): unexpected error"))))
+
+
+
+
+
+
+
+

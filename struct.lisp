@@ -4,6 +4,8 @@
 (ns:defns flexpr.struct
 	(:use :cl 
 		  :flexpr.constant)
+	(:import-from :flexpr.error
+				  :initval-required-error)
 	(:export 
 	  ;; defstruct で暗黙的に定義される関数が
 	  ;; @exportではエクスポートできないみたいなので
@@ -87,7 +89,8 @@
 ;; 最も基本となる 変数のみからなる項
 @export
 (defstruct (vterm  (:constructor vterm (var const)))
-  (var (error "vterm: variable symbol required") 
+  (var (error (make-condition 'initval-required-error 
+							  :ire-where 'vterm)) 
 	   :type vterm-type ;;symbol ここをsymbolにしちゃうと 1とか2とかのシンボルで無いのが扱えなくなる
 	   )
   (const nil :type boolean))
@@ -98,21 +101,24 @@
 ;; terms は 各要素が fterm または vterm 型である
 @export
 (defstruct (fterm (:constructor fterm (fsymbol &rest terms)))
-  (fsymbol (error "fterm: function symbol required") 
+  (fsymbol (error (make-condition 'initval-required-error 
+								  :ire-where 'fterm)) 
 		   :type symbol)
   (terms   nil
 		   :type terms-type))
 
 @export
 (defstruct (atomic-lexpr (:constructor atomic-lexpr (pred-sym &rest terms)))
-  (pred-sym (error "atomic-lexpr: predicate symbol required")
+  (pred-sym (error (make-condition 'initval-required-error 
+								   :ire-where 'atomic-lexpr))
 			:type symbol)
   (terms    nil
 			:type terms-type))
 
 @export
 (defstruct (operator (:constructor operator (opr)))
-  (opr (error "operator: operator required") 
+  (opr (error (make-condition 'initval-required-error 
+							  :ire-where 'operator)) 
 	   :type operator-type))
 
 
@@ -120,9 +126,11 @@
 ;;; normal-lexpr とは 量化子のないような論理式のこと
 @export
 (defstruct (normal-lexpr (:constructor normal-lexpr (operator l-lexpr r-lexpr)))
-  (operator (error "normal-lexpr: operator required") 
+  (operator (error (make-condition 'initval-required-error 
+								   :ire-where 'normal-lexpr)) 
 			:type operator)
-  (l-lexpr  (error "normal-lexpr: left logical expression must be required") 
+  (l-lexpr  (error (make-condition 'initval-required-error 
+								   :ire-where 'normal-lexpr)) 
 		    :type normal-lexpr-type)
   ;; operator が neg じゃない時はかならずここは nil ではいけない
   (r-lexpr nil 
@@ -131,8 +139,12 @@
 
 @export
 (defstruct (quant (:constructor quant (qnt var neg)))
-  (qnt (error "quants: qnt required") :type quant-type)
-  (var (error "quants: var required") :type vterm)
+  (qnt (error (make-condition 'initval-required-error 
+							  :ire-where 'quant)) 
+	   :type quant-type)
+  (var (error (make-condition 'initval-required-error 
+							  :ire-where 'quant)) 
+	   :type vterm)
   (neg 0 :type integer) ;; 奇数回、量化子を否定するならここがt
   						;; にしようと思ったけどそれだとはじめから 2n重否定除去をリーダが行っちゃうことになるからよろしくない
   )
@@ -144,9 +156,11 @@
 
 @export
 (defstruct (lexpr (:constructor lexpr (qpart expr)))
-  (qpart (error "lexpr: qpart required") 
+  (qpart (error (make-condition 'initval-required-error 
+								:ire-where 'lexpr)) 
 		 :type quantsp)
-  (expr  (error "logical expression required")
+  (expr  (error (make-condition 'initval-required-error 
+								:ire-where 'lexpr))
 		:type lexpr-type))
 
 

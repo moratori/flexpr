@@ -8,6 +8,8 @@
 				  :opr-equal?
 				  :opr->strength
 				  :opr-strong?)
+	(:import-from :flexpr.error
+				  :struct-unmatch-error)
 	(:import-from :optima
 				  :match))
 
@@ -39,7 +41,9 @@
 	 (format nil "~A(~{~A~^,~})" 
 			 fsymbol 
 			 (mapcar #'term->string terms)))
-	(otherwise (error "term->string: invalid data structure"))))
+	(otherwise (error (make-condition 'struct-unmatch-error 
+					   :sue-val term
+					   :sue-where 'term->string_fterm)))))
 
 
 
@@ -64,7 +68,9 @@
 			   "")
 			 (second (assoc qnt +QUANTS+))
 			 (term->string var)))	 
-	(otherwise (error "quant->string: invalid data structure"))))
+	(otherwise (error (make-condition 'struct-unmatch-error 
+					   :sue-val quant
+					   :sue-where 'quant->string_quant)))))
 
 
 
@@ -98,7 +104,9 @@
 	   (term->string 
 		 (apply #'fterm pred-sym terms))))
 	(otherwise 
-	  (error "lexpr->string(atomic-lexpr): invalid data structure"))))
+	  (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'lexpr->string_atomic-lexpr)))))
 
 
 (defmethod lexpr->string ((lexpr normal-lexpr))
@@ -116,7 +124,9 @@
 				(opr->string operator)
 				(lexpr->string r-lexpr)))))	 
 	(otherwise 
-	  (error "lexpr->string(normal-lexpr): invalid data structure"))))
+	  (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'lexpr->string_normal-lexpr)))))
 
 
 
@@ -126,6 +136,8 @@
 	 (format nil "~A(~A)" 
 			 (quantsp->string qpart)
 			 (lexpr->string expr)))
-	(otherwise (error "lexpr->string(lexpr): invalid data structure"))))
+	(otherwise (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'lexpr->string_lexpr)))))
 
 

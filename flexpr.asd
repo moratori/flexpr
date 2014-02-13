@@ -11,7 +11,8 @@
 	:depends-on (:optima :namespace)
 	:serial t
 	:components 
-		((:file "constant")
+		((:file "error")
+		 (:file "constant")
 		 (:file "struct")
 		 (:file "util")
 		 (:file "dump")

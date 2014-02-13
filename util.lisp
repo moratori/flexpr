@@ -6,7 +6,9 @@
 		  :flexpr.constant
 		  :flexpr.struct)
 	(:import-from :optima
-				  :match))
+				  :match)
+	(:import-from :flexpr.error
+				  :struct-unmatch-error))
 
 @export
 (defmethod opr->strength ((opr operator))
@@ -35,7 +37,10 @@
 	 +EXISTS+)
 	((qnt-equal? quant (quant +EXISTS+  (vterm '|dummy| nil) 0))
 	 +FORALL+)
-	(t (error "opposite-qnt: unbelievable quantifier"))))
+	(t 
+	 (error (make-condition 'struct-unmatch-error 
+					   :sue-val quant
+					   :sue-where 'opposite-qnt)))))
 
 
 @export
@@ -45,7 +50,10 @@
 	 +OR+)
 	((opr-equal? opr (operator +OR+))
 	 +AND+)
-	(t (error "opposite-opr(operator): undefined operator"))))
+	(t 
+	 (error (make-condition 'struct-unmatch-error 
+					   :sue-val opr
+					   :sue-where 'opposite-opr)))))
 
 
 @export
@@ -112,7 +120,10 @@
 	   (term-using? vterm l-lexpr)
 	   (or (term-using? vterm l-lexpr)
 		   (term-using? vterm r-lexpr))))	 
-	(otherwise (error "term-using?(normal-lexpr): unexpected error"))))
+	(otherwise 
+	  (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'term-using?_normal-lexpr)))))
 
 ;; Ax.(Ax.P(x)) のなかで外側は除去れる x は自由出現しないからってかこんな式書く奴いんの
 ;; Ax.(P(x) > Ax.R(x)) この場合は P(x)で自由出現してるから除去れない
@@ -127,6 +138,9 @@
 			(not (term= vterm (quant-var qnt))))
 		 (quantsp-each-quant qpart))
 	   (term-using? vterm expr)))	 
-	(otherwise (error "term-using?(lexpr): unexpected error"))))
+	(otherwise 
+	 (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'term-using?_lexpr)))))
 
 

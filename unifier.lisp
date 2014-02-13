@@ -5,7 +5,9 @@
 		  :flexpr.constant
 		  :flexpr.struct)
 	(:import-from :flexpr.util
-				  :term=))
+				  :term=)
+	(:import-from :flexpr.error
+				  :struct-unmatch-error))
 
 
 ;;;; 単一化の実装
@@ -72,7 +74,9 @@
 				 ((fterm-p each-new)
 					(apply #'fterm (fterm-fsymbol each-new) 
 						   (subst-term new old (fterm-terms each-new))))
-				 (t (error "subst-rule: unexpected error"))))))
+				 (t (error (make-condition 'struct-unmatch-error 
+					   :sue-val each-new
+					   :sue-where 'subst-old-rule)))))))
 	  old-rules)))
 
 ;;; 新しいルールを更に今まで見つかったので置換

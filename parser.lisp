@@ -6,7 +6,9 @@
 		  :flexpr.constant
 		  :flexpr.struct)
 	(:import-from :flexpr.util
-				  :opr->strength))
+				  :opr->strength)
+	(:import-from :flexpr.error
+				  :illformed-parse-error))
 
 
 #|
@@ -53,7 +55,11 @@
 		(cond
 		  ((string= str "")
 		    (unless (zerop acc)
-			  (error "innerparen?: parenthesis error"))
+				(error 
+				  (make-condition 'illformed-parse-error 
+					   :ipe-val acc
+					   :ipe-where 'innerparen?
+					   :ipe-mes "parenthesis unmatched!")))
 			t)
 		  ((zerop acc) 
 		   nil)
@@ -88,7 +94,11 @@
 		(progn 
 	
 		  	(unless (zerop paren)
-			  (error "tokenize-lexpr: an unmatched parenthesis"))
+			  (error 
+				  (make-condition 'illformed-parse-error 
+					   :ipe-val paren
+					   :ipe-where 'tokenize-lexpr
+					   :ipe-mes "parenthesis unmatched!")))
 
 			(reverse 
 			  (if (string= each "") 
@@ -148,7 +158,11 @@
 
 (defun string->operator (str)
   (when (null (express-opr? str))
-	(error "string->operator: invalid string"))
+	(error 
+	  (make-condition 'illformed-parse-error 
+					  :ipe-val str
+					  :ipe-where 'string->operator
+					  :ipe-mes "string expressing operator required")))
   (operator 
 	  (second 
 		(assoc str 
@@ -209,7 +223,11 @@
 			 (progn 
 
 			   (unless (zerop paren)
-				 (error "tokenize-lexpr: an unmatched parenthesis"))
+				 (error 
+				   (make-condition 'illformed-parse-error 
+					  :ipe-val paren
+					  :ipe-where 'tokenize-term
+					  :ipe-mes "parenthesis unmatched!")))
 			   
 			   (reverse 
 				 (if (string= each "") 
@@ -251,7 +269,11 @@
 ;;; symbol と term1 , term2 , term3 ... の形に分ける
 (defun split-func-format (str)
   	(unless (func-format? str)
-	  (error "split-func-format: parentheses not found"))
+	  (error 
+		(make-condition 'illformed-parse-error 
+						:ipe-val str
+					    :ipe-where 'split-func-format
+					    :ipe-mes "parenthesis not found")))
 	(let* ((p-s   (position +PAREN-START+ str :test #'string=))
 		   (p-e   (position +PAREN-END+ str :test #'string= :from-end t))
 		   (sym   (strip-bug (subseq str 0 p-s)))
@@ -271,7 +293,11 @@
 						  (not (upper-str? fsym)))
 				 ;; ここのエラーは些か抽象度低い.リーダの役割であるstring->...系の関数で
 				 ;; 発生させるべきエラーでないかもしれない
-				 (error "string->term: constant function must be start in capitals string"))
+				(error 
+				  (make-condition 'illformed-parse-error 
+						:ipe-val fsym
+					    :ipe-where 'string->term
+					    :ipe-mes "constant function must be start in capitals string")))
 			   argvs)))
 	(vterm 
 	  (intern str) 
@@ -304,7 +330,12 @@
 		   +FORALL+)
 		  ((string= s +EXISTS-STR+)
 		   +EXISTS+)
-		  (t (error "s->q: unexpected error"))))
+		  (t 
+			(error 
+			  (make-condition 'illformed-parse-error 
+							  :ipe-val s
+							  :ipe-where 'string->quant
+							  :ipe-mes "string must be A or E")))))
 	 (main ()
 		(let ((var (strip-bug (subseq str 1))))
 		  (quant 
@@ -359,7 +390,11 @@
 										(string= x +EXISTS-STR+))) str)))
 						  		
 						  		(when (null quant-pos)
-								  (error "string->quants: quantifier required"))
+									(error 
+										(make-condition 'illformed-parse-error 
+														:ipe-val str
+														:ipe-where 'string->quantsp
+														:ipe-mes "quantifier required")))
 
 								(multiple-value-bind (q n) 
 								  (split-quant 
@@ -369,7 +404,11 @@
 										   :test #'string=))
 								  (main n (cons q result)))))
 				  (t 
-					(error "string->quants: invalid character found")))))))
+					(error 
+					  (make-condition 'illformed-parse-error 
+									  :ipe-val head
+									  :ipe-where 'string->quantsp
+									  :ipe-mes "quantifier part must be consist from ~ or A or E or variable"))))))))
 	(apply #'quantsp (main str nil))))
 
 
@@ -414,7 +453,11 @@
 			  ((express-quant? head)
 			   (let ((dot-pos (place +DELIMITER+ target)))
 				 	(when (null dot-pos)
-					  (error "string->lexpr: parse error delimiter required"))
+					  (error 
+					  		(make-condition 'illformed-parse-error 
+									  :ipe-val target
+									  :ipe-where 'string->lexpr
+									  :ipe-mes "delimiter required")))
 					(lexpr 
 					  (string->quantsp 
 						(subseq target 0 dot-pos))

@@ -11,7 +11,10 @@
 				  :term=
 				  :opr-equal?
 				  :opposite-qnt
-				  :opposite-opr))
+				  :opposite-opr)
+	(:import-from :flexpr.error
+				  :struct-unmatch-error
+				  :illformed-formalize-error))
 
 
 
@@ -30,7 +33,10 @@
 		   (remove-disuse-quant l-lexpr)
 		   (unless (null r-lexpr)
 			 (remove-disuse-quant r-lexpr))))	 
-		(otherwise (error "remove-disuse-quant(normal-lexpr): unexpected error"))))
+		(otherwise 
+		  (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'remove-disuse-quant_normal-lexpr)))))
 
 
 (defmethod remove-disuse-quant ((lexpr lexpr))
@@ -48,7 +54,10 @@
 		 (remove-disuse-quant expr)
 		 (lexpr (apply #'quantsp new-qpart) 
 				(remove-disuse-quant expr)))))
-	(otherwise (error "remove-disuse-quant(lexpr): unexpected error"))))
+	(otherwise 
+	 (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'remove-disuse-quant_lexpr)))))
 
 
 
@@ -94,8 +103,15 @@
 			  (normal-lexpr (operator +IMPL+)
 					r-lexpr
 					l-lexpr))))
-	   (t (error "remove-operator(normal-lexpr): conversion rule is not defined"))))
-	(otherwise (error "remove-operator(normal-lexpr): unexpected error"))))
+	   (t 
+		 (error (make-condition 'illformed-formalize-error
+								:ife-mes "conversion rule is not defined"
+								:ife-val operator
+								:ife-where 'remove-operator_normal-lexpr)))))
+	(otherwise 
+	  (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'remove-operator_normal-lexpr)))))
 
 
 (defmethod remove-operator ((lexpr lexpr))
@@ -103,7 +119,10 @@
 	((lexpr :qpart qpart :expr expr)
 	 (lexpr qpart
 			(remove-operator expr)))	 
-	(otherwise (error "remove-operator(lexpr): unexpected error"))))
+	(otherwise 
+	 (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'remove-operator_lexpr)))))
 
 
 
@@ -156,7 +175,11 @@
 					(literalize
 					  (normal-lexpr (operator +NEG+) r-lexpr_ nil))))
 	
-			   (t (error "literalize(normal-lexpr): removed operator lexpr required"))))
+			   (t 
+					(error (make-condition 'illformed-formalize-error
+								:ife-mes "removed operator lexpr required"
+								:ife-val operator_
+								:ife-where 'literalize_normal-lexpr)))))
 			
 			((lexpr :qpart qpart_ :expr expr_)
 			 ;; ~AxAy...の形
@@ -174,12 +197,22 @@
 			
 			(otherwise 
 			  (unless (typep l-lexpr 'atomic-lexpr)
-				(error "literalize(normal-lexpr): l-lexpr must be atomic"))
+					(error (make-condition 'illformed-formalize-error
+								:ife-mes "l-lexpr must be atomic"
+								:ife-val operator_
+								:ife-where 'literalize_normal-lexpr)))
 			  lexpr ;; 負リテラル
 			  )))
 		
-	   (t (error "literalize(normal-lexpr): removed operator lexpr required"))))	 
-	(otherwise (error "literalize(normal-lexpr): unexpected error"))))
+	   (t 
+		 (error (make-condition 'illformed-formalize-error
+								:ife-mes "removed operator lexpr required"
+								:ife-val operator
+								:ife-where 'literalize_normal-lexpr)))))	 
+	(otherwise 
+	  (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'literalize_normal-lexpr)))))
 
 
 
@@ -206,7 +239,9 @@
 								 (cons (quant (opposite-qnt (car lst)) var 0) result) 
 								 1)))
 							(otherwise 
-							  (error "remove-quant-negation: unexpected error"))))))
+								(error (make-condition 'struct-unmatch-error 
+											:sue-val (car lst)
+					   						:sue-where 'remove-quant-negation)))))))
 					 (main (quantsp-each-quant qpart) nil 0)))
 			
 			  (if (evenp 
@@ -215,7 +250,10 @@
 					  (quantsp-each-quant qpart) :initial-value 0))
 				expr
 				(normal-lexpr (operator +NEG+) expr nil))))
-	(otherwise (error "remove-quant-negation: unexpected error"))))
+	(otherwise 
+	 (error (make-condition 'struct-unmatch-error 
+				:sue-val lexpr
+				:sue-where 'remove-quant-negation)))))
 
 
 (defmethod literalize ((lexpr lexpr))
@@ -250,9 +288,16 @@
 							  ((fterm-p term)
 							   (apply #'fterm (fterm-fsymbol term)
 									  (mapcar #'main (fterm-terms term))))
-							  (t (error "rename-bound-var(atomic-lexpr): unexpected error")))))
+							  (t 
+								(error (make-condition 'illformed-formalize-error
+										:ife-mes "vterm or fterm required"
+										:ife-val term
+										:ife-where 'rename-bound-var_atomic-lexpr))))))
 						(main each)))))
-		(otherwise (error "rename-bound-var(atomic-lexpr): unexpected error")))
+		(otherwise 
+		   (error (make-condition 'struct-unmatch-error 
+				:sue-val lexpr
+				:sue-where 'remove-bound-var_atomic-lexpr))))
 	lexpr))
 
 
@@ -263,7 +308,10 @@
 	   (rename-bound-var l-lexpr old new)
 	   (unless (null r-lexpr)
 		 (rename-bound-var r-lexpr old new))))
-	(otherwise (error "rename-bound-var(normal-lexpr): unexpected error"))))
+	(otherwise 
+	 (error (make-condition 'struct-unmatch-error 
+				:sue-val lexpr
+				:sue-where 'remove-bound-var_normal-lexpr)))))
 
 (defmethod rename-bound-var ((lexpr lexpr) old new)
   ;;remove-disuse-quantやった後じゃないとだめ
@@ -296,7 +344,10 @@
 				  res
 				  
 				  )))))) 
-	(otherwise (error "rename-bound-var(lexpr): unexpected error"))))
+	(otherwise 
+	  (error (make-condition 'struct-unmatch-error 
+				:sue-val lexpr
+				:sue-where 'remove-bound-var_lexpr)))))
 
 
 

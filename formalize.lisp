@@ -351,7 +351,18 @@
 
 
 
+
+;; S は x を自由変数として持たない
+;; D は x を自由変数として持つ
+;; Ax.D & S -> Ax.(D & S)
+;; Ax.D V S -> Ax.(D V S)
+;; Ex.D & S -> Ex.(D & S)
+;; Ex.D V S -> Ex.(D V S)
+;;
+;; Ax.(P(x) & (Q(x) V Ay.R(y)))
+
 (defgeneric prefix (a)
+	;; prefixに来るためには特に束縛変数が正規化されてるひつようあり
 	(:documentation "prefix normalization"))
 
 
@@ -359,14 +370,44 @@
   lexpr)
 
 
+
 (defmethod prefix ((lexpr normal-lexpr))
-  )
+  (match lexpr
+	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
+	 ;; むずい
+	 )
+	(otherwise 
+		(error
+		  (make-condition 'struct-unmatch-error
+						  :sue-val lexpr
+						  :sue-where 'prefix_normal-lexpr)))))
+
+
 
 
 (defmethod prefix ((lexpr lexpr))
-  )
-
-
+  (match lexpr
+	((lexpr :qpart qpart :expr expr)
+	 (let ((res (prefix expr)))
+	   (cond 
+		 ((or (atomic-lexpr-p res)
+			  (normal-lexpr-p res))
+		  (lexpr qpart expr))
+		 ((lexpr-p res)
+		  (lexpr 
+			(apply #'quantsp (append (quantsp-each-quant qpart) 
+									 (quantsp-each-quant (lexpr-qpart res)))) 
+			(lexpr-expr res)))
+		 (t 
+		   (error
+			 (make-condition 'struct-unmatch-error
+							 :sue-val res
+							 :sue-where 'prefix_lexpr))))))
+	(otherwise 
+	  (error 
+		(make-condition 'struct-unmatch-error
+						:sue-val lexpr
+						:sue-where 'prefix_lexpr)))))
 
 
 
@@ -376,6 +417,7 @@
 	(literalize 
 	  (remove-operator 
 		(remove-disuse-quant lexpr))) nil nil))
+
 
 
 

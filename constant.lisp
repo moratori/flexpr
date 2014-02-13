@@ -60,5 +60,5 @@
 			 `((,+FORALL+ ,+FORALL-STR+ "∀")
 			   (,+EXISTS+ ,+EXISTS-STR+ "∃")))
 
-
-
+@export
+(defvar +RENAME-PREFIX+ "var_")

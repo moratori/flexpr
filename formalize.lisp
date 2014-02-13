@@ -8,6 +8,7 @@
 				  :match)
 	(:import-from :flexpr.util
 				  :term-using?
+				  :term=
 				  :opr-equal?
 				  :opposite-qnt
 				  :opposite-opr))
@@ -27,7 +28,8 @@
 		 (normal-lexpr 
 		   operator
 		   (remove-disuse-quant l-lexpr)
-		   (remove-disuse-quant r-lexpr)))	 
+		   (unless (null r-lexpr)
+			 (remove-disuse-quant r-lexpr))))	 
 		(otherwise (error "remove-disuse-quant(normal-lexpr): unexpected error"))))
 
 
@@ -226,47 +228,103 @@
 
 
 
-
-
-
-(defgeneric rename-bound-var (a)
+(defgeneric rename-bound-var (lexpr old new)
 	(:documentation "rename bound variable"))
 
 
 
+(defmethod rename-bound-var ((lexpr atomic-lexpr) old new)
+  (if (not (or (null old) 
+			   (null new)))
+	(match lexpr
+		((atomic-lexpr :pred-sym pred-sym :terms terms)
+	 		(apply #'atomic-lexpr
+				pred-sym
+				(loop for each in terms
+					  collect
+					  (labels 
+						((main (term)
+							(cond 
+							  ((vterm-p term)
+							   (if (term= term old) new term))
+							  ((fterm-p term)
+							   (apply #'fterm (fterm-fsymbol term)
+									  (mapcar #'main (fterm-terms term))))
+							  (t (error "rename-bound-var(atomic-lexpr): unexpected error")))))
+						(main each)))))
+		(otherwise (error "rename-bound-var(atomic-lexpr): unexpected error")))
+	lexpr))
 
 
+(defmethod rename-bound-var ((lexpr normal-lexpr) old new)
+  (match lexpr
+	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
+	 (normal-lexpr operator
+	   (rename-bound-var l-lexpr old new)
+	   (unless (null r-lexpr)
+		 (rename-bound-var r-lexpr old new))))
+	(otherwise (error "rename-bound-var(normal-lexpr): unexpected error"))))
 
-(defmethod %rename-bound-var ((lexpr atomic-lexpr) (old vterm) (new vterm))
-  
-  )
-
-
-(defmethod %rename-bound-var ((lexpr normal-lexpr) (old vterm) (new vterm))
-   
-  )
-
-
-(defmethod rename-bound-var ((lexpr lexpr))
+(defmethod rename-bound-var ((lexpr lexpr) old new)
   ;;remove-disuse-quantやった後じゃないとだめ
   (match lexpr
 	((lexpr :qpart qpart :expr expr)
 	 (let ((quants (quantsp-each-quant qpart)))
 	   ;; quants is quant lst
 	   ;; below lst is rule for rename
-	   (loop for each in quants
-			 collect (cons (quant-var each)
-						   (gensym "RNM-")))
-
-
-
-	   )
-	 ) 
+	  
+	   (let ((rule (loop for each in quants
+						 collect (cons (quant-var each)
+									   (vterm (gensym +RENAME-PREFIX+)  nil)))))
+		(lexpr
+		  (apply #'quantsp
+				 (loop for pair in rule 
+					   for qnt  in quants
+					   collect (quant (quant-qnt qnt)
+									  (cdr pair)
+									  (quant-neg qnt))))
+		  (let ((res (reduce 
+					   (lambda (x y)
+						 (rename-bound-var x (car y) (cdr y)))  
+					   rule :initial-value expr)))
+			
+				(if (and (not (null old))
+						 (not (null new))
+						 (find-if-not 
+						   (lambda (x) (term= (car x) old)) rule))
+				  (rename-bound-var res old new)
+				  res
+				  
+				  )))))) 
 	(otherwise (error "rename-bound-var(lexpr): unexpected error"))))
 
 
 
+(defgeneric prefix (a)
+	(:documentation "prefix normalization"))
 
+
+(defmethod prefix ((lexpr atomic-lexpr))
+  lexpr)
+
+
+(defmethod prefix ((lexpr normal-lexpr))
+  )
+
+
+(defmethod prefix ((lexpr lexpr))
+  )
+
+
+
+
+
+@export
+(defun formalize (lexpr)
+  (rename-bound-var 
+	(literalize 
+	  (remove-operator 
+		(remove-disuse-quant lexpr))) nil nil))
 
 
 

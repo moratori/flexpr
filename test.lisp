@@ -14,36 +14,7 @@
   (apply #'flexpr.struct:atomic-lexpr arg))
 
 
-
-
-
-(print 
-  (flexpr.dump:lexpr->string 
-	(flexpr.formalize::remove-disuse-quant
-	  (flexpr.parser:string->lexpr 
-		"AxAyAz.P(w)"))))
-
-(print (flexpr.dump:lexpr->string 
-		   (flexpr.formalize::remove-operator
-		   (print (flexpr.parser:string->lexpr "P(x) V (Q(x) - R(x))")))))
-
-
-
-(print (flexpr.parser:string->lexpr "P(x) V Q(x) V R(x) V S(x)"))
-
-
-
-(print 
-  (flexpr.dump:lexpr->string 
-	(flexpr.formalize::remove-quant-negation 
-	  (flexpr.parser:string->lexpr "AxAyAw.P(x)"))))
-
-
-(print 
-  (flexpr.dump:lexpr->string 
-	(print 
-	  (flexpr.formalize::literalize 
-	  (flexpr.formalize::remove-operator
-		(flexpr.parser:string->lexpr "~Ey~Ax.(P(x) - ~Q(x))"))))))
-
-
+;; AxEy.(Q(x,y) & P(x)) = Ax.(P(x) & Ey.Q(x,y))
+(print (flexpr.dump::lexpr->string 
+		 (flexpr.formalize:formalize 
+		 (flexpr.parser::string->lexpr "Ax.(P(x) & Ex.Q(x) V R(x))"))))

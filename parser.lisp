@@ -438,7 +438,7 @@
 
 @export
 (defun string->lexpr (str)
-  (let*  ((tklst (tokenize-lexpr str))
+  (let*  ((tklst (tokenize-lexpr (init str +PAREN-START+ +PAREN-END+)))
 		  (wp    (weak-point tklst)))
 	(if (null wp)
 	  (let* ((target (car tklst))

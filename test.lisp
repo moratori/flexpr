@@ -23,6 +23,6 @@
 
 (print (test "Ax.~P(x) > (AxEy.(P(x,y) > Ey.Q(y)))"))
 (print (test "Ax.(P(x) & Ey.Q(x,y))"))
-
+(print (test "Ax.(man(x) & handsome(x) > Ey.(girl(y) & cute(y) & couple(x,y)))"))
 
 

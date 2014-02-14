@@ -61,4 +61,4 @@
 			   (,+EXISTS+ ,+EXISTS-STR+ "∃")))
 
 @export
-(defvar +RENAME-PREFIX+ "var_")
+(defvar +RENAME-PREFIX+ "v_")

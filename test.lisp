@@ -3,25 +3,26 @@
 (ql:quickload :flexpr)
 
 
+(defun parse (str)
+  (flexpr.parser::string->lexpr str))
 
-(defun ft (&rest arg)
-  (apply #'flexpr.struct:fterm arg))
+(defun dump (lexpr)
+  (flexpr.dump::lexpr->string lexpr))
 
-(defun vt (&rest arg)
-  (apply #'flexpr.struct:vterm arg))
+(defun formal (lexpr)
+  (flexpr.formalize::formalize lexpr))
 
-(defun al (&rest arg)
-  (apply #'flexpr.struct:atomic-lexpr arg))
 
+(defun test (str)
+  (dump (formal (parse str))))
 
 ;; AxEy.(Q(x,y) & P(x)) = Ax.(P(x) & Ey.Q(x,y))
 ;; Ax.~P(x) > (AxEy.(P(x,y) > Ey.Q(y))) = EaAbEcEd.(P(a) V ~P(b,c) V Q(d))
-(print (flexpr.dump::lexpr->string 
-		 (flexpr.formalize:formalize 
-		 (flexpr.parser::string->lexpr 
-		   "Ax.~P(x) > (AxEy.(P(x,y) > Ey.Q(y)))"))))
 
 
 
+(print (test "Ax.~P(x) > (AxEy.(P(x,y) > Ey.Q(y)))"))
+(print (test "Ax.(P(x) & Ey.Q(x,y))"))
 
-(print (flexpr.parser:string->lexpr "Ax.P(x)"))
+
+

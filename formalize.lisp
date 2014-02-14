@@ -371,11 +371,91 @@
 
 
 
+(defun get-quantsp-lst (lexpr)
+  (when (lexpr-p lexpr)
+	(quantsp-each-quant (lexpr-qpart lexpr))))
+
+(defun get-expr (lexpr)
+  (if (lexpr-p lexpr) (lexpr-expr lexpr)
+	lexpr))
+
+(defun both-lexpr (l-lexpr op r-lexpr)
+	(let ((left-mat  (prefix (lexpr-expr l-lexpr)))
+		  (right-mat (prefix (lexpr-expr r-lexpr))))
+	  (lexpr 
+		(apply #'quantsp 
+			   (append (get-quantsp-lst l-lexpr)
+					   (get-quantsp-lst left-mat)
+					   (get-quantsp-lst r-lexpr)
+					   (get-quantsp-lst right-mat)))
+		(normal-lexpr op
+					  (get-expr left-mat)
+				      (get-expr right-mat)))))
+
+
 (defmethod prefix ((lexpr normal-lexpr))
   (match lexpr
 	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
-	 ;; むずい
-	 )
+	 
+	 (cond 
+	
+	   ;;先の正規化でnegationは原子式のまえにしかついてないはず
+	   ((opr-equal? operator (operator +NEG+))
+		lexpr)
+
+	   ;;どっちもatomicだったらこれ以上むり
+	   ((and (atomic-lexpr-p l-lexpr)
+			 (atomic-lexpr-p r-lexpr))
+			(normal-lexpr operator
+				l-lexpr
+				r-lexpr))
+
+	   ;; どちらもlexprだったら
+		((and (lexpr-p l-lexpr)
+			  (lexpr-p r-lexpr))
+			(both-lexpr l-lexpr operator r-lexpr))
+
+
+		(t 
+		  
+		  (let ((left  (prefix l-lexpr))
+				(right (prefix r-lexpr)))
+				
+			(cond
+
+			  ;; どっちもlexprになったら
+			  ((and (lexpr-p left)
+					(lexpr-p right))
+			   (both-lexpr left operator right))
+
+			  ;; どっちも量化されない
+			  ((not (or (lexpr-p left)
+						(lexpr-p right)))
+			   (normal-lexpr operator
+				left
+				right))
+
+			  ;; 何れか一方は lexpr type
+
+			  ((lexpr-p left)
+				(lexpr 
+				   (lexpr-qpart left)
+				   (normal-lexpr operator
+						(lexpr-expr left)
+						right)))
+
+			  ((lexpr-p right)
+				(lexpr 
+				   (lexpr-qpart right)
+				   (normal-lexpr operator
+						left
+						(lexpr-expr right))))
+			  
+			  (t 
+				(error (make-condition 'illformed-formalize-error
+								:ife-mes "formula does not satisfy any condition"
+								:ife-val lexpr
+								:ife-where 'prefix_normal-lexpr))))))))
 	(otherwise 
 		(error
 		  (make-condition 'struct-unmatch-error
@@ -396,7 +476,7 @@
 		 ((lexpr-p res)
 		  (lexpr 
 			(apply #'quantsp (append (quantsp-each-quant qpart) 
-									 (quantsp-each-quant (lexpr-qpart res)))) 
+									 (get-quantsp-lst res))) 
 			(lexpr-expr res)))
 		 (t 
 		   (error
@@ -413,10 +493,11 @@
 
 @export
 (defun formalize (lexpr)
-  (rename-bound-var 
-	(literalize 
-	  (remove-operator 
-		(remove-disuse-quant lexpr))) nil nil))
+  (prefix 
+	(rename-bound-var 
+	  (literalize 
+		(remove-operator 
+		  (remove-disuse-quant lexpr))) nil nil)))
 
 
 

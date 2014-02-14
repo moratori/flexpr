@@ -17,6 +17,7 @@
   (dump (formal (parse str))))
 
 
+(print (test "Ax.(Ey.R(x,y) > P(x))"))
 
 
 

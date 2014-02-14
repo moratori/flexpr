@@ -18,6 +18,26 @@
 
 
 
+
+;; 1.remove-disuse-quant 
+;;  束縛されていない量化子を削除する
+;; 2.remove-operator
+;;  -> , <-> を取り除く
+;; 3.literalize
+;;  リテラルの選言.連言となるように変形する
+;; 4.rename-bound-var
+;;  束縛変数を正規化する
+;; 5.prefix
+;; 	冠頭標準形にする
+;; 6.cnf
+;;  母式を連言標準形に変形
+;; 6.dnf 
+;; 	母式を選言標準形に変形
+;;
+
+
+
+
 (defgeneric remove-disuse-quant (a)
 	(:documentation "remove disuse quantifier in expression a"))
 
@@ -115,16 +135,9 @@
 
 
 (defmethod remove-operator ((lexpr lexpr))
-  (match lexpr
-	((lexpr :qpart qpart :expr expr)
-	 (lexpr qpart
-			(remove-operator expr)))	 
-	(otherwise 
-	 (error (make-condition 'struct-unmatch-error 
-					   :sue-val lexpr
-					   :sue-where 'remove-operator_lexpr)))))
-
-
+  (lexpr 
+	(lexpr-qpart lexpr)
+	(remove-operator (lexpr-expr lexpr))))
 
 
 
@@ -490,14 +503,82 @@
 						:sue-where 'prefix_lexpr)))))
 
 
+(defgeneric c/dnf (lexpr op)
+	(:documentation "formalize in cnf or dnf"))
+
+(defmethod c/dnf ((lexpr atomic-lexpr) (op operator))
+  lexpr)
+
+
+(defmethod c/dnf ((lexpr normal-lexpr) (op operator))
+  (let ((revop (opposite-opr op)))
+	(match lexpr
+
+		((normal-lexpr :operator (operator :opr +NEG+) :l-lexpr (atomic-lexpr :pred-sym _ :terms _) :r-lexpr nil)
+	 	;; リテラルは既にc/dnf形
+	 	;; そして否定はatomicにしかついていない(literalizeによって)
+	 	lexpr)
+
+		;; F V (G & H) -> (F V G) & (F V H)
+		;; F & (G V H) -> (F & G) V (F & H)
+    	;; (G & H) V F -> (F V G) & (F V H)
+		;; (G V H) & F -> (F & G) V (F & H)
+
+		((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
+		 	
+		 	(cond 
+			  ((and (opr-equal? (operator revop) operator)
+					(normal-lexpr-p r-lexpr)
+					(opr-equal? op (normal-lexpr-operator r-lexpr)))
+			   
+			   		(normal-lexpr op
+						(c/dnf (normal-lexpr (operator revop) 
+									  l-lexpr 
+									  (normal-lexpr-l-lexpr r-lexpr))
+							   op)
+						(c/dnf (normal-lexpr (operator revop) 
+									  l-lexpr 
+									  (normal-lexpr-r-lexpr r-lexpr))
+							   op)))
+			  
+			  ((and (opr-equal? (operator revop) operator)
+					(normal-lexpr-p l-lexpr)
+					(opr-equal? op (normal-lexpr-operator l-lexpr)))
+			   
+			   		(normal-lexpr op
+						(c/dnf (normal-lexpr (operator revop) 
+									  r-lexpr 
+									  (normal-lexpr-l-lexpr l-lexpr))
+							   op)
+						(c/dnf (normal-lexpr (operator revop) 
+									  r-lexpr 
+									  (normal-lexpr-r-lexpr l-lexpr))
+							   op)))
+			  
+			  (t lexpr)))
+
+
+		(otherwise 
+		  (error (make-condition 'struct-unmatch-error 
+					   :sue-val lexpr
+					   :sue-where 'c/dnf_normal-lexpr))))))
+
+;; 連言標準形に変換
+(defmethod c/dnf ((lexpr lexpr) (op operator))
+  (lexpr (lexpr-qpart lexpr)
+		 (c/dnf (lexpr-expr lexpr) op)))
+
+
+
 
 @export
-(defun formalize (lexpr)
-  (prefix 
+(defun formalize (lexpr &optional (op (operator +AND+)))
+  (c/dnf 
+	(prefix 
 	(rename-bound-var 
 	  (literalize 
 		(remove-operator 
-		  (remove-disuse-quant lexpr))) nil nil)))
+		  (remove-disuse-quant lexpr))) nil nil)) op))
 
 
 

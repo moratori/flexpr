@@ -144,3 +144,76 @@
 					   :sue-where 'term-using?_lexpr)))))
 
 
+@export
+(defgeneric literal? (a)
+	(:documentation "check whether literal"))
+
+
+(defmethod literal? ((lexpr atomic-lexpr))
+  t)
+
+(defmethod literal? ((lexpr normal-lexpr))
+  (cond
+	((not (opr-equal? (operator +NEG+)
+					  (normal-lexpr-operator lexpr)))
+	 nil)
+	(t (literal? 
+		 (normal-lexpr-l-lexpr lexpr)))))
+
+(defmethod literal? ((lexpr lexpr))
+  nil)
+
+
+(defmethod literal? (a) 
+  nil)
+
+
+
+
+@export
+(defgeneric lexpr-literal? (a)
+	(:documentation "check whether lexpr or negation lexpr"))
+
+(defmethod lexpr-literal? ((lexpr atomic-lexpr))
+  nil)
+
+(defmethod lexpr-literal? ((lexpr normal-lexpr))
+  (cond
+	((not (opr-equal? (operator +NEG+)
+					  (normal-lexpr-operator lexpr)))
+	 nil)
+	(t (lexpr-literal? 
+		 (normal-lexpr-l-lexpr lexpr)))))
+
+(defmethod lexpr-literal? ((lexpr lexpr))
+  t)
+
+(defmethod lexpr-literal? (a)
+  nil)
+
+
+(defgeneric clause? (a b)
+   (:documentation "check whther clause form"))
+
+(defmethod clause? ((lexpr atomic-lexpr) (opr operator))
+  t)
+
+(defmethod clause? ((lexpr normal-lexpr) (opr operator))
+  (cond 
+	((literal? lexpr) t)
+	((opr-equal? opr (normal-lexpr-operator lexpr))
+	 (and (clause? (normal-lexpr-l-lexpr lexpr) opr)
+		  (clause? (normal-lexpr-r-lexpr lexpr) opr)))
+	(t nil)))
+
+(defmethod clause? ((lexpr lexpr) (opr operator))
+  nil
+  )
+
+(defmethod clause? (a b)
+  nil)
+
+@export
+(defun gliteral? (l)
+  (or (literal? l)
+	  (lexpr-literal? l)))

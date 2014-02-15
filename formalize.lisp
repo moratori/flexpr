@@ -11,7 +11,8 @@
 				  :term=
 				  :opr-equal?
 				  :opposite-qnt
-				  :opposite-opr)
+				  :opposite-opr
+				  :clause?)
 	(:import-from :flexpr.error
 				  :struct-unmatch-error
 				  :illformed-formalize-error))
@@ -511,14 +512,10 @@
 
 
 (defmethod c/dnf ((lexpr normal-lexpr) (op operator))
+
   (let ((revop (opposite-opr op)))
-	(match lexpr
-
-		((normal-lexpr :operator (operator :opr +NEG+) :l-lexpr (atomic-lexpr :pred-sym _ :terms _) :r-lexpr nil)
-	 	;; リテラルは既にc/dnf形
-	 	;; そして否定はatomicにしかついていない(literalizeによって)
-	 	lexpr)
-
+	(if (clause? lexpr (operator revop)) lexpr
+		(match lexpr
 		;; F V (G & H) -> (F V G) & (F V H)
 		;; F & (G V H) -> (F & G) V (F & H)
     	;; (G & H) V F -> (F V G) & (F V H)
@@ -527,10 +524,10 @@
 		((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
 		 	
 		 	(cond 
+
 			  ((and (opr-equal? (operator revop) operator)
 					(normal-lexpr-p r-lexpr)
 					(opr-equal? op (normal-lexpr-operator r-lexpr)))
-			   
 			   		(normal-lexpr op
 						(c/dnf (normal-lexpr (operator revop) 
 									  l-lexpr 
@@ -544,7 +541,6 @@
 			  ((and (opr-equal? (operator revop) operator)
 					(normal-lexpr-p l-lexpr)
 					(opr-equal? op (normal-lexpr-operator l-lexpr)))
-			   
 			   		(normal-lexpr op
 						(c/dnf (normal-lexpr (operator revop) 
 									  r-lexpr 
@@ -554,6 +550,32 @@
 									  r-lexpr 
 									  (normal-lexpr-r-lexpr l-lexpr))
 							   op)))
+
+
+			  ((and (opr-equal? (operator revop) operator)
+					(normal-lexpr-p l-lexpr)
+					(opr-equal? operator (normal-lexpr-operator l-lexpr)))
+			   (c/dnf 
+				 (normal-lexpr (operator revop)
+					(normal-lexpr-l-lexpr l-lexpr)
+					(normal-lexpr (operator revop)
+						(normal-lexpr-r-lexpr l-lexpr)		  
+						r-lexpr)) op))
+
+
+			  ((and (opr-equal? (operator revop) operator)
+					(normal-lexpr-p r-lexpr)
+					(opr-equal? operator (normal-lexpr-operator r-lexpr)))
+			   (c/dnf 
+				 (normal-lexpr (operator revop)
+					(normal-lexpr (operator revop)		  
+								  l-lexpr
+								  (normal-lexpr-l-lexpr r-lexpr)
+								  )
+					(normal-lexpr-r-lexpr r-lexpr)
+					) op))
+
+
 			  
 			  (t lexpr)))
 
@@ -561,7 +583,9 @@
 		(otherwise 
 		  (error (make-condition 'struct-unmatch-error 
 					   :sue-val lexpr
-					   :sue-where 'c/dnf_normal-lexpr))))))
+					   :sue-where 'c/dnf_normal-lexpr))))
+	  )
+	))
 
 ;; 連言標準形に変換
 (defmethod c/dnf ((lexpr lexpr) (op operator))

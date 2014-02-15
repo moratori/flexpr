@@ -7,7 +7,10 @@
 	(:import-from :flexpr.util
 				  :opr-equal?
 				  :opr->strength
-				  :opr-strong?)
+				  :opr-strong?
+				  :literal?
+				  :lexpr-literal?
+				  :gliteral?)
 	(:import-from :flexpr.error
 				  :struct-unmatch-error)
 	(:import-from :optima
@@ -109,20 +112,85 @@
 					   :sue-where 'lexpr->string_atomic-lexpr)))))
 
 
+(defun %lexpr->string (format left op right)
+  (format nil format 
+		  (lexpr->string left)
+		  (opr->string op)
+		  (lexpr->string right)))
+
+(defun %lexpr->string_c/dnf (upper-opr under-opr expr)
+(cond
+  ((and (opr-equal? upper-opr under-opr)
+		(or (opr-equal? upper-opr (operator +AND+))
+			(opr-equal? upper-opr (operator +OR+))))
+   (format nil "~A"   (lexpr->string expr)))
+  
+  ((= (opr->strength upper-opr)
+	  (opr->strength under-opr))
+   (format nil "(~A)" (lexpr->string expr)))
+  (t (format nil "~A"   (lexpr->string expr)))))
+
 (defmethod lexpr->string ((lexpr normal-lexpr))
   (match lexpr
 	((normal-lexpr :operator operator :l-lexpr l-lexpr :r-lexpr r-lexpr)
 	 ;;	オペレータの強さと
 	 ;;	l-lexprとr-lexprの関係から適当に括弧を省く処理が必要
 	 (cond 
+
 	   ((opr-equal? operator (operator +NEG+))
-		(format nil "~A(~A)" 
-				(opr->string operator)
-				(lexpr->string l-lexpr)))
-	   (t (format nil "(~A) ~A (~A)"
+		(if (or (literal?        l-lexpr)
+				(lexpr-literal?  l-lexpr))
+		  (format nil "~A~A" 
+				  (opr->string operator)
+				  (lexpr->string l-lexpr))
+		  (format nil "~A(~A)" 
+				  (opr->string operator)
+				  (lexpr->string l-lexpr))))
+	  
+
+	   ((and (gliteral? l-lexpr)
+			 (gliteral? r-lexpr))
+			(%lexpr->string "~A ~A ~A" 
+							l-lexpr operator r-lexpr))	
+
+	   ((gliteral? l-lexpr)
+	;	(%lexpr->string "~A ~A (~A)" 
+	;					l-lexpr operator r-lexpr)
+		(format nil "~A ~A ~A"
 				(lexpr->string l-lexpr)
 				(opr->string operator)
-				(lexpr->string r-lexpr)))))	 
+				(%lexpr->string_c/dnf operator 
+									  (normal-lexpr-operator r-lexpr)
+									  r-lexpr)))
+
+	   ((gliteral? r-lexpr)
+		;(%lexpr->string "(~A) ~A ~A"
+		;				l-lexpr operator r-lexpr)
+		(format nil "~A ~A ~A"
+				(%lexpr->string_c/dnf operator 
+									  (normal-lexpr-operator l-lexpr)
+									  l-lexpr)	
+				(opr->string operator)
+				(lexpr->string r-lexpr)))
+
+		
+	   ((and (normal-lexpr-p l-lexpr)
+			 (normal-lexpr-p r-lexpr))
+		;; V と & については 結合律が成り立つのでその規則を入れれば
+		;; 自然な感じに 連/選言標準形がdumpできる
+		(let* ((l-op (normal-lexpr-operator l-lexpr))
+			  (r-op (normal-lexpr-operator r-lexpr))
+			  (leftstr 
+				(%lexpr->string_c/dnf operator l-op l-lexpr))
+			   (rightstr 
+				(%lexpr->string_c/dnf operator r-op r-lexpr)))
+		  (format nil "~A ~A ~A" leftstr (opr->string operator) rightstr)))
+
+	   (t 
+		 
+		 (%lexpr->string "(~A) ~A (~A)"
+						 l-lexpr operator r-lexpr))))	 
+
 	(otherwise 
 	  (error (make-condition 'struct-unmatch-error 
 					   :sue-val lexpr
@@ -133,9 +201,10 @@
 (defmethod lexpr->string ((lexpr lexpr))
   (match lexpr
 	((lexpr :qpart qpart :expr expr)
-	 (format nil "~A(~A)" 
-			 (quantsp->string qpart)
-			 (lexpr->string expr)))
+	 (let ((qpstr (quantsp->string qpart)))
+	   (if (literal? expr)
+		 (format nil "~A~A"   qpstr (lexpr->string expr))
+		 (format nil "~A(~A)" qpstr (lexpr->string expr)))))
 	(otherwise (error (make-condition 'struct-unmatch-error 
 					   :sue-val lexpr
 					   :sue-where 'lexpr->string_lexpr)))))

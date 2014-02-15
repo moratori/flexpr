@@ -182,18 +182,22 @@
 					 (string->operator x)) 
 				   (opr->strength 
 					 (string->operator y)))))))
-
 	(unless (null oporder)
-		(position-if (lambda (x)
-					   (and (express-opr? x)
-							(string= x (car oporder))))  tklst
-					 :from-end 
-					 (every 
+	  	(let ((fromend 
+				(every 
 					   (lambda (x) 
 						 (= (opr->strength 
 							  (string->operator (car oporder)))
 							(opr->strength 
-							  (string->operator x)))) oporder)))))
+							  (string->operator x)))) oporder)))
+		 (position-if 
+		   (lambda (x)
+			 (if fromend 
+			   (and (express-opr? x)
+					(= (opr->strength (string->operator x)) 
+					   (opr->strength (string->operator (car oporder)))))
+			   (and (express-opr? x)
+					(string= x (car oporder)))))  tklst :from-end  fromend) ))))
 
 
 (defun upper-str? (str)

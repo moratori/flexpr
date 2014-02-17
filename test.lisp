@@ -42,21 +42,32 @@
 			  ("P & Q > S V R" . "~P V ~Q V S V R")
 			  ("((P V Q) & (R V S)) & (T V U)" . "(P V Q) & (R V S) & (T V U)")
 			  ("P & (P > Q) > Q" . "(~P V Q V P) & (~P V Q V ~Q)")
+			  ("((P > Q) > P) > P" . "(P V ~P V Q) & (P V ~P)")
+			  ("~(P & ~P)" . "~P V P")
+			  ("(P > Q) - (~Q > ~P)" . "(Q V ~P V P) & (Q V ~P V ~Q) & (~P V Q V ~Q) & (~P V Q V P)")
+			  ("P & Q V P & Q" . "(P V P) & (P V Q) & Q")
+			  ("((P & Q) V P) & Q" . "(P V P) & (P V Q) & Q")
 			  )
 			))
 	  (dolist (each data)
 		(assert-equal (cdr each) (test2 (car each))))))
 
 
-
+#|
 (test2 "(((P(x) & Q(x) > R(x)) V (P(y) > Q(y))) & P(z)) & ~(Q(x) & R(x))")
 (test2 "(P & Q) V (R & S) V (T & U)")
 (test2 "(((P & Q) V (R & S)) V T) & (((P & Q) V (R & S)) V U)")
 (test2 "(P & Q) V (R & S) V (T & U) V (W & X)")
-
+|#
 
 
 (print-failures (run-tests '(show formalize)))
 
 
+#|
+ ((P & ~Q) V Q V ~P) & ((~Q & P) V ~P V Q)
+|#
 
+
+;(test2 "(((P & ~Q) V Q) V ~P) & (((~Q & P) V ~P) V Q)")
+;(test2 "P & Q V P  & Q")

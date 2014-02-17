@@ -527,6 +527,7 @@
 			  ((and (opr-equal? (operator revop) operator)
 					(normal-lexpr-p r-lexpr)
 					(opr-equal? op (normal-lexpr-operator r-lexpr)))
+			   (print "here4")
 			   		(normal-lexpr op
 						(c/dnf (normal-lexpr (operator revop) 
 									  l-lexpr 
@@ -540,6 +541,7 @@
 			  ((and (opr-equal? (operator revop) operator)
 					(normal-lexpr-p l-lexpr)
 					(opr-equal? op (normal-lexpr-operator l-lexpr)))
+			   		(print "here3")
 			   		(normal-lexpr op
 						(c/dnf (normal-lexpr (operator revop) 
 									  r-lexpr 
@@ -554,9 +556,12 @@
 			  ((and (opr-equal? (operator revop) operator)
 					(normal-lexpr-p l-lexpr)
 					(opr-equal? operator (normal-lexpr-operator l-lexpr)))
+			   (print "here1")
 			   (c/dnf 
 				 (normal-lexpr (operator revop)
+					
 					(normal-lexpr-l-lexpr l-lexpr)
+						  
 					
 					(c/dnf (normal-lexpr (operator revop)
 						(normal-lexpr-r-lexpr l-lexpr)		  
@@ -568,18 +573,29 @@
 			  ((and (opr-equal? (operator revop) operator)
 					(normal-lexpr-p r-lexpr)
 					(opr-equal? operator (normal-lexpr-operator r-lexpr)))
+			   (print "here2")
 			   (c/dnf 
 				 (normal-lexpr (operator revop)
 					(c/dnf (normal-lexpr (operator revop)		  
 								  l-lexpr
 								  (normal-lexpr-l-lexpr r-lexpr))
 					op)
-					(normal-lexpr-r-lexpr r-lexpr)
+				
+				 
+				   (normal-lexpr-r-lexpr r-lexpr)
+				  
+				  	
 					) op))
 
-
+			  ((opr-equal? operator op)
+			   (print "6")
+			   (normal-lexpr op
+					(c/dnf l-lexpr op)
+					(c/dnf r-lexpr op)
+					)
+			   )
 			  
-			  (t lexpr)))
+			  (t (print "here5") lexpr)))
 
 
 		(otherwise 

@@ -512,7 +512,6 @@
 
 
 (defmethod c/dnf ((lexpr normal-lexpr) (op operator))
-
   (let ((revop (opposite-opr op)))
 	(if (clause? lexpr (operator revop)) lexpr
 		(match lexpr
@@ -558,9 +557,12 @@
 			   (c/dnf 
 				 (normal-lexpr (operator revop)
 					(normal-lexpr-l-lexpr l-lexpr)
-					(normal-lexpr (operator revop)
+					
+					(c/dnf (normal-lexpr (operator revop)
 						(normal-lexpr-r-lexpr l-lexpr)		  
-						r-lexpr)) op))
+						r-lexpr) op))
+				 
+				 op))
 
 
 			  ((and (opr-equal? (operator revop) operator)
@@ -568,10 +570,10 @@
 					(opr-equal? operator (normal-lexpr-operator r-lexpr)))
 			   (c/dnf 
 				 (normal-lexpr (operator revop)
-					(normal-lexpr (operator revop)		  
+					(c/dnf (normal-lexpr (operator revop)		  
 								  l-lexpr
-								  (normal-lexpr-l-lexpr r-lexpr)
-								  )
+								  (normal-lexpr-l-lexpr r-lexpr))
+					op)
 					(normal-lexpr-r-lexpr r-lexpr)
 					) op))
 
@@ -602,7 +604,7 @@
 	(rename-bound-var 
 	  (literalize 
 		(remove-operator 
-		  (remove-disuse-quant lexpr))) nil nil)) op))
+		  (remove-disuse-quant lexpr))) nil nil))op))
 
 
 

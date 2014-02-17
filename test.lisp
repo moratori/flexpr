@@ -47,8 +47,8 @@
 			  ("(P > Q) - (~Q > ~P)" . "(Q V ~P V P) & (Q V ~P V ~Q) & (~P V Q V ~Q) & (~P V Q V P)")
 			  ("P & Q V P & Q" . "(P V P) & (P V Q) & Q")
 			  ("((P & Q) V P) & Q" . "(P V P) & (P V Q) & Q")
-			  )
-			))
+
+			  )))
 	  (dolist (each data)
 		(assert-equal (cdr each) (test2 (car each))))))
 

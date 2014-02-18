@@ -60,8 +60,9 @@
 (test2 "(P & Q) V (R & S) V (T & U) V (W & X)")
 |#
 
+(test2 "((P > Q) - (~ Q > ~P)) & ((~ P V ~Q) - (~(P & Q)))")
 
-(print-failures (run-tests '(show formalize)))
+;(print-failures (run-tests '(show formalize)))
 
 
 #|

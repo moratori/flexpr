@@ -3,10 +3,20 @@
 (ns:defns flexpr.infer
 	(:use :cl
 		  :flexpr.constant
-		  :flexpr.struct
-		  :flexpr.unifier)
+		  :flexpr.struct)
+	(:import-from :flexpr.error
+				  :struct-unmatch-error
+				  :illformed-error)
+	(:import-from :flexpr.unifier
+				  :mgu)
 	(:import-from :flexpr.formalize
-				  :formalize))
+				  :formalize)
+	(:import-from :flexpr.util
+				  :literal?
+				  :opr-equal?
+				  :closed?
+				  :clause?
+				  :opposite-opr))
 
 
 ;;;  効率的な導出を実装
@@ -14,28 +24,37 @@
 ;;;  他の使うか
 
 
-(defmethod getclause ((lexpr atomic-lexpr))
-  (list lexpr))
+(defgeneric get-clause (a b)
+	(:documentation "b is operator that expressing which formalization"))
 
-(defmethod getclause ((lexpr normal-lexpr))
-  ;; get leaf
+(defmethod get-clause ((lexpr atomic-lexpr) (op operator))
   )
 
-(defmethod getclause ((lexpr lexpr))
-  (getclause (lexpr-expr lexpr)))
+(defmethod get-clause ((lexpr normal-lexpr) (op operator))
+  )
+
+(defmethod get-clause ((lexpr lexpr) (op operator))
+  )
+
+
 
 ;;; 節形式は集合の集合
 ;;; {{P} , {P , Q} , {R , S} ...}
-(defun convert (lexprs)
+(defun convert (lexprs op)
   (assert (every (lambda (x)
 				   (or (typep x 'atomic-lexpr)
 					   (typep x 'normal-lexpr)
 					   (typep x 'lexpr))) lexprs))
   (mapcar (lambda (x) 
-			(formalize x)
-			) 
-		  lexprs)
-  )
+			(let ((formed (formalize x op)))
+			  (unless (closed? formed)
+				(error 
+				  (make-condition 'illformed-error
+								  :ie-mes "closed formula required."
+								  :ie-val formed
+								  :ie-where 'convert)))
+			  (get-clause formed op))) 
+		  lexprs))
 
 
 

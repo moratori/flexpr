@@ -160,10 +160,6 @@
 	(t (literal? 
 		 (normal-lexpr-l-lexpr lexpr)))))
 
-(defmethod literal? ((lexpr lexpr))
-  nil)
-
-
 (defmethod literal? (a) 
   nil)
 
@@ -173,9 +169,6 @@
 @export
 (defgeneric lexpr-literal? (a)
 	(:documentation "check whether lexpr or negation lexpr"))
-
-(defmethod lexpr-literal? ((lexpr atomic-lexpr))
-  nil)
 
 (defmethod lexpr-literal? ((lexpr normal-lexpr))
   (cond
@@ -192,6 +185,14 @@
   nil)
 
 
+@export
+(defun gliteral? (l)
+  (or (literal? l)
+	  (lexpr-literal? l)))
+
+
+
+@export
 (defgeneric clause? (a b)
    (:documentation "check whther clause form"))
 
@@ -206,14 +207,55 @@
 		  (clause? (normal-lexpr-r-lexpr lexpr) opr)))
 	(t nil)))
 
-(defmethod clause? ((lexpr lexpr) (opr operator))
-  nil
-  )
-
 (defmethod clause? (a b)
   nil)
 
+
+(defgeneric %closed? (a b)
+	(:documentation "check whther formula b closed in environ b"))
+
+(defmethod %closed? ((lexpr atomic-lexpr) bounds)
+  ;; bounds is term list
+  (every 
+	(lambda (term)
+	  (labels 
+		((main (x)
+			(cond 
+			  ((vterm-const x) t)
+			  ((vterm-p x)
+			   (member x bounds :test #'term=))
+			  ((fterm-p x)
+			   (every 
+				 #'main
+				 (fterm-terms x)))
+			  (t 
+				(error 
+				  (make-condition 'struct-unmatch-error 
+							:sue-val term
+							:sue-where '%closed?_atomic))))))
+		(main term))) 
+	(atomic-lexpr-terms lexpr)))
+
+
+(defmethod %closed? ((lexpr normal-lexpr) bounds)
+  (and
+	(%closed? 
+	  (normal-lexpr-l-lexpr lexpr) bounds)
+	(let ((right (normal-lexpr-r-lexpr lexpr)))
+	  (if (not (null right))
+		(%closed? right bounds) t))))
+
+
+(defmethod %closed? ((lexpr lexpr) bounds)
+  (%closed? 
+	(lexpr-expr lexpr)
+	(append 
+	  bounds
+	  (loop for each in (quantsp-each-quant (lexpr-qpart lexpr))
+			collect (quant-var each)))))
+
 @export
-(defun gliteral? (l)
-  (or (literal? l)
-	  (lexpr-literal? l)))
+(defun closed? (lexpr)
+  (%closed? lexpr nil))
+
+

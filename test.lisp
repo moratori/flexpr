@@ -60,9 +60,9 @@
 (test2 "(P & Q) V (R & S) V (T & U) V (W & X)")
 |#
 
-(test2 "((P > Q) - (~ Q > ~P)) & ((~ P V ~Q) - (~(P & Q)))")
+;(test2 "((P > Q) - (~ Q > ~P)) & ((~ P V ~Q) - (~(P & Q)))")
 
-;(print-failures (run-tests '(show formalize)))
+(print-failures (run-tests '(show formalize)))
 
 
 #|
@@ -72,3 +72,12 @@
 
 ;(test2 "(((P & ~Q) V Q) V ~P) & (((~Q & P) V ~P) V Q)")
 ;(test2 "P & Q V P  & Q")
+
+
+(print (car (flexpr.infer::convert 
+		 (list 
+		  (parse "P(C) & Q(D)")
+		   ;(parse "AxAy.(P(x,y) > Q(x))")
+		   )
+		 (flexpr.struct::operator flexpr.constant::+AND+)
+		 )))

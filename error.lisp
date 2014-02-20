@@ -27,6 +27,21 @@
 	  (format s "~%Internal error occurred. ~%initial value required~%where: ~A~%"
 			  (ire-where-of c)))))
 
+@export
+(define-condition illformed-error (error)
+  ((ie-val   :initarg :ie-val
+			 :reader   ie-val-of)
+   (ie-where :initarg :ie-where
+			 :reader   ie-where-of)
+   (ie-mes   :initarg :ie-mes
+			 :reader   ie-mes-of))
+  (:report 
+	(lambda (c s)
+	  (format s "~%Runtime error occurred.~%~A~%value: ~A~%where: ~A~%"
+			  (ie-mes-of c)
+			  (ie-val-of c)
+			  (ie-where-of c)))))
+
 
 @export
 (define-condition illformed-parse-error (error)

@@ -28,15 +28,41 @@
 	(:documentation "b is operator that expressing which formalization"))
 
 (defmethod get-clause ((lexpr atomic-lexpr) (op operator))
-  )
+  (list (list lexpr)))
 
 (defmethod get-clause ((lexpr normal-lexpr) (op operator))
-  )
+  (cond 
+	((literal? lexpr)
+	 (list (list lexpr)))
+	((clause? lexpr (operator (opposite-opr op)))
+	 ;; get leaf
+	 (labels 
+	   ((collect (lexpr result)
+			(if (literal? lexpr)
+			  (cons lexpr result)
+			  (let ((left  (normal-lexpr-l-lexpr lexpr))
+					(right (normal-lexpr-r-lexpr lexpr)))
+				(cond 
+				  ((and (literal? left)
+						(literal? right)) 
+				   (cons left (cons right result)))
+				  ((literal? left)
+				   (collect right (cons left result)))
+				  ((literal? right)
+				   (collect left (cons right result)))
+				  (t (error "!!")))))))
+	   (collect lexpr nil)
+	   ))
+	(t
+	  (append
+(get-clause 
+		  (normal-lexpr-l-lexpr lexpr) op)
+	(get-clause 
+		  (normal-lexpr-r-lexpr lexpr) op)
+))))
 
 (defmethod get-clause ((lexpr lexpr) (op operator))
-  )
-
-
+  (get-clause (lexpr-expr lexpr) op))
 
 ;;; 節形式は集合の集合
 ;;; {{P} , {P , Q} , {R , S} ...}

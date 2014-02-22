@@ -74,10 +74,16 @@
 ;(test2 "P & Q V P  & Q")
 
 
-(print (car (flexpr.infer::convert 
+(print 
+  (flexpr.infer::convert 
 		 (list 
-		  (parse "P(C) & Q(D)")
+		  (parse "P(A) & Q(A)")
 		   ;(parse "AxAy.(P(x,y) > Q(x))")
 		   )
 		 (flexpr.struct::operator flexpr.constant::+AND+)
-		 )))
+		 )
+
+  )
+
+
+

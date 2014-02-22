@@ -12,7 +12,7 @@
   (flexpr.dump::lexpr->string lexpr))
 
 (defun formal (lexpr op)
-  (flexpr.formalize::formalize lexpr op))
+  (flexpr.formalize:formalize lexpr op))
 
 
 (defun test1 (str)
@@ -54,32 +54,27 @@
 		(assert-equal (cdr each) (test2 (car each))))))
 
 
-#|
 (test2 "(((P(x) & Q(x) > R(x)) V (P(y) > Q(y))) & P(z)) & ~(Q(x) & R(x))")
 (test2 "(P & Q) V (R & S) V (T & U)")
 (test2 "(((P & Q) V (R & S)) V T) & (((P & Q) V (R & S)) V U)")
 (test2 "(P & Q) V (R & S) V (T & U) V (W & X)")
-|#
+(test2 "(((P & ~Q) V Q) V ~P) & (((~Q & P) V ~P) V Q)")
+(test2 "((P > Q) - (~ Q > ~P)) & ((~ P V ~Q) - (~(P & Q)))")
+(test2 "P & Q V P  & Q")
+(test2 "AxAy.(P(x,y) > (Q(x) - Ez.R(x,y,z)))")
+(test2 "Ax.(P(x) & Q(C)) & Ey.(R(y) > S(y)) > AxAy.(P(x) & Q(K))")
+(test2 "ExAyEz.(P(x,z) > Q(y,x)) > P(C) & Q(x)")
+(test2 "AxAyAzEw.(Ev.(Ax.P(C,V,K)))")
 
-;(test2 "((P > Q) - (~ Q > ~P)) & ((~ P V ~Q) - (~(P & Q)))")
 
 (print-failures (run-tests '(show formalize)))
 
 
-#|
- ((P & ~Q) V Q V ~P) & ((~Q & P) V ~P V Q)
-|#
-
-
-;(test2 "(((P & ~Q) V Q) V ~P) & (((~Q & P) V ~P) V Q)")
-;(test2 "P & Q V P  & Q")
 
 
 
 (print 
-	  (flexpr.infer::convert 
-		  (parse "(P V Q) > R")
-		 (flexpr.struct::operator flexpr.constant::+AND+)
-		 )
-	  )
+	  (flexpr.formalize::convert 
+		(parse "(P V Q) > R")
+		(flexpr.struct::operator flexpr.constant::+AND+)))
 

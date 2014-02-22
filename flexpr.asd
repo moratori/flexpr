@@ -18,5 +18,8 @@
 		 (:file "dump")
 		 (:file "parser")
 		 (:file "unifier")
+		 (:file "formalize-opr")
+		 (:file "formalize-quant")
+		 (:file "formalize-mat")
 		 (:file "formalize")
 		 (:file "infer")))

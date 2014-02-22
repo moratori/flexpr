@@ -1,7 +1,8 @@
 
 
 (ql:quickload :flexpr)
-(use :lisp-unit)
+(ql:quickload :lisp-unit)
+(use-package :lisp-unit)
 
 
 (defun parse (str)
@@ -74,16 +75,11 @@
 ;(test2 "P & Q V P  & Q")
 
 
+
 (print 
-  (flexpr.infer::convert 
-		 (list 
-		  (parse "P(A) & Q(A)")
-		   ;(parse "AxAy.(P(x,y) > Q(x))")
-		   )
+	  (flexpr.infer::convert 
+		  (parse "(P V Q) > R")
 		 (flexpr.struct::operator flexpr.constant::+AND+)
 		 )
-
-  )
-
-
+	  )
 

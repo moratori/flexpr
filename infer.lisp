@@ -50,41 +50,35 @@
 				   (collect right (cons left result)))
 				  ((literal? right)
 				   (collect left (cons right result)))
-				  (t (error "!!")))))))
-	   (collect lexpr nil)
-	   ))
+				  (t (make-condition 'illformed-error
+							:ie-mes "formalized formula(CNF/DNF) required."
+							:ie-val lexpr
+							:ie-where 'get-clause)))))))
+	  (list (collect lexpr nil))))
 	(t
 	  (append
-(get-clause 
+		(get-clause 
 		  (normal-lexpr-l-lexpr lexpr) op)
-	(get-clause 
-		  (normal-lexpr-r-lexpr lexpr) op)
-))))
+		(get-clause 
+		  (normal-lexpr-r-lexpr lexpr) op)))))
 
 (defmethod get-clause ((lexpr lexpr) (op operator))
   (get-clause (lexpr-expr lexpr) op))
 
 ;;; 節形式は集合の集合
 ;;; {{P} , {P , Q} , {R , S} ...}
-(defun convert (lexprs op)
-  (assert (every (lambda (x)
-				   (or (typep x 'atomic-lexpr)
-					   (typep x 'normal-lexpr)
-					   (typep x 'lexpr))) lexprs))
-  (mapcar (lambda (x) 
-			(let ((formed (formalize x op)))
-			  (unless (closed? formed)
-				(error 
-				  (make-condition 'illformed-error
-								  :ie-mes "closed formula required."
-								  :ie-val formed
-								  :ie-where 'convert)))
-			  (get-clause formed op))) 
-		  lexprs))
+(defun convert (lexpr op)
+  (assert (or (typep lexpr 'atomic-lexpr)
+			  (typep lexpr 'normal-lexpr)
+		      (typep lexpr 'lexpr)))
 
-
-
-
-
+  (let ((formed (formalize lexpr op)))
+	(unless (closed? formed)
+		(error 
+		  (make-condition 'illformed-error
+			:ie-mes "closed formula required."
+			:ie-val formed
+			:ie-where 'convert)))	
+	(get-clause formed op)))
 
 

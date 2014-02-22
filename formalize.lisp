@@ -612,6 +612,14 @@
 
 
 
+;; 不必要な節を取り除く処理が必要
+;; 1.重複は削除
+;;   P V P -> P
+;;   P & P -> P
+;; 2.恒真式について
+;;   (P & ~P) -> F
+;;   (P V ~P) -> T
+
 
 @export
 (defun formalize (lexpr &optional (op (operator +AND+)))

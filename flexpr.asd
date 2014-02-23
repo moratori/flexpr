@@ -16,13 +16,21 @@
 		((:module "src"
 		  :serial t
 		  :components 
-				((:file "error")
-				 (:file "constant")
-                 (:file "struct")
-                 (:file "util")
-                 (:file "dump")
-				 (:file "parser")
-		 		 (:file "unifier")
+				((:module "constant"
+				  :serial t
+				  :components 
+					((:file "error")
+					 (:file "constant")))
+				 (:module "base"
+				  :serial t
+				  :components 
+					((:file "struct")
+					 (:file "util")))
+				 (:module "io"
+				  :serial t
+				  :components 
+					((:file "dump")
+					 (:file "parser"))) 
 				 (:module "formalize"
 				  :serial t
 				  :components 
@@ -30,5 +38,12 @@
 		 			 (:file "formalize-quant")
 		 			 (:file "formalize-mat")
 		 			 (:file "formalize")))
-				 (:file "infer")))))
+				 (:module "core"
+				  :serial t
+				  :components 
+					((:file "unifier")
+					 (:file "infer")))))))
+
+
+
 

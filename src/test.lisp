@@ -54,6 +54,9 @@
 		(assert-equal (cdr each) (test2 (car each))))))
 
 
+(print-failures (run-tests '(show formalize)))
+
+
 (test2 "(((P(x) & Q(x) > R(x)) V (P(y) > Q(y))) & P(z)) & ~(Q(x) & R(x))")
 (test2 "(P & Q) V (R & S) V (T & U)")
 (test2 "(((P & Q) V (R & S)) V T) & (((P & Q) V (R & S)) V U)")
@@ -66,15 +69,9 @@
 (test2 "ExAyEz.(P(x,z) > Q(y,x)) > P(C) & Q(x)")
 (test2 "AxAyAzEw.(Ev.(Ax.P(C,V,K)))")
 
-
-(print-failures (run-tests '(show formalize)))
-
-
-
-
-
-(print 
-	  (flexpr.formalize::convert 
-		(parse "(P V Q) > R")
-		(flexpr.struct::operator flexpr.constant::+AND+)))
-
+(test2 "~(P V ~P) > ~(Q V P)")
+(test2 "(P V Q) - (Q & R)")
+(test2 "((P V ~Q) - (Q & ~P))")
+(test2 "(P1 & Q1 & R1) V (P2 & Q2 & R2)")
+(test2 "(P V B V C) & (P V ~B V C) & (P V B V ~C) & (~P V ~B V C)" (flexpr.struct::operator flexpr.constant::+OR+))
+(test2 "~P > ~Q")

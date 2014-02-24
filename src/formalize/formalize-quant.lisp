@@ -285,3 +285,18 @@
 						:sue-where 'prefix_lexpr)))))
 
 
+
+@export
+(defgeneric skolemization (a)
+	(:documentation "skolemize a"))
+
+(defmethod skolemization ((lexpr atomic-lexpr))
+  lexpr)
+
+(defmethod skolemization ((lexpr normal-lexpr))
+  lexpr)
+
+(defmethod skolemization ((lexpr lexpr))
+  lexpr)
+
+

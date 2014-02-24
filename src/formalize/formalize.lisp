@@ -37,15 +37,6 @@
 ;;
 
 
-(defmethod skolemization ((lexpr atomic-lexpr))
-  lexpr)
-
-(defmethod skolemization ((lexpr normal-lexpr))
-  lexpr)
-
-(defmethod skolemization ((lexpr lexpr))
-  lexpr)
-
 
 
 ;;; スコーレム標準形までもっていく処理

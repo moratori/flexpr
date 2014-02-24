@@ -1,4 +1,4 @@
-
+/
 
 (ns:defns flexpr.formalize
 	(:use :cl
@@ -12,7 +12,10 @@
 				  :opr-equal?
 				  :closed?
 				  :clause?
-				  :opposite-opr)
+				  :opposite-opr
+				  :%literal=
+				  :opposite-%literal=
+				  :%clause=)
 	(:import-from :flexpr.error
 				  :illformed-error))
 
@@ -34,74 +37,31 @@
 ;;
 
 
+(defmethod skolemization ((lexpr atomic-lexpr))
+  lexpr)
 
+(defmethod skolemization ((lexpr normal-lexpr))
+  lexpr)
+
+(defmethod skolemization ((lexpr lexpr))
+  lexpr)
+
+
+
+;;; スコーレム標準形までもっていく処理
+;;; 命題論理式の場合はCNFまたはDNF形にするだけ
 @export
 (defun formalize (lexpr &optional (op (operator +AND+)))
-  (c/dnf 
+(skolemization
+	(c/dnf 
 	(prefix 
 	(rename-bound-var 
 	  (literalize 
 		(remove-operator 
-		  (remove-disuse-quant lexpr))) nil nil))op))
+		  (remove-disuse-quant lexpr))) nil nil))op)))
 
 
 
-
-(defgeneric get-clause (a b)
-	(:documentation "b is operator that expressing which formalization"))
-
-(defmethod get-clause ((lexpr atomic-lexpr) (op operator))
-  (list (list lexpr)))
-
-(defmethod get-clause ((lexpr normal-lexpr) (op operator))
-  (cond 
-	((literal? lexpr)
-	 (list (list lexpr)))
-	((clause? lexpr (operator (opposite-opr op)))
-	 ;; get leaf
-	 (labels 
-	   ((collect (lexpr result)
-			(if (literal? lexpr)
-			  (cons lexpr result)
-			  (let ((left  (normal-lexpr-l-lexpr lexpr))
-					(right (normal-lexpr-r-lexpr lexpr)))
-				(cond 
-				  ((and (literal? left)
-						(literal? right)) 
-				   (cons left (cons right result)))
-				  ((literal? left)
-				   (collect right (cons left result)))
-				  ((literal? right)
-				   (collect left (cons right result)))
-				  (t (make-condition 'illformed-error
-							:ie-mes "formalized formula(CNF/DNF) required."
-							:ie-val lexpr
-							:ie-where 'get-clause)))))))
-	  (list (collect lexpr nil))))
-	(t
-	  (append
-		(get-clause 
-		  (normal-lexpr-l-lexpr lexpr) op)
-		(get-clause 
-		  (normal-lexpr-r-lexpr lexpr) op)))))
-
-(defmethod get-clause ((lexpr lexpr) (op operator))
-  (get-clause (lexpr-expr lexpr) op))
-
-;;; {{P} , {P , Q} , {R , S} ...}
-(defun convert (lexpr op)
-  (assert (or (typep lexpr 'atomic-lexpr)
-			  (typep lexpr 'normal-lexpr)
-		      (typep lexpr 'lexpr)))
-
-  (let ((formed (formalize lexpr op)))
-	(unless (closed? formed)
-		(error 
-		  (make-condition 'illformed-error
-			:ie-mes "closed formula required."
-			:ie-val formed
-			:ie-where 'convert)))	
-	(get-clause formed op)))
 
 
 ;;; convertされた集合を対象にさらに
@@ -115,3 +75,99 @@
 ;;; P <OPERATOR> P => P
 ;;; (P V ~P V ... ) & (Q V R V ...) & ... => (Q V R V ...) & ...
 ;;; (P & ~P & ... ) V (Q & R & ...) V ... => (Q & R & ...) V ...
+;;;
+
+;;; 重複を削除する
+;;; P <OPERATOR> P => P
+(defun reduction-clause (clause)
+  (assert (every (lambda (l) (typep l '%literal)) clause))
+  (remove-duplicates clause :test #'%literal=))
+
+
+(defun disuse-clause? (clause)
+	(some 
+	  (lambda (literal)
+		(find-if 
+		  (lambda (x)
+			(opposite-%literal= literal x)) clause)) clause))
+
+;;; (P V ~P V ... ) & (Q V R V ...) & ... => (Q V R V ...) & ...
+;;; (P & ~P & ... ) V (Q & R & ...) V ... => (Q & R & ...) V ...
+(defun reduction-clause-form (clause-form op)
+  (assert
+	(every 
+	  (lambda (clause)
+		(every (lambda (lit) (typep lit '%literal)) clause)
+		) clause-form)
+	)
+  ;; まず重複を削除して排中律と矛盾に関する規則
+  (remove-if #'disuse-clause?
+			 (remove-duplicates 
+			   (mapcar #'reduction-clause clause-form) :test #'%clause=)))
+
+
+(defun literal->%literal (literal)
+  (assert (or (typep literal 'atomic-lexpr)
+			  (typep literal 'normal-lexpr)))
+	(cond 
+	  ((normal-lexpr-p literal)
+	   (unless (and (opr-equal? (normal-lexpr-operator literal)
+								(operator +NEG+))
+					(atomic-lexpr-p (normal-lexpr-l-lexpr literal)))
+			(error 
+			  (make-condition 'illformed-error
+							:ie-mes "formalized formula required"
+							:ie-val literal
+							:ie-where 'literal->%literal)))
+			   (%literal t 
+						 (atomic-lexpr-pred-sym 
+						   (normal-lexpr-l-lexpr literal))
+						 (atomic-lexpr-terms 
+						   (normal-lexpr-l-lexpr literal))))
+	  
+	  ((atomic-lexpr-p literal)
+	   (%literal nil
+				 (atomic-lexpr-pred-sym literal)
+				 (atomic-lexpr-terms literal)))
+			  
+	  (t 
+		(error 
+		  (make-condition 'illformed-error
+							:ie-mes "formalized formula required"
+							:ie-val literal
+							:ie-where 'literal->%literal)))))
+
+
+;;; {{P} , {P , Q} , {R , S} ...}
+;;; この処理で完全に節形式にもっていく
+;;; つまり %literal の集合の集合
+;;; これを dump するには clause-form->string を使う
+;;; 節形式にした時に 節集合が nil になる時があるけど
+;;; それは, opの違いで何を表しているかで変わる
+;;;
+;;; op が or の時: その節集合は矛盾を表す
+;;; op が and の時: その節集合は真を表す
+;;;
+;;; どちらも、演算における単位元の扱いの性質
+@export
+(defun convert (lexpr op)
+  (assert (or (typep lexpr 'atomic-lexpr)
+			  (typep lexpr 'normal-lexpr)
+		      (typep lexpr 'lexpr)))
+
+  (let ((formed (formalize lexpr op)))
+	(unless (closed? formed)
+		(error 
+		  (make-condition 'illformed-error
+			:ie-mes "closed formula required."
+			:ie-val formed
+			:ie-where 'convert)))	
+	(reduction-clause-form 
+		(mapcar 
+		  (lambda (clause)
+			(mapcar 
+			  (lambda (literal)
+				(literal->%literal literal)) clause)) 
+		  (get-clause formed op)) op)))
+
+

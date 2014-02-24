@@ -8,6 +8,7 @@
 				  :opr-equal?
 				  :opr->strength
 				  :opr-strong?
+				  :opposite-opr
 				  :literal?
 				  :lexpr-literal?
 				  :gliteral?)
@@ -209,4 +210,30 @@
 					   :sue-val lexpr
 					   :sue-where 'lexpr->string_lexpr)))))
 
+
+(defun %literal->string (%literal)
+	(lexpr->string 
+	  (if (%literal-negation %literal)
+ 		(normal-lexpr (operator +NEG+)
+			(apply #'atomic-lexpr 
+				   (%literal-pred %literal)
+				   (%literal-terms %literal)) nil)
+		(apply #'atomic-lexpr 
+			   (%literal-pred %literal)
+			   (%literal-terms %literal)))))
+
+(defun clause->string (clause op)
+  (format nil 
+		  (format nil "(~~{~~A~~^ ~A ~~})" (opr->string op))
+		  (mapcar #'%literal->string clause)))
+
+@export
+(defun clause-form->string (clause-form op) 
+  (format nil
+		  (format nil "~~{~~A~~^ ~A ~~}" (opr->string op))
+		  (mapcar 
+			(lambda (clause)
+	  			(clause->string 
+				  clause
+				  (operator (opposite-opr op)))) clause-form)))
 

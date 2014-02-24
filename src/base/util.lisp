@@ -259,3 +259,47 @@
   (%closed? lexpr nil))
 
 
+
+@export
+(defun %literal= (a b)
+  (assert (and (typep a '%literal)
+			   (typep b '%literal)))
+  (and 
+	(eq (%literal-negation a)
+		(%literal-negation b))
+	(eq (%literal-pred a)
+		(%literal-pred b))
+	(every 
+	  (lambda (x y) 
+		(term= x y)) 
+	  (%literal-terms a)
+	  (%literal-terms b))))
+
+@export
+(defun opposite-%literal= (a b)
+  ;; b が aの負リテラルであるか
+  (assert (and (typep a '%literal)
+			   (typep b '%literal)))
+  (and 
+	(eq (not (%literal-negation a))
+		(%literal-negation b))
+	(eq (%literal-pred a)
+		(%literal-pred b))
+	(every 
+	  (lambda (x y) 
+		(term= x y)) 
+	  (%literal-terms a)
+	  (%literal-terms b)))
+  )
+
+
+@export
+(defun %clause= (a b)
+ (and 
+   (null (set-difference a b :test #'%literal=))
+   (null (set-difference b a :test #'%literal=))))
+
+
+
+
+

@@ -22,6 +22,11 @@
 		:atomic-lexpr-pred-sym
 		:atomic-lexpr-terms
 
+		:%literal-p
+		:%literal-negation
+		:%literal-pred
+		:%literal-terms
+
 		:operator-p
 		:operator-opr
 
@@ -114,6 +119,17 @@
 			:type symbol)
   (terms    nil
 			:type terms-type))
+
+
+@export
+(defstruct (%literal (:constructor %literal (negation pred terms)))
+  (negation nil :type boolean)
+  (pred (error (make-condition 'initval-required-error 
+								   :ire-where '%literal))
+		:type symbol)
+  (terms nil :type terms-type))
+
+
 
 @export
 (defstruct (operator (:constructor operator (opr)))

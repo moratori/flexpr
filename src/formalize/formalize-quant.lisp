@@ -286,17 +286,18 @@
 
 
 
+;; quant-sym を除去る
 @export
-(defgeneric skolemization (a)
+(defgeneric skolemization (a b )
 	(:documentation "skolemize a"))
 
-(defmethod skolemization ((lexpr atomic-lexpr))
+(defmethod skolemization ((lexpr atomic-lexpr) quant-sym)
   lexpr)
 
-(defmethod skolemization ((lexpr normal-lexpr))
+(defmethod skolemization ((lexpr normal-lexpr) quant-sym)
   lexpr)
 
-(defmethod skolemization ((lexpr lexpr))
+(defmethod skolemization ((lexpr lexpr) quant-syml)
   lexpr)
 
 

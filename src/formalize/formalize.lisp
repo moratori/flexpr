@@ -41,15 +41,17 @@
 
 ;;; スコーレム標準形までもっていく処理
 ;;; 命題論理式の場合はCNFまたはDNF形にするだけ
+;;; かなりキモい式(同値演算子でやたら式の長さが増えるようなの)をformalizeしようとすると
+;;; ヒープ食いつぶしてldbに落ちる場合あり
 @export
-(defun formalize (lexpr &optional (op (operator +AND+)))
+(defun formalize (lexpr &optional (op (operator +AND+)) (quant +EXISTS+))
 (skolemization
 	(c/dnf 
 	(prefix 
 	(rename-bound-var 
 	  (literalize 
 		(remove-operator 
-		  (remove-disuse-quant lexpr))) nil nil))op)))
+		  (remove-disuse-quant lexpr))) nil nil))op) quant))
 
 
 

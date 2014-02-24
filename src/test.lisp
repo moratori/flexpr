@@ -4,6 +4,9 @@
 (ql:quickload :lisp-unit)
 (use-package :lisp-unit)
 
+(import '(flexpr.constant:+FORALL+
+		  flexpr.constant:+EXISTS+))
+
 (defvar *and* (flexpr.struct:operator flexpr.constant:+AND+))
 (defvar *or* (flexpr.struct:operator flexpr.constant:+OR+))
 
@@ -28,6 +31,9 @@
 	("(P & ~Q) - (P > Q)" "(~P V Q V ~P V Q) & (P V P) & (P V ~Q) & (~Q V P) & (~Q V ~Q)" 
 	 nil  "(~P V Q) & (P) & (~Q V P) & (~Q)" nil)
 
+	("(T & T) V R" "(R V T) & (R V T)" "(T & T) V R" 
+	 				"(R V T)" "(T) V (R)")
+
 	)
   "(test formal-and-expected  formal-or-expected
 		 convert-and-expected convert-or-expected)"
@@ -47,9 +53,9 @@
   clause form must be set of set of %literal structure."
   (flexpr.dump:clause-form->string clause-form op))
 
-(defun formal (str op)
+(defun formal (str op q)
   "convert to prenex normal form end matrix is cnf or dnf"
-  (dump1 (flexpr.formalize:formalize (parse str) op)))
+  (dump1 (flexpr.formalize:formalize (parse str) op q)))
 
 (defun convert (str op)
   "convert to clause form"
@@ -60,8 +66,8 @@
 (define-test formalize-test 
 	(dolist (each-case *test-data*)
 	  (destructuring-bind (data fa fo ca co) each-case
-		(let ((fa-ans (formal data *and*))
-			  (fo-ans (formal data *or*))
+		(let ((fa-ans (formal data *and* +FORALL+))
+			  (fo-ans (formal data *or*  +FORALL+))
 			  (ca-ans (convert data *and*))
 			  (co-ans (convert data *or*)))
 		  
@@ -72,5 +78,4 @@
 
 
 (print-failures (run-tests '(formalize-test)))
-
 

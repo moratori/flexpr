@@ -77,5 +77,16 @@
 			  (or (null co) (assert-equal co co-ans))))))
 
 
-(print-failures (run-tests '(formalize-test)))
+;(print-failures (run-tests '(formalize-test)))
+
+
+
+(print 
+  (dump2
+	(flexpr.infer::preproc 
+	(mapcar #'parse 
+			(list 
+			  "Ax.(human(x) > animal(x))"
+			  "Ax.(animal(x) > mortal(x))"))
+		 (parse "~Ex.(human(x) & ~mortal(x))"))*and*))
 

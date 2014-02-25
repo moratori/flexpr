@@ -16,4 +16,17 @@
 
 
 
+(defun preproc (premises conseq &optional (quants-form +FORALL+) (mat-form (operator +AND+)))
+  (append
+	(loop for each in 
+		  (mapcar 
+			(lambda (x) 
+			  (convert x mat-form quants-form)) premises)
+		  append each)
+	(convert 
+	  (normal-lexpr (operator +NEG+) conseq nil)
+	  mat-form quants-form)))
+
+
+
 

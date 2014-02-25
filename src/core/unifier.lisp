@@ -154,9 +154,12 @@
 (defmethod mgu ((lexpr1 atomic-lexpr) (lexpr2 atomic-lexpr))
   ;; 実際には関数項と同じ扱い
   ;; だけど命題変数への扱いをかんがえなければならない
-  (mgu (apply #'fterm (atomic-lexpr-pred-sym lexpr1)
-			  		  (atomic-lexpr-terms    lexpr1))
-	   (apply #'fterm (atomic-lexpr-pred-sym lexpr2)
-			  		  (atomic-lexpr-terms    lexpr2))))
-
+  (if (and (null (atomic-lexpr-terms lexpr1))
+		   (null (atomic-lexpr-terms lexpr2))) 
+		(eq (atomic-lexpr-pred-sym lexpr1)
+			(atomic-lexpr-pred-sym lexpr2))
+		(mgu (apply #'fterm (atomic-lexpr-pred-sym lexpr1)
+							(atomic-lexpr-terms    lexpr1)) 
+			 (apply #'fterm (atomic-lexpr-pred-sym lexpr2)
+							(atomic-lexpr-terms    lexpr2)))))
 

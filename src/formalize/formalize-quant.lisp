@@ -8,7 +8,9 @@
 	(:import-from :flexpr.util
 				  :term-using?
 				  :term=
-				  :opr-equal?)
+				  :opr-equal?
+				  :qnt-equal?
+				  :opposite-qnt)
 	(:import-from :flexpr.error
 				  :struct-unmatch-error
 				  :illformed-formalize-error))
@@ -286,18 +288,98 @@
 
 
 
-;; quant-sym を除去る
+;; quant-sym だけが量化子として残るようにする
 @export
 (defgeneric skolemization (a b )
 	(:documentation "skolemize a"))
 
-(defmethod skolemization ((lexpr atomic-lexpr) quant-sym)
-  lexpr)
 
-(defmethod skolemization ((lexpr normal-lexpr) quant-sym)
-  lexpr)
+(defun substvar (matrix binds)
+  ;; ((y (x)) (w (x)) (v (x z)))
+  (cond
+	((atomic-lexpr-p matrix)
+	 (apply #'atomic-lexpr 
+			(atomic-lexpr-pred-sym matrix)
+			 (let ((terms (atomic-lexpr-terms matrix)))
+	   (loop for each in terms
+			 collect 
+			 (labels 
+			   ((main (each)
+				(cond 
+				  ((vterm-p each)
+				   (let ((new (find-if 
+								(lambda (x) (term= (car x) each)) binds)))
+					 (if (null new) each
+					   (second new))))
+				  ((fterm-p each)
+				   (apply #'fterm (fterm-fsymbol each)
+						  (mapcar #'main (fterm-terms each))))
+				  (t (error "term requried!")))))
+			   (main each))))))
+	((normal-lexpr-p matrix)
+	 (normal-lexpr (normal-lexpr-operator matrix)
+		(substvar (normal-lexpr-l-lexpr matrix) binds)
+		(unless (null (normal-lexpr-r-lexpr matrix))
+		  (substvar (normal-lexpr-r-lexpr matrix) binds))))
+	(t (error "matrix must be atomic or normal"))))
 
-(defmethod skolemization ((lexpr lexpr) quant-syml)
-  lexpr)
+
+(defun %skolemization (target-rm lexpr binds)
+	(let ((new-qpart
+			(remove-if  
+			  (lambda (x)
+				(eq (quant-qnt x) target-rm))
+			  (quantsp-each-quant (lexpr-qpart lexpr)))))
+	  
+		(if (null new-qpart)
+		  (substvar (lexpr-expr lexpr) binds)
+		  (lexpr 
+			(apply #'quantsp new-qpart)
+			(substvar (lexpr-expr lexpr) binds)))))
+
+
+(defmethod skolemization ((lexpr lexpr) quant-sym)
+  ;; target-rm はタダの シンボル
+  (let ((target-rm (opposite-qnt 
+					 (quant quant-sym (vterm '|dummy| nil) 0)))
+		(each (quantsp-each-quant (lexpr-qpart lexpr))))
+
+		;; AxEyEwAzEv
+		;; でEを削除したいとする.
+		;; (y (x))
+		;; (w (x))
+		;; (v (x z))
+
+		(%skolemization 
+		  target-rm
+		  lexpr
+		  (labels 
+		  ((main (qlist tmp result)
+				 (if (null qlist) result
+				   (let ((head (car qlist)))
+					 (cond  
+					   ((eq quant-sym (quant-qnt head))
+						(main (cdr qlist)
+							  (cons (quant-var head) tmp)
+							  result))
+					   ((eq target-rm (quant-qnt head))
+						(main (cdr qlist)
+							  tmp
+							  (cons 
+								(list (quant-var head)
+									  (if (null tmp) 
+										  (vterm (gensym +SKOLEM_CONST+) t)
+										  (apply #'fterm 
+												 (gensym +SKOLEM_FUNC+)
+												 (reverse tmp)))) result)))
+						(t 
+						  (error "A or E required")))))))
+		  (reverse (main each nil nil))))))
+
+
+(defmethod skolemization (a b)
+  a)
+
+
 
 

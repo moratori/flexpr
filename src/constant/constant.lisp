@@ -62,3 +62,9 @@
 
 @export
 (defvar +RENAME-PREFIX+ "v_")
+
+@export
+(defvar +SKOLEM_CONST+ "SC_")
+
+@export
+(defvar +SKOLEM_FUNC+ "SF_")

@@ -221,9 +221,10 @@
 	  (labels 
 		((main (x)
 			(cond 
-			  ((vterm-const x) t)
+			  ;((vterm-const x) t)
 			  ((vterm-p x)
-			   (member x bounds :test #'term=))
+			   (or (vterm-const x)
+				   (member x bounds :test #'term=)))
 			  ((fterm-p x)
 			   (every 
 				 #'main

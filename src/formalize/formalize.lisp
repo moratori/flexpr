@@ -143,12 +143,12 @@
 ;;;
 ;;; どちらも、演算における単位元の扱いの性質
 @export
-(defun convert (lexpr op)
+(defun convert (lexpr op quant)
   (assert (or (typep lexpr 'atomic-lexpr)
 			  (typep lexpr 'normal-lexpr)
 		      (typep lexpr 'lexpr)))
 
-  (let ((formed (formalize lexpr op)))
+  (let ((formed (formalize lexpr op quant)))
 	(unless (closed? formed)
 		(error 
 		  (make-condition 'illformed-error
@@ -162,5 +162,4 @@
 			  (lambda (literal)
 				(literal->%literal literal)) clause)) 
 		  (get-clause formed op)) op)))
-
 

@@ -57,10 +57,10 @@
   "convert to prenex normal form end matrix is cnf or dnf"
   (dump1 (flexpr.formalize:formalize (parse str) op q)))
 
-(defun convert (str op)
+(defun convert (str op q)
   "convert to clause form"
   (dump2 
-	(flexpr.formalize:convert (parse str) op) op))
+	(flexpr.formalize:convert (parse str) op q) op))
 
 
 (define-test formalize-test 
@@ -68,8 +68,8 @@
 	  (destructuring-bind (data fa fo ca co) each-case
 		(let ((fa-ans (formal data *and* +FORALL+))
 			  (fo-ans (formal data *or*  +FORALL+))
-			  (ca-ans (convert data *and*))
-			  (co-ans (convert data *or*)))
+			  (ca-ans (convert data *and* +FORALL+))
+			  (co-ans (convert data *or* +FORALL+)))
 		  
 		      (or (null fa) (assert-equal fa fa-ans))
 			  (or (null fo) (assert-equal fo fo-ans))
@@ -78,4 +78,3 @@
 
 
 (print-failures (run-tests '(formalize-test)))
-

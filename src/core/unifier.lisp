@@ -163,3 +163,46 @@
 			 (apply #'fterm (atomic-lexpr-pred-sym lexpr2)
 							(atomic-lexpr-terms    lexpr2)))))
 
+@export
+(defun eliminate? (lit1 lit2)
+  (assert (and (typep lit1 '%literal)
+			   (typep lit2 '%literal)))
+  (cond 
+	((eq (%literal-negation lit1)
+		 (%literal-negation lit2)) nil)
+	(t (mgu 
+		 (apply #'atomic-lexpr 
+		   (%literal-pred lit1) (%literal-terms lit1))
+		 (apply #'atomic-lexpr 
+		   (%literal-pred lit2) (%literal-terms lit2))))))
+
+
+
+@export
+(defun unify (rule clause)
+  ;; ( (term1 . new1) (term2 . new2) )
+  (if (eq rule t) clause
+	 (mapcar 
+	(lambda (x)
+	  (assert (typep x '%literal))
+
+	  (%literal 
+		(%literal-negation x)
+		(%literal-pred x)
+		(labels 
+		  ((main (term)
+			(cond 
+			  ((vterm-p term)
+			   (let ((subs (assoc term rule :test #'term=)))
+				 (if (null subs) term (cdr subs))))
+			  ((fterm-p term)
+			   (apply #'fterm (fterm-fsymbol term)
+					  (mapcar #'main (fterm-terms term))))
+			  (t (error "unify!")))
+			))
+		  (mapcar #'main (%literal-terms x)))
+		)) clause)	
+	)
+ ) 
+
+

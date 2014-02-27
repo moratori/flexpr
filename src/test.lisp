@@ -81,12 +81,24 @@
 
 
 
+#|
+			  "AxEy.(hs(x) & mn(x) > cu(y) & wo(y) & co(x,y))"
+			  "AxAy.(co(x,y) > ha(x) & ha(y))"
+			  "Ax.(ha(x) > ll(x))"
+	Ax.(hs(x) & mn(x) > ll(x))
+
+|#
+
 (print 
-  (dump2
-	(flexpr.infer::preproc 
-	(mapcar #'parse 
+  (flexpr.infer:resolution
+	(mapcar #'parse
 			(list 
-			  "Ax.(human(x) > animal(x))"
-			  "Ax.(animal(x) > mortal(x))"))
-		 (parse "~Ex.(human(x) & ~mortal(x))"))*and*))
+			  "Ax.(human(x) V cat(x))"
+		  ))
+	(parse "human(Me) V cat(Me)")
+	)
+  )
+
+
+
 

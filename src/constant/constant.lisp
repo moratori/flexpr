@@ -68,3 +68,6 @@
 
 @export
 (defvar +SKOLEM_FUNC+ "SF_")
+
+@export
+(defvar +DEPTH+ 100)

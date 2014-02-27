@@ -62,6 +62,8 @@
   (dump2 
 	(flexpr.formalize:convert (parse str) op q) op))
 
+(defun pl (&rest strings)
+  (mapcar #'parse strings))
 
 (define-test formalize-test 
 	(dolist (each-case *test-data*)
@@ -82,20 +84,22 @@
 
 
 #|
-			  "AxEy.(hs(x) & mn(x) > cu(y) & wo(y) & co(x,y))"
-			  "AxAy.(co(x,y) > ha(x) & ha(y))"
-			  "Ax.(ha(x) > ll(x))"
-	Ax.(hs(x) & mn(x) > ll(x))
+	bug 
+		{Ax.(odd(x) - ~even(x)) , even(Zero)} |= ~odd(Zero)
+		
+		{} |= (P V Q) - ~(~P & ~Q)
+
+		{} |= ~(P V Q) - (~P & ~Q)
 
 |#
 
 (print 
   (flexpr.infer:resolution
-	(mapcar #'parse
-			(list 
-			  "Ax.(human(x) V cat(x))"
-		  ))
-	(parse "human(Me) V cat(Me)")
+	(pl 
+	  "Ax.(human(x) > animal(x))"
+	  "Ax.(animal(x) > mortal(x))"
+	  )
+	(parse "~Ex.(human(x) & ~mortal(x))")
 	)
   )
 

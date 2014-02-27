@@ -71,7 +71,28 @@
 	(let ((clause-form (append premises-clause-form
 							   conseq-clause-form)))
 	  ;; clause-form が矛盾していることを 導く
+	 	
+		
+	  	(labels 
+		  ((main (clause-form selected-clause)
+				(block exit 
+				  	(dolist (each clause-form)
+				   (multiple-value-bind 
+					 (flag result-clause) (resolution? each selected-clause)
+					 (cond 
+					   ((and flag (null result-clause))
+						(return-from exit t))
+					   ((null flag) )
+					   (t 
+						 (return-from exit 
+									  (main clause-form result-clause))))))
+				  ) 
 
+				 ))
+		  (some 
+			(lambda (c-clause)
+			  (main clause-form c-clause)
+			  ) conseq-clause-form))
 
 	  )))
 

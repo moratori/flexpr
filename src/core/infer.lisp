@@ -115,7 +115,10 @@
 									(1+ (clause-used clause)))))
 							 result
 							 (1- dep)))))))))
-
+		  ;; 
+		  ;; conseq の節の何れかを前提の節に作用させれば矛盾がでると
+		  ;; 勝手に考えた実装になってるけどそれがダメ
+		  ;;
 		  (some 
 			(lambda (c-clause)
 			  (assert (typep c-clause 'clause))

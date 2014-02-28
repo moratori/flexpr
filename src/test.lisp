@@ -149,12 +149,12 @@
 		"Ax.=(x,x)")
 	    "=(Zero,Zero)")
 
-	  ;(("AxAy.(parent(x,y) > ancestor(x,y))"
-	;	"AxAyAz.(parent(x,y) & ancestor(y,z) > ancestor(x,z))"
-	;	"parent(Kh,Ky)"
-	;	"parent(Ts,Kh)"
-	;	"parent(Sj,Ts)")
-	 ;   "ancestor(Sj,Kh)")
+	  (("AxAy.(parent(x,y) > ancestor(x,y))"
+		"AxAyAz.(parent(x,y) & ancestor(y,z) > ancestor(x,z))"
+		"parent(Kh,Ky)"
+		"parent(Ts,Kh)"
+		"parent(Sj,Ts)")
+	    "ancestor(Ts,Ky)")
 
 	)
   )

@@ -63,8 +63,10 @@
 (defun subst-old-rule (old-rules new-rules)
   ;; new-rules = ((old . new))
   ;; old-rules = ((old1 . new1) (old2 . new2) ...)
-  (destructuring-bind ((old . new)) new-rules
-	(mapcar 
+  (if (null new-rules) old-rules
+	 (destructuring-bind (old . new) (car new-rules)
+	   (subst-old-rule
+(mapcar 
 	  (lambda (x)
 		(destructuring-bind (each-old . each-new) x
 		 (cons each-old
@@ -77,7 +79,12 @@
 				 (t (error (make-condition 'struct-unmatch-error 
 					   :sue-val each-new
 					   :sue-where 'subst-old-rule)))))))
-	  old-rules)))
+	  old-rules)
+		(cdr new-rules)
+		 )
+	   )
+	)
+ )
 
 ;;; 新しいルールを更に今まで見つかったので置換
 (defun subst-new-rule (old-rules new-rules)

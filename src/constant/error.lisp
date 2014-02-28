@@ -4,6 +4,15 @@
 	(:use :cl))
 
 
+(define-condition maximum-depth-exceeded (error)
+  ((mde-val   :initarg :mde-val
+		      :reader   mde-val-of)
+   (mde-where :initarg :mde-where
+		      :reader   mde-where-of))
+  (:report 
+	(lambda (c s)
+	  (format s "~%Runtime error occurred.~%Maximum search depth ~A exceeded." (mde-val-of c)))))
+
 
 @export
 (define-condition struct-unmatch-error (error)

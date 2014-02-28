@@ -87,8 +87,11 @@
 	(()
 	 "(P > Q) > ((P > R) > (P > (Q & R)))")
 	
-	;(()
-	;"(P > (Q > R)) - (Q > (P > R))")
+	(()
+	"(P > (Q > R)) - (Q > (P > R))")
+
+	(()
+	 "P > (Q > (P & Q))")
 
 	(("Ax.(number(x) > number(succ(x)))"
 	  "number(Zero)")
@@ -107,9 +110,51 @@
 	  "have(Jhon,Car) & have(Jhon,Bike)")
 	  "wants(Mike,Car) & wants(Mike,Bike)")
 
+	;これ手でやっても上手くいかないぞ
 	;(("AxAy.(Ez.hate(y,z) > hate(x,y))"
-	;  "hate(Jhon,Mike)")
-	;  "AxAy.hate(x,y)")
+	 ; "hate(Jhon,Mike)")
+	  ;"AxAy.hate(x,y)")
+
+	  (("number(Zero)")
+	    "Ex.number(x)")
+
+	  (("Ax.(P(x) V Q(x))"
+		"Ax.~Q(x)")
+	    "Ax.P(x)")
+
+	  (("AxAy.P(x,y)")
+	    "AxAy.P(x,y)")
+
+	  (("Ex.(P(x) & Ay.Q(x,y))")
+	    "ExEy.Q(x,y)")
+
+	  (()
+	   "AxAyEz.P(x,y,z) > AxEyEz.P(x,y,z)")
+
+	  (()
+	   "Ax.P(x) > Ex.P(x)")
+
+	  (("number(Zero)"
+		"even(Zero)"
+		"Ax.(even(x) - ~odd(x))")
+	    "~odd(Zero)")
+
+	  (("even(Zero)"
+		"Ax.((even(x) V odd(x)) & (even(x) - ~odd(x)))"
+		"Ax.((even(x) > odd(succ(x))) & (odd(x) > even(succ(x))))")
+	    "even(succ(succ(succ(succ(Zero)))))")
+
+	  (("AxAy.(=(x,y) - =(y,x))"
+		"AxAyAz.(=(x,y) & =(y,z) > =(x,z))"
+		"Ax.=(x,x)")
+	    "=(Zero,Zero)")
+
+	  ;(("AxAy.(parent(x,y) > ancestor(x,y))"
+	;	"AxAyAz.(parent(x,y) & ancestor(y,z) > ancestor(x,z))"
+	;	"parent(Kh,Ky)"
+	;	"parent(Ts,Kh)"
+	;	"parent(Sj,Ts)")
+	 ;   "ancestor(Sj,Kh)")
 
 	)
   )
@@ -161,5 +206,6 @@
 		  (parse (second each))))))
 
 
-(print-errors (run-tests '(formalize-test)))
-(print-errors (run-tests '(resolution-test)))
+(print-failures (run-tests '(formalize-test)))
+(print-failures (run-tests '(resolution-test)))
+

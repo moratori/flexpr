@@ -80,10 +80,12 @@
 							   conseq-clause-form)))
 	  ;; clause-form が矛盾していることを 導く	
 	  	(labels 
-		  ((main (clause-form selected-clause depth)
-				 (when (zerop depth)
+		  ((main (clause-form selected-clause dep)
+				 ;(format t "SELECTED~%~A~%~%" (flexpr.dump::clause->string selected-clause (operator +OR+)))
+				 ;(sleep 0.5)
+				 (when (zerop dep)
 				   (error (make-condition 'maximum-depth-exceeded
-										  :mde-val 0
+										  :mde-val depth
 										  :mde-where 'resolution)))
 				 (let ((best
 					    (iterate:iter 
@@ -92,11 +94,13 @@
 								      for rule = (multiple-value-list (resolution? each-c selected-clause)) 
 								      if (not (null (first rule)))
 								        collect (list each-c rule)))
+							  ;; minimizing されて最も短い節としか融合されなくなるってことか...
 							  (iterate:finding each iterate:minimizing  
 								(destructuring-bind (clause (flag result)) each
 							  		(length (clause-%literals result)))))))
 
 				  (if (null best) nil
+					;; ここでの clause が selected-clause とペアになる節
 					(destructuring-bind (clause (flag result)) best
 					  (cond 
 						 ((and flag
@@ -110,7 +114,7 @@
 									(clause-%literals clause)
 									(1+ (clause-used clause)))))
 							 result
-							 (1- depth)))))))))
+							 (1- dep)))))))))
 
 		  (some 
 			(lambda (c-clause)

@@ -112,8 +112,8 @@
 
 	;これ手でやっても上手くいかないぞ
 	;(("AxAy.(Ez.hate(y,z) > hate(x,y))"
-	 ; "hate(Jhon,Mike)")
-	  ;"AxAy.hate(x,y)")
+	;  "hate(Jhon,Mike)")
+	;  "AxAy.hate(x,y)")
 
 	  (("number(Zero)")
 	    "Ex.number(x)")
@@ -144,17 +144,26 @@
 		"Ax.((even(x) > odd(succ(x))) & (odd(x) > even(succ(x))))")
 	    "even(succ(succ(succ(succ(Zero)))))")
 
-	  (("AxAy.(=(x,y) - =(y,x))"
+	  ((
+		"AxAy.(=(x,y) - =(y,x))"
 		"AxAyAz.(=(x,y) & =(y,z) > =(x,z))"
-		"Ax.=(x,x)")
-	    "=(Zero,Zero)")
+		)
+	    "=(Z,C) & =(C,D) > =(Z,D)")
 
 	  (("AxAy.(parent(x,y) > ancestor(x,y))"
 		"AxAyAz.(parent(x,y) & ancestor(y,z) > ancestor(x,z))"
 		"parent(Kh,Ky)"
 		"parent(Ts,Kh)"
-		"parent(Sj,Ts)")
-	    "ancestor(Ts,Ky)")
+		"parent(Sj,Ts)"
+		"parent(Kj,Sj)"
+		"parent(Mj,Kj)")
+	    "ancestor(Mj,Ky)")
+
+	  (("AxAyAz.(parent(x,y) & parent(x,z) > sibling(y,z) & sibling(z,y))"
+		"parent(N,S)"
+		"parent(N,K)"
+		"parent(N,W)")
+	    "sibling(K,S) & sibling(W,S)")
 
 	)
   )
@@ -206,6 +215,20 @@
 		  (parse (second each))))))
 
 
-(print-failures (run-tests '(formalize-test)))
-(print-failures (run-tests '(resolution-test)))
+;(print-failures (run-tests '(formalize-test)))
+;(print-errors (run-tests '(resolution-test)))
+
+(print 
+  
+  (flexpr.infer.general::resolution
+	
+	(pl
+		"AxAy.(=(x,y) - =(y,x))"
+		"AxAyAz.(=(x,y) & =(y,z) > =(x,z))"
+	  
+	  )
+	(parse "=(Z,C) & =(C,D) > =(Z,D)")
+	)
+  )
+
 

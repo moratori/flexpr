@@ -81,8 +81,8 @@
 	  ;; clause-form が矛盾していることを 導く	
 	  	(labels 
 		  ((main (clause-form selected-clause dep)
-				 ;(format t "SELECTED~%~A~%~%" (flexpr.dump::clause->string selected-clause (operator +OR+)))
-				 ;(sleep 0.5)
+				 (format t "SELECTED~%~A~%~%" (flexpr.dump::clause->string selected-clause (operator +OR+)))
+				 (sleep 0.5)
 				 (when (zerop dep)
 				   (error (make-condition 'maximum-depth-exceeded
 										  :mde-val depth
@@ -95,6 +95,7 @@
 								      if (not (null (first rule)))
 								        collect (list each-c rule)))
 							  ;; minimizing されて最も短い節としか融合されなくなるってことか...
+							  ;; (Z C)のループはここが原因っぽい匂いがする
 							  (iterate:finding each iterate:minimizing  
 								(destructuring-bind (clause (flag result)) each
 							  		(length (clause-%literals result)))))))
@@ -115,26 +116,37 @@
 									(1+ (clause-used clause)))))
 							 result
 							 (1- dep)))))))))
-		  ;; 
-		  ;; conseq の節の何れかを前提の節に作用させれば矛盾がでると
-		  ;; 勝手に考えた実装になってるけどそれがダメ.全然ダメ
-		  ;; 例えば再帰ルールを含んだ節とかと融合する例(あの家系図のancestorのやつとか)
-		  ;; だと、空節を導けるのにかかわらず nil を返してしまい
-		  ;; 導出原理の完全性を損ねている
-		  ;;
-		  ;; けど、結論の否定を付け加えて矛盾を導くと言う意味で
-		  ;; 初めの節としてそれを選んで 導出原理 にかけるのは
-		  ;; いいと思う。(現にそれでテストの殆どを通ってしまうもんだから気づくの遅れた)
-		  ;;
-		  (some 
-			(lambda (c-clause)
-			  (assert (typep c-clause 'clause))
-			  (main 
-				(remove c-clause clause-form :test #'%clause=) 
-				c-clause
-				depth
-				)) 
-			conseq-clause-form)))))
+		  (or 
+			(some 
+			  (lambda (c-clause)
+				(main 
+					(remove 
+					  c-clause 
+					  clause-form :test #'%clause=)  
+					c-clause 
+					depth)) 
+			  conseq-clause-form)
+			;; premises-clause-form の 特にリテラルをすくなくもつ式
+			;; から優先して導出にかける
+			(some 
+			  (lambda (p-clause)
+				(main 
+				  (remove 
+					p-clause
+					clause-form :test #'%clause=)
+				  p-clause
+				  depth)) 
+			  (sort 
+				premises-clause-form
+				(lambda (c1 c2) 
+				  (< (length (clause-%literals c1))
+					 (length (clause-%literals c2)))))))))))
+
+
+
+
+
+
 
 
 

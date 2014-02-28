@@ -8,7 +8,7 @@
 
 
 (defsystem flexpr
-	:depends-on (:optima :namespace)
+	:depends-on (:optima :namespace :iterate)
 	:serial t
 	:version "1.0"
 	:author "moratori"
@@ -42,7 +42,8 @@
 				  :serial t
 				  :components 
 					((:file "unifier")
-					 (:file "infer")))))))
+					 (:file "infer-gen")
+					 (:file "infer-sld")))))))
 
 
 

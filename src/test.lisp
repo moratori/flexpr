@@ -201,7 +201,7 @@
 (define-test resolution-test
 	(dolist (each *resolution-test-data*)
 	  (assert-true 
-		(flexpr.infer::resolution 
+		(flexpr.infer.general::resolution 
 		  (apply #'pl (first each))
 		  (parse (second each))))))
 

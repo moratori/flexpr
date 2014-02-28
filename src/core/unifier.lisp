@@ -182,27 +182,29 @@
 (defun unify (rule clause)
   ;; ( (term1 . new1) (term2 . new2) )
   (if (eq rule t) clause
-	 (mapcar 
-	(lambda (x)
-	  (assert (typep x '%literal))
-
-	  (%literal 
-		(%literal-negation x)
-		(%literal-pred x)
-		(labels 
-		  ((main (term)
-			(cond 
-			  ((vterm-p term)
-			   (let ((subs (assoc term rule :test #'term=)))
-				 (if (null subs) term (cdr subs))))
-			  ((fterm-p term)
-			   (apply #'fterm (fterm-fsymbol term)
-					  (mapcar #'main (fterm-terms term))))
-			  (t (error "unify!")))
-			))
-		  (mapcar #'main (%literal-terms x)))
-		)) clause)	
-	)
- ) 
-
-
+	 (clause
+	   (mapcar 
+		 (lambda (x)
+		   (assert (typep x '%literal))
+		   (%literal 
+			 (%literal-negation x)
+			 (%literal-pred x)
+			 (labels 
+			   ((main (term)
+					  (cond 
+						((vterm-p term)
+						 (let ((subs (assoc term rule :test #'term=)))
+						   (if (null subs) 
+							 term
+							 (cdr subs))))
+						((fterm-p term)
+						 (apply #'fterm (fterm-fsymbol term)
+								(mapcar #'main (fterm-terms term))))
+						(t 
+						  (error (make-condition 'struct-unmatch-error 
+					   :sue-val term
+					   :sue-where 'unify))))))
+			   (mapcar #'main (%literal-terms x)))
+			 0))
+		 (clause-%literals clause))
+	   0))) 

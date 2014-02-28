@@ -296,9 +296,19 @@
 
 @export
 (defun %clause= (a b)
+ (assert (and (typep a 'clause)
+			  (typep b 'clause)))
  (and 
-   (null (set-difference a b :test #'%literal=))
-   (null (set-difference b a :test #'%literal=))))
+   (null 
+	 (set-difference 
+	   (clause-%literals a)
+	   (clause-%literals b) 
+	   :test #'%literal=))
+   (null 
+	 (set-difference 
+	   (clause-%literals b)
+	   (clause-%literals a)
+	   :test #'%literal=))))
 
 
 

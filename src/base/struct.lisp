@@ -26,6 +26,11 @@
 		:%literal-negation
 		:%literal-pred
 		:%literal-terms
+		:%literal-used
+
+		:clause-p
+		:clause-%literals
+		:clause-used
 
 		:operator-p
 		:operator-opr
@@ -122,12 +127,19 @@
 
 
 @export
-(defstruct (%literal (:constructor %literal (negation pred terms)))
+(defstruct (%literal (:constructor %literal (negation pred terms used)))
   (negation nil :type boolean)
   (pred (error (make-condition 'initval-required-error 
 								   :ire-where '%literal))
 		:type symbol)
-  (terms nil :type terms-type))
+  (terms nil :type terms-type)
+  (used 0 :type integer))
+
+
+@export
+(defstruct (clause (:constructor clause (%literals used)))
+  (%literals nil :type list)
+  (used 0 :type integer))
 
 
 

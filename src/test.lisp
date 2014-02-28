@@ -15,7 +15,7 @@
 ;; 意味論的に同値であるかを判定する機能つけなきゃやってられない
 ;; => けど述語論理に対応できなくなる
 ;; => けど今でもPLのテストはしてない
-(defvar *test-data*
+(defvar *formalize-test-data*
   '(("P - Q > P" nil "(P & ~Q) V (Q & ~P) V P" 
 	 			 nil "(P & ~Q) V (Q & ~P) V (P)")
 	("P V ~Q > R" "(R V ~P) & (R V Q)" nil
@@ -37,6 +37,81 @@
 	)
   "(test formal-and-expected  formal-or-expected
 		 convert-and-expected convert-or-expected)"
+  )
+
+
+(defvar *resolution-test-data*
+  '(
+	(()
+	 "P V ~P")
+	(() 
+	 "((P > Q) > P) > P")
+	(()
+	 "P - P")
+	(()
+	 "(~P V Q) - ~(P & ~Q)")
+	(()
+	 "(P & Q) - (Q & P)")
+	(()
+	 "~(P & ~P)")
+	(()
+	 "P & (P > Q) > Q")
+	(()
+	 "~~P - P")
+	(()
+	 "(~P & (P V Q)) > Q")
+	(()
+	 "P > (P V Q)")
+	(()
+	 "P & Q > P")
+	(()
+	 "(P > Q) - (~Q > ~P)")
+	(()
+	 "(P > Q) & (Q > R) > (P > R)")
+	(()
+	 "(P > (Q > R)) > (P & Q > R)")
+	(()
+	 "~(P > Q) - (P & ~Q)")
+	(()
+	 "((P > R) & (Q > R)) > (P V Q > R)")
+	(()
+	 "P > (Q > P)")
+	(()
+	 "~P > (P > Q)")
+	(()
+	 "P V P > P")
+	(()
+	 "P & P > P")
+	(()
+	 "~Q & (P > Q) > ~P")
+	(()
+	 "(P > Q) > ((P > R) > (P > (Q & R)))")
+	
+	;(()
+	;"(P > (Q > R)) - (Q > (P > R))")
+
+	(("Ax.(number(x) > number(succ(x)))"
+	  "number(Zero)")
+	  "number(succ(succ(succ(succ(Zero)))))")
+
+	(("Ax.(human(x) > mortal(x))" 
+	  "human(Socrates)") 
+	  "mortal(Socrates)")
+
+	(("AxEy.(man(x) & handsome(x) > cute(y) & woman(y) & couple(x,y))"
+	  "AxAy.(couple(x,y) > happy(x) & happy(y))"
+	  "Ax.(happy(x) > longlife(x))")
+	  "Ax.(man(x) & handsome(x) > longlife(x))")
+
+	(("Ax.(have(Jhon,x) > wants(Mike , x))"
+	  "have(Jhon,Car) & have(Jhon,Bike)")
+	  "wants(Mike,Car) & wants(Mike,Bike)")
+
+	;(("AxAy.(Ez.hate(y,z) > hate(x,y))"
+	;  "hate(Jhon,Mike)")
+	;  "AxAy.hate(x,y)")
+
+	)
   )
 
 
@@ -66,7 +141,7 @@
   (mapcar #'parse strings))
 
 (define-test formalize-test 
-	(dolist (each-case *test-data*)
+	(dolist (each-case *formalize-test-data*)
 	  (destructuring-bind (data fa fo ca co) each-case
 		(let ((fa-ans (formal data *and* +FORALL+))
 			  (fo-ans (formal data *or*  +FORALL+))
@@ -78,31 +153,13 @@
 			  (or (null ca) (assert-equal ca ca-ans))
 			  (or (null co) (assert-equal co co-ans))))))
 
-
-;(print-failures (run-tests '(formalize-test)))
-
-
-
-#|
-	bug 
-		{Ax.(odd(x) - ~even(x)) , even(Zero)} |= ~odd(Zero)
-		
-		{} |= (P V Q) - ~(~P & ~Q)
-
-		{} |= ~(P V Q) - (~P & ~Q)
-
-|#
-
-(print 
-  (flexpr.infer:resolution
-	(pl 
-	  "Ax.(human(x) > animal(x))"
-	  "Ax.(animal(x) > mortal(x))"
-	  )
-	(parse "~Ex.(human(x) & ~mortal(x))")
-	)
-  )
+(define-test resolution-test
+	(dolist (each *resolution-test-data*)
+	  (assert-true 
+		(flexpr.infer::resolution 
+		  (apply #'pl (first each))
+		  (parse (second each))))))
 
 
-
-
+(print-errors (run-tests '(formalize-test)))
+(print-errors (run-tests '(resolution-test)))

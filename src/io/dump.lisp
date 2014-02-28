@@ -223,9 +223,10 @@
 			   (%literal-terms %literal)))))
 
 (defun clause->string (clause op)
+  (assert (typep clause 'clause))
   (format nil 
 		  (format nil "(~~{~~A~~^ ~A ~~})" (opr->string op))
-		  (mapcar #'%literal->string clause)))
+		  (mapcar #'%literal->string (clause-%literals clause))))
 
 @export
 (defun clause-form->string (clause-form op) 

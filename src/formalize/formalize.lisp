@@ -73,16 +73,24 @@
 ;;; 重複を削除する
 ;;; P <OPERATOR> P => P
 (defun reduction-clause (clause)
-  (assert (every (lambda (l) (typep l '%literal)) clause))
-  (remove-duplicates clause :test #'%literal=))
+  (assert (typep clause 'clause))
+  (clause
+	(remove-duplicates 
+	  (clause-%literals clause) :test #'%literal=)
+	0
+	)
+  )
 
 
 (defun disuse-clause? (clause)
+  (assert (typep clause 'clause))
 	(some 
 	  (lambda (literal)
 		(find-if 
 		  (lambda (x)
-			(opposite-%literal= literal x)) clause)) clause))
+			(opposite-%literal= literal x)) 
+		  (clause-%literals clause))) 
+	  (clause-%literals clause)))
 
 ;;; (P V ~P V ... ) & (Q V R V ...) & ... => (Q V R V ...) & ...
 ;;; (P & ~P & ... ) V (Q & R & ...) V ... => (Q & R & ...) V ...
@@ -90,9 +98,8 @@
   (assert
 	(every 
 	  (lambda (clause)
-		(every (lambda (lit) (typep lit '%literal)) clause)
-		) clause-form)
-	)
+		(typep clause 'clause)
+		) clause-form))
   ;; まず重複を削除して排中律と矛盾に関する規則
   (remove-if #'disuse-clause?
 			 (remove-duplicates 
@@ -116,12 +123,14 @@
 						 (atomic-lexpr-pred-sym 
 						   (normal-lexpr-l-lexpr literal))
 						 (atomic-lexpr-terms 
-						   (normal-lexpr-l-lexpr literal))))
+						   (normal-lexpr-l-lexpr literal))
+						 0))
 	  
 	  ((atomic-lexpr-p literal)
 	   (%literal nil
 				 (atomic-lexpr-pred-sym literal)
-				 (atomic-lexpr-terms literal)))
+				 (atomic-lexpr-terms literal)
+				 0))
 			  
 	  (t 
 		(error 
@@ -154,12 +163,18 @@
 		  (make-condition 'illformed-error
 			:ie-mes "closed formula required."
 			:ie-val formed
-			:ie-where 'convert)))	
+			:ie-where 'convert)))
 	(reduction-clause-form 
 		(mapcar 
 		  (lambda (clause)
-			(mapcar 
+			(clause
+			  (mapcar 
 			  (lambda (literal)
-				(literal->%literal literal)) clause)) 
-		  (get-clause formed op)) op)))
+				(literal->%literal literal)) clause)
+			  0)) 
+		  (get-clause formed op)) op)
+	))
+
+
+
 

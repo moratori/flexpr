@@ -11,10 +11,7 @@
 				  :eliminate?
 				  :unify)
 	(:import-from :flexpr.formalize
-				  :convert)
-	(:import-from :flexpr.error
-				  :maximum-depth-exceeded)
-	)
+				  :convert))
 
 
 ;;;  効率的な導出を実装
@@ -72,7 +69,7 @@
 
 
 @export
-(defun resolution (premises conseq &optional (depth +DEPTH+))
+(defun resolution (premises conseq)
   (multiple-value-bind 
 	(premises-clause-form conseq-clause-form)
 	(preproc premises conseq)
@@ -80,46 +77,37 @@
 							   conseq-clause-form)))
 	  ;; clause-form が矛盾していることを 導く	
 	  	(labels 
-		  ((main (clause-form selected-clause depth)
-				 (when (zerop depth)
-				   (error (make-condition 'maximum-depth-exceeded
-										  :mde-val 0
-										  :mde-where 'resolution)))
-				 (let ((best
-					    (iterate:iter 
-						  	  (iterate:for each iterate:in 
-								(loop for each-c in clause-form 
-								      for rule = (multiple-value-list (resolution? each-c selected-clause)) 
-								      if (not (null (first rule)))
-								        collect (list each-c rule)))
-							  (iterate:finding each iterate:minimizing  
-								(destructuring-bind (clause (flag result)) each
-							  		(length (clause-%literals result)))))))
-
-				  (if (null best) nil
-					(destructuring-bind (clause (flag result)) best
-					  (cond 
-						 ((and flag
-							   (null (clause-%literals result))) t)
-						 (t 
-						   (main 
-							 (append 
-								(remove clause clause-form :test #'%clause=)
-								(list 
-								  (clause 
-									(clause-%literals clause)
-									(1+ (clause-used clause)))))
-							 result
-							 (1- depth)))))))))
-
+		  ((main (clause-form selected-clause)
+				(loop named exit 
+					  for each in clause-form
+					  do
+					  (multiple-value-bind 
+						;; 導出できる節でもっとも導出後に小さくなるものが好ましい
+						;; これ実装しないとかなりあれっぽい.
+						;; テストでうまく動かないのはこれやってないからっぽい(手計算済み)
+						(flag result-clause) (resolution? each selected-clause)
+						(assert (typep each 'clause))
+						(cond 
+						  ((and flag (null (clause-%literals result-clause)))
+						   (return-from exit t))
+						  ((null flag) )
+						  (t 
+							(return-from exit 
+								(main 
+									;;今回使った節を一番後ろに入れることで
+									;;節をローテートさせてるけど、節の数がでかくなったら
+									;;効率悪いので何回使ったかカウントしないとだめ
+									(append 
+										(remove each clause-form :test #'%clause=)
+										(list 
+										  (clause 
+											(clause-%literals each)
+											(1+ (clause-used each)))))	
+										result-clause))))))))
 		  (some 
 			(lambda (c-clause)
 			  (assert (typep c-clause 'clause))
-			  (main 
-				(remove c-clause clause-form :test #'%clause=) 
-				c-clause
-				depth
-				)) 
+			  (main (remove c-clause clause-form :test #'%clause=) c-clause)) 
 			conseq-clause-form)))))
 
 

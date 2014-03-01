@@ -4,7 +4,11 @@
 	(:use :cl))
 
 
-(define-condition maximum-depth-exceeded (error)
+(define-condition undeterminable-error (error)
+  ())
+
+
+(define-condition maximum-depth-exceeded-error (error)
   ((mde-val   :initarg :mde-val
 		      :reader   mde-val-of)
    (mde-where :initarg :mde-where

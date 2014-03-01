@@ -13,8 +13,8 @@
 	(:import-from :flexpr.formalize
 				  :convert)
 	(:import-from :flexpr.error
-				  :maximum-depth-exceeded)
-	)
+				  :maximum-depth-exceeded-error
+				  :undeterminable-error))
 
 
 ;;; 任意の一階述語論理式の集合に対して
@@ -68,9 +68,6 @@
 					   (remove lit2 (clause-%literals clause2) :test #'%literal=))
 					 0)))))))
 
-
-
-
 @export
 (defun resolution (premises conseq &optional (depth +DEPTH+))
   (multiple-value-bind 
@@ -81,28 +78,30 @@
 	  ;; clause-form が矛盾していることを 導く	
 	  	(labels 
 		  ((main (clause-form selected-clause dep)
-				 (format t "SELECTED~%~A~%~%" (flexpr.dump::clause->string selected-clause (operator +OR+)))
-				 (sleep 0.5)
+				 
 				 (when (zerop dep)
-				   (error (make-condition 'maximum-depth-exceeded
+				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
 										  :mde-where 'resolution)))
 				 (let ((best
 					    (iterate:iter 
 						  	  (iterate:for each iterate:in 
-								(loop for each-c in clause-form 
+								(loop for each-c in clause-form
 								      for rule = (multiple-value-list (resolution? each-c selected-clause)) 
 								      if (not (null (first rule)))
 								        collect (list each-c rule)))
 							  ;; minimizing されて最も短い節としか融合されなくなるってことか...
-							  ;; (Z C)のループはここが原因っぽい匂いがする
+							  ;; ループの原因っぽくなりそうな匂いがする
+							  ;; ここで一番短くなるやつを選ぶんじゃなくて他の選択肢でも some すればおｋ?
 							  (iterate:finding each iterate:minimizing  
 								(destructuring-bind (clause (flag result)) each
 							  		(length (clause-%literals result)))))))
 
-				  (if (null best) nil
+				 (if (null best) nil
 					;; ここでの clause が selected-clause とペアになる節
+					;; 導出されたのが result 節
 					(destructuring-bind (clause (flag result)) best
+					  ;(format t "~A~%" (flexpr.dump::clause->string result (operator +OR+)))
 					  (cond 
 						 ((and flag
 							   (null (clause-%literals result))) t)
@@ -116,37 +115,39 @@
 									(1+ (clause-used clause)))))
 							 result
 							 (1- dep)))))))))
-		  (or 
+
+		;; 以下の２つの探索(someのやつ)で
+		;;
+
+		  (or
+			;; 結論の否定を前提の節に作用させれば
+			;; 手っ取り早く矛盾を導けるだろうというヒューリスティクスが以下
 			(some 
 			  (lambda (c-clause)
-				(main 
-					(remove 
-					  c-clause 
-					  clause-form :test #'%clause=)  
-					c-clause 
-					depth)) 
-			  conseq-clause-form)
-			;; premises-clause-form の 特にリテラルをすくなくもつ式
-			;; から優先して導出にかける
+				(handler-case 
+				 	(main 
+				  		(remove c-clause clause-form :test #'%clause=)  
+						c-clause 
+						depth) 
+				(maximum-depth-exceeded-error (c) 
+					(declare (ignore c)) nil))) 
+				conseq-clause-form)
+				
 			(some 
-			  (lambda (p-clause)
-				(main 
-				  (remove 
-					p-clause
-					clause-form :test #'%clause=)
-				  p-clause
-				  depth)) 
-			  (sort 
-				premises-clause-form
-				(lambda (c1 c2) 
-				  (< (length (clause-%literals c1))
-					 (length (clause-%literals c2)))))))))))
-
-
-
-
-
-
-
-
+			  	  ;; 前提の節についての探索を行う
+				  (lambda (p-clause)
+					(handler-case 
+						(main 
+						  (remove p-clause clause-form :test #'%clause=)
+						  	p-clause
+					  		depth)
+					  (maximum-depth-exceeded-error (c)
+						(declare (ignore c)) nil))) 
+				  (sort 
+					premises-clause-form
+					(lambda (c1 c2) 
+					  (< (length (clause-%literals c1))
+						 (length (clause-%literals c2))))))
+			
+			(error (make-condition 'undeterminable-error)))))))
 

@@ -110,7 +110,6 @@
 	  "have(Jhon,Car) & have(Jhon,Bike)")
 	  "wants(Mike,Car) & wants(Mike,Bike)")
 
-	;これ手でやっても上手くいかないぞ
 	;(("AxAy.(Ez.hate(y,z) > hate(x,y))"
 	 ; "hate(Jhon,Mike)")
 	  ;"AxAy.hate(x,y)")
@@ -144,10 +143,8 @@
 		"Ax.((even(x) > odd(succ(x))) & (odd(x) > even(succ(x))))")
 	    "even(succ(succ(succ(succ(Zero)))))")
 
-	 ((
+	 (( "Ax.=(x,x)"
 		"AxAy.(=(x,y) - =(y,x))"
-		; 下の規則入れると止まらなくなる
-		;"Ax.=(x,x)"
 		"AxAyAz.(=(x,y) & =(y,z) > =(x,z))"
 		)
 	    "=(Z,C) & =(C,D) > =(Z,D)")
@@ -159,9 +156,53 @@
 		"parent(Sj,Ts)"
 		"parent(Kj,Sj)"
 		"parent(Mj,Kj)"
-	  	"parent(Pj,Mj)")
-	    "ancestor(Pj,Ky)")
+	  	"parent(Pj,Mj)"
+  	    "parent(Hj,Pj)")
+	    "ancestor(Hj,Ky)")
+
+	 (( "AxAyAz.(parent(x,y) & parent(x,z) > sibling(y,z))"
+	   "AxAy.(sibling(x,y) - sibling(y,x))"
+	   "AxAyAz.(sibling(x,y) & parent(x,z) > R(z,y))"
+	   "parent(N,S)"
+	   "parent(N,K)"
+	   "parent(N,W)"
+	   "parent(S,T)")
+	   "R(T,K) & sibling(K,W)")
+
+	 ((
+	   "Ax.=(x,x)"
+	   "AxAy.(=(x,y) - =(y,x))"
+	   "AxAyAz.(=(x,y) & =(y,z) > =(x,z))"
+
+	   "Ax.(~=(succ(x),ZERO))"
+	   "AxAy.(=(succ(x),succ(y)) > =(x,y))"
+
+	   "Ax.(=(f(x,ZERO),x))"
+	   "AxAy.(=(f(x,succ(y)),succ(f(x,y))))"
+	   )
+
+	   "=(f(ZERO,ZERO),ZERO)")
+
+
+	 (("Ax.sum(x,ZERO,x)"
+	   "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))")
+	   "sum(s(ZERO) , s(s(ZERO)) , s(s(s(ZERO))))")
+	
+
+	 (("Ax.sum(x,ZERO,x)"
+	   "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))")
+	   "Eres.sum(s(ZERO) , s(s(ZERO)) , res)")
+	 
+	(("Ax.sum(x,ZERO,x)"
+	  "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))"
+	  "Ax.prd(x,ZERO,ZERO)"
+	  "AnAmAkAp.(sum(k,m,p) & prd(m,n,k) > prd(m,s(n),p))")
+	   "prd(s(s(s(s(ZERO)))),s(s(ZERO)),s(s(s(s(s(s(s(s(ZERO)))))))))")
+
+	
 	)
+
+
   )
 
 
@@ -212,5 +253,8 @@
 
 
 (print-failures (run-tests '(formalize-test)))
-(print-errors (run-tests '(resolution-test)))
+(time (print-errors (run-tests '(resolution-test))))
+
+
+
 

@@ -68,6 +68,31 @@
 					   (remove lit2 (clause-%literals clause2) :test #'%literal=))
 					 0)))))))
 
+;; もっとも使われてない節を優先
+(defun primary-unused (clause-form*)
+  (sort clause-form*
+		(lambda (x y)
+		  (< 
+			(clause-used (first x))
+			(clause-used (first y))))))
+
+;;; 導出後の節が最も小さくなるものを優先
+(defun primary-short (clause-form*)
+  (sort clause-form*
+		(lambda (x y)
+		  (< 
+			(length
+			  (clause-%literals 
+				(second (second x))))
+			(length 
+			  (clause-%literals
+				(second (second y))))))))
+
+
+(defun cf-sort (clause-form*)
+  (primary-short clause-form*))
+
+
 @export
 (defun resolution (premises conseq &optional (depth +DEPTH+))
   (multiple-value-bind 
@@ -78,46 +103,57 @@
 	  ;; clause-form が矛盾していることを 導く	
 	  	(labels 
 		  ((main (clause-form selected-clause dep)
-				 
+
 				 (when (zerop dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
 										  :mde-where 'resolution)))
 				 (let ((best
-					    (iterate:iter 
-						  	  (iterate:for each iterate:in 
-								(loop for each-c in clause-form
-								      for rule = (multiple-value-list (resolution? each-c selected-clause)) 
-								      if (not (null (first rule)))
-								        collect (list each-c rule)))
-							  ;; minimizing されて最も短い節としか融合されなくなるってことか...
-							  ;; ループの原因っぽくなりそうな匂いがする
-							  ;; ここで一番短くなるやつを選ぶんじゃなくて他の選択肢でも some すればおｋ?
-							  (iterate:finding each iterate:minimizing  
-								(destructuring-bind (clause (flag result)) each
-							  		(length (clause-%literals result)))))))
+						 (cf-sort
+						   (loop for each-c in clause-form
+								 for rule = (multiple-value-list (resolution? each-c selected-clause)) 
+								 if (not (null (first rule)))
+								   collect (list each-c rule)))))
 
-				 (if (null best) nil
+				   (some 
+					 (lambda (best)
 					;; ここでの clause が selected-clause とペアになる節
-					;; 導出されたのが result 節
-					(destructuring-bind (clause (flag result)) best
-					  ;(format t "~A~%" (flexpr.dump::clause->string result (operator +OR+)))
+					
+					;; main は maximum-depth-exceeded-error お シグナルするわけだけど
+					;; ここで 受けないとhandler-caseが待ってる呼び出しまで戻っっちゃうきがする
+					;; つまり結論の否定を初めに一個ずつ呼ぶわけだけど
+					;; それを A として A と融合可能な節々(B C D E)が best に束縛され
+					;; それらの各々をここの some で受け取るんだけど
+					;; B で main を呼んだ時に error　をシグナリングされると
+					;; 残ってる C D E が実行されないうちに handler-case まで戻っちゃっ手
+					;; 結局 A は失敗だったって事になってしまうので
+					;; 下の main で handler-case するべきかもしれん
+					(destructuring-bind (clause (flag resolted)) best
+		;			  (format t "SELECTED-CLAUSE: ~A~%" (flexpr.dump::clause->string selected-clause (operator +OR+))  )
+		;			  (format t "PAIR-CLAUSE: ~A~%" (flexpr.dump::clause->string clause (operator +OR+)) )
+		;			  (format t "RESOLUTED: ~A~%~%" (flexpr.dump::clause->string resolted (operator +OR+)))
+		;			  (sleep 0.3)
 					  (cond 
 						 ((and flag
-							   (null (clause-%literals result))) t)
+							   (null (clause-%literals resolted))) t)
 						 (t 
-						   (main 
+						   (handler-case 
+							 (main 
 							 (append 
 								(remove clause clause-form :test #'%clause=)
 								(list 
 								  (clause 
 									(clause-%literals clause)
 									(1+ (clause-used clause)))))
-							 result
-							 (1- dep)))))))))
-
-		;; 以下の２つの探索(someのやつ)で
-		;;
+							 resolted
+							 (1- dep))
+							 (maximum-depth-exceeded-error (c)
+								(declare (ignore c))
+								(format t "!!! GUARD INNER ERROR !!!~%")
+								nil
+								)
+							 )
+						   )))) best))))
 
 		  (or
 			;; 結論の否定を前提の節に作用させれば
@@ -130,9 +166,19 @@
 						c-clause 
 						depth) 
 				(maximum-depth-exceeded-error (c) 
-					(declare (ignore c)) nil))) 
+					(declare (ignore c)) 
+					(format t "!!! GUARD OUTER ERROR1 !!!~%")
+					nil))) 
 				conseq-clause-form)
-				
+
+			(progn
+			  (format t "!! SECOND RESOLUTION !!~%")
+			  nil
+			  )
+			
+			;; 上の経験則は必ずしも成り立たないので
+			;; こっから全探索
+
 			(some 
 			  	  ;; 前提の節についての探索を行う
 				  (lambda (p-clause)
@@ -142,7 +188,9 @@
 						  	p-clause
 					  		depth)
 					  (maximum-depth-exceeded-error (c)
-						(declare (ignore c)) nil))) 
+						(declare (ignore c)) 
+						(format t "!!! GUARD OUTER ERROR2 !!!~%")
+						nil))) 
 				  (sort 
 					premises-clause-form
 					(lambda (c1 c2) 

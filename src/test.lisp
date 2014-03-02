@@ -110,6 +110,8 @@
 	  "have(Jhon,Car) & have(Jhon,Bike)")
 	  "wants(Mike,Car) & wants(Mike,Bike)")
 
+	; prolog でやるとシングルトンパターンになるやつ
+	; これ最汎単一化子を求めるとこがいけない気がする
 	;(("AxAy.(Ez.hate(y,z) > hate(x,y))"
 	 ; "hate(Jhon,Mike)")
 	  ;"AxAy.hate(x,y)")
@@ -199,6 +201,17 @@
 	  "AnAmAkAp.(sum(k,m,p) & prd(m,n,k) > prd(m,s(n),p))")
 	   "prd(s(s(s(s(ZERO)))),s(s(ZERO)),s(s(s(s(s(s(s(s(ZERO)))))))))")
 
+	(("Ax.(P(x) > B(x))"
+	  "Ax.(C(x) > D(x))"
+	  "Ax.(Q(x) > F(x))"
+	  "Ax.(~G(x) > ~H(x))"
+	  "Ax.(B(x) > I(x))"
+	  "Ax.(~P(x) > ~J(x))"
+	  "Ax.(K(x) > ~D(x))"
+	  "Ax.(~H(x) > ~I(x))"
+	  "Ax.(~J(x) > Q(x))"
+	  "Ax.(G(x) > C(x))")
+	 "Ax.(K(x) > F(x))")
 	
 	)
 

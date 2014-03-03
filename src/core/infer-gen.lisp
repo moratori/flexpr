@@ -149,7 +149,7 @@
 							 (1- dep))
 							 (maximum-depth-exceeded-error (c)
 								(declare (ignore c))
-								(format t "!!! GUARD INNER ERROR !!!~%")
+							;	(format t "!!! GUARD INNER ERROR !!!~%")
 								nil
 								)
 							 )
@@ -167,12 +167,12 @@
 						depth) 
 				(maximum-depth-exceeded-error (c) 
 					(declare (ignore c)) 
-					(format t "!!! GUARD OUTER ERROR1 !!!~%")
+					;(format t "!!! GUARD OUTER ERROR1 !!!~%")
 					nil))) 
 				conseq-clause-form)
 
 			(progn
-			  (format t "!! SECOND RESOLUTION !!~%")
+			 ; (format t "!! SECOND RESOLUTION !!~%")
 			  nil
 			  )
 			
@@ -189,7 +189,7 @@
 					  		depth)
 					  (maximum-depth-exceeded-error (c)
 						(declare (ignore c)) 
-						(format t "!!! GUARD OUTER ERROR2 !!!~%")
+				;		(format t "!!! GUARD OUTER ERROR2 !!!~%")
 						nil))) 
 				  (sort 
 					premises-clause-form

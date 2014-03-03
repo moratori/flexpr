@@ -3,11 +3,11 @@
 (ns:defns flexpr.error
 	(:use :cl))
 
-
+@export
 (define-condition undeterminable-error (error)
   ())
 
-
+@export
 (define-condition maximum-depth-exceeded-error (error)
   ((mde-val   :initarg :mde-val
 		      :reader   mde-val-of)

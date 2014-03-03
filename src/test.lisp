@@ -93,6 +93,32 @@
 	(()
 	 "P > (Q > (P & Q))")
 
+	(("P & Q"
+	  "P > R")
+	  "R")
+
+	(("P V Q"
+	  "~P")
+	  "Q")
+
+	(("P V Q")
+	 "~(~P & ~Q)")
+
+	(("P & Q")
+	 "~(~P V ~Q)")
+
+	(("((P > Q) > P)")
+	 "P")
+
+	(("P")
+	 "P")
+
+	(("P & ~P")
+	 "Q")
+
+	(("~(P - P)")
+	 "Q - R")
+
 	(("Ax.(number(x) > number(succ(x)))"
 	  "number(Zero)")
 	  "number(succ(succ(succ(succ(Zero)))))")
@@ -220,6 +246,45 @@
 	))
 
 
+(defvar *resolution-error*
+  '(
+
+	(("P > Q" 
+	  "Q") 
+	  "P")
+
+	(("P V Q")
+	 "P")
+
+	(("P")
+	 "P & Q")
+
+	(("P V Q"
+	  "P > R")
+	 "R")
+
+	(() 
+	 "P(C)")
+
+	(("P > Q"
+	  "Q > R"
+	  "R > S"
+	  "S > T"
+	  "T > U"
+	  "U > W")
+	 "~(~W > ~P)")
+
+	(("Ax.(P(x) > Q(x))")
+	 "Ex.P(x) V Ex.Q(x)")
+
+	(("Ax.(P(x) V Q(x))")
+	 "Ax.P(x)")
+
+	
+	
+	))
+
+
 (defun parse (str)
   (flexpr.parser:string->lexpr str))
 
@@ -265,9 +330,17 @@
 		  (apply #'pl (first each))
 		  (parse (second each))))))
 
+(define-test resolution-error-test 
+	(dolist (each *resolution-error*)
+	  (assert-error
+		'flexpr.error:undeterminable-error
+		(flexpr.infer.general::resolution 
+		  (apply #'pl (first each))
+		  (parse (second each))))))
 
-(print-failures (run-tests '(formalize-test)))
-(time (print-errors (run-tests '(resolution-test))))
 
+;(print-failures (run-tests '(formalize-test)))
+;(time (print-errors (run-tests '(resolution-test))))
+(print-errors (run-tests '(resolution-error-test)))
 
 

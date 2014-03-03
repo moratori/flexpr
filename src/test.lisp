@@ -112,9 +112,11 @@
 
 	; prolog でやるとシングルトンパターンになるやつ
 	; これ最汎単一化子を求めるとこがいけない気がする
-	;(("AxAy.(Ez.hate(y,z) > hate(x,y))"
-	 ; "hate(Jhon,Mike)")
-	  ;"AxAy.hate(x,y)")
+	; mgu(vterm::const:nil , vterm::const:nil)をいじったら
+	; 通ったけど、それってこのケースにしか当てはまらないんじゃ?
+	(("AxAy.(Ez.hate(z,y) > hate(y,x))"
+	  "hate(Jhon,Mike)")
+	  "AxAy.hate(x,y)")
 
 	  (("number(Zero)")
 	    "Ex.number(x)")
@@ -212,11 +214,10 @@
 	  "Ax.(~J(x) > Q(x))"
 	  "Ax.(G(x) > C(x))")
 	 "Ax.(K(x) > F(x))")
-	
-	)
 
 
-  )
+
+	))
 
 
 (defun parse (str)
@@ -267,7 +268,6 @@
 
 (print-failures (run-tests '(formalize-test)))
 (time (print-errors (run-tests '(resolution-test))))
-
 
 
 

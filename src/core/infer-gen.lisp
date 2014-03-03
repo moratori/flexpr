@@ -11,6 +11,8 @@
 				  :eliminate?
 				  :unify)
 	(:import-from :flexpr.formalize
+				  :%formalize
+				  :formalize
 				  :convert)
 	(:import-from :flexpr.error
 				  :maximum-depth-exceeded-error
@@ -27,15 +29,25 @@
 ;; (values {C1,C2,C3...} {C1,C2,C3...})
 ;; 上の合併集合から空節が求まればおｋ
 (defun preproc (premises conseq &optional (quants-form +FORALL+) (mat-form (operator +AND+)))
-  (values
-	(loop for each in 
-		  (mapcar 
-			(lambda (x) 
-			  (convert x mat-form quants-form)) premises)
-		  append each)
-	(convert 
-	  (normal-lexpr (operator +NEG+) conseq nil)
-	  mat-form quants-form)))
+
+  (let* ((convp 
+		  (loop for each in 
+		  	(mapcar 
+			  (lambda (x) 
+			  	  (convert x mat-form quants-form)) premises)
+			append each))
+		(tmp 
+		  (normal-lexpr (operator +NEG+) conseq nil))
+		(convf 
+		  (%formalize tmp mat-form)))
+	;; conseq から量化子だけを上にもってきてやるようにしなきゃだめだ
+	;; 否定つけて %formalize したら全称量化に化けるに決まってるじゃん
+	;; そうなる前の初めの状態の存在量化の変数をもってこなければ
+	(values convp (convert tmp mat-form quants-form)
+			(when (lexpr-p convf)
+			  (loop for eachq in (quantsp-each-quant (lexpr-qpart convf))
+					if (eq (quant-qnt eachq) +EXISTS+)
+					collect (quant-var eachq))))))
 
 ;; (values flag result)
 ;; flag で導出できたかいなか
@@ -98,7 +110,7 @@
 @export
 (defun resolution (premises conseq &optional (depth +DEPTH+))
   (multiple-value-bind 
-	(premises-clause-form conseq-clause-form)
+	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
 	(let ((clause-form (append premises-clause-form
 							   conseq-clause-form)))
@@ -138,7 +150,7 @@
 					  (cond 
 						 ((and flag
 							   (null (clause-%literals resolted))) 
-						  (print (cons mgu substrule))
+						  ;(print (cons mgu substrule))
 						  t)
 						 (t 
 						   (handler-case 

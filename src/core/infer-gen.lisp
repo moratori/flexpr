@@ -66,7 +66,9 @@
 					 (append 
 					   (remove lit1 (clause-%literals clause1) :test #'%literal=) 
 					   (remove lit2 (clause-%literals clause2) :test #'%literal=))
-					 0)))))))
+					 0))
+			rule
+			)))))
 
 ;; もっとも使われてない節を優先
 (defun primary-unused (clause-form*)
@@ -102,7 +104,7 @@
 							   conseq-clause-form)))
 	  ;; clause-form が矛盾していることを 導く	
 	  	(labels 
-		  ((main (clause-form selected-clause dep)
+		  ((main (clause-form selected-clause dep substrule)
 
 				 (when (zerop dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
@@ -128,14 +130,16 @@
 					;; 残ってる C D E が実行されないうちに handler-case まで戻っちゃっ手
 					;; 結局 A は失敗だったって事になってしまうので
 					;; 下の main で handler-case するべきかもしれん
-					(destructuring-bind (clause (flag resolted)) best
+					(destructuring-bind (clause (flag resolted mgu)) best
 		;			  (format t "SELECTED-CLAUSE: ~A~%" (flexpr.dump::clause->string selected-clause (operator +OR+))  )
 		;			  (format t "PAIR-CLAUSE: ~A~%" (flexpr.dump::clause->string clause (operator +OR+)) )
 		;			  (format t "RESOLUTED: ~A~%~%" (flexpr.dump::clause->string resolted (operator +OR+)))
 		;			  (sleep 0.3)
 					  (cond 
 						 ((and flag
-							   (null (clause-%literals resolted))) t)
+							   (null (clause-%literals resolted))) 
+						  (print (cons mgu substrule))
+						  t)
 						 (t 
 						   (handler-case 
 							 (main 
@@ -146,7 +150,10 @@
 									(clause-%literals clause)
 									(1+ (clause-used clause)))))
 							 resolted
-							 (1- dep))
+							 (1- dep)
+							 (if (not (eq mgu t)) 
+							   (cons mgu substrule)
+							   substrule))
 							 (maximum-depth-exceeded-error (c)
 								(declare (ignore c))
 							;	(format t "!!! GUARD INNER ERROR !!!~%")
@@ -164,17 +171,15 @@
 				 	(main 
 				  		(remove c-clause clause-form :test #'%clause=)  
 						c-clause 
-						depth) 
+						depth
+						nil) 
 				(maximum-depth-exceeded-error (c) 
 					(declare (ignore c)) 
 					;(format t "!!! GUARD OUTER ERROR1 !!!~%")
 					nil))) 
 				conseq-clause-form)
 
-			(progn
 			 ; (format t "!! SECOND RESOLUTION !!~%")
-			  nil
-			  )
 			
 			;; 上の経験則は必ずしも成り立たないので
 			;; こっから全探索
@@ -186,7 +191,8 @@
 						(main 
 						  (remove p-clause clause-form :test #'%clause=)
 						  	p-clause
-					  		depth)
+					  		depth
+							nil)
 					  (maximum-depth-exceeded-error (c)
 						(declare (ignore c)) 
 				;		(format t "!!! GUARD OUTER ERROR2 !!!~%")

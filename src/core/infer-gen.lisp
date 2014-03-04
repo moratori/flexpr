@@ -9,9 +9,9 @@
 				  :%clause=)
 	(:import-from :flexpr.unifier
 				  :eliminate?
-				  :unify)
+				  :unify
+				  :reverse-unify)
 	(:import-from :flexpr.formalize
-				  :%formalize
 				  :formalize
 				  :convert)
 	(:import-from :flexpr.error
@@ -28,24 +28,18 @@
 ;; 
 ;; (values {C1,C2,C3...} {C1,C2,C3...})
 ;; 上の合併集合から空節が求まればおｋ
-(defun preproc (premises conseq &optional (quants-form +FORALL+) (mat-form (operator +AND+)))
-
-  (let* ((convp 
-		  (loop for each in 
-		  	(mapcar 
-			  (lambda (x) 
-			  	  (convert x mat-form quants-form)) premises)
-			append each))
-		(convf 
-		  (%formalize conseq mat-form nil)))
-	;; conseq から量化子だけを上にもってきてやるようにしなきゃだめだ
-	;; 否定つけて %formalize したら全称量化に化けるに決まってるじゃん
-	;; そうなる前の初めの状態の存在量化の変数をもってこなければ
-	(values convp (convert (normal-lexpr (operator +NEG+) convf nil) mat-form quants-form t)
-			(when (lexpr-p convf)
-			  (loop for eachq in (quantsp-each-quant (lexpr-qpart convf))
-					if (eq (quant-qnt eachq) +EXISTS+)
-					collect (quant-var eachq))))))
+(defun preproc (premises conseq &optional (quants-form +FORALL+) (mat-form (operator +AND+))) 
+  (multiple-value-bind 
+	(lexpr exist-terms) 
+	(convert (normal-lexpr (operator +NEG+) conseq nil) mat-form quants-form )
+	(values 
+	  (loop for each in 
+	    (mapcar 
+		  (lambda (x) 
+			(convert x mat-form quants-form)) premises)
+			append each)
+	  lexpr
+	  exist-terms)))
 
 ;; (values flag result)
 ;; flag で導出できたかいなか
@@ -105,20 +99,32 @@
   (primary-short clause-form*))
 
 
+(defun addrule (acc new)
+  (if (not (eq new t)) 
+	(append acc new)
+	acc ))
+
+
+;;; 
+;;; 導出に失敗 => unterminable error
+;;; 導出に成功!
+;;; 	1. conseqに存在量化子が含まれていた       => (t  result-list)
+;;;     2. conseqに存在量化子は含まれていなかった => (t nil)
+;;; 
+
 @export
 (defun resolution (premises conseq &optional (depth +DEPTH+))
   (multiple-value-bind 
 	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
 	
-	(print exist-terms)
-
 	(let ((clause-form (append premises-clause-form
-							   conseq-clause-form)))
-	  ;; clause-form が矛盾していることを 導く	
-	  	(labels 
+							   conseq-clause-form))
+		  ;; これは副作用なので扱い注意
+		  (specific-term nil))
+	  	
+	    (labels 
 		  ((main (clause-form selected-clause dep substrule)
-
 				 (when (zerop dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
@@ -132,78 +138,56 @@
 
 				   (some 
 					 (lambda (best)
-					;; ここでの clause が selected-clause とペアになる節
+					;; ここでの best が selected-clause とペアになる節
 					
-					;; main は maximum-depth-exceeded-error お シグナルするわけだけど
-					;; ここで 受けないとhandler-caseが待ってる呼び出しまで戻っっちゃうきがする
-					;; つまり結論の否定を初めに一個ずつ呼ぶわけだけど
-					;; それを A として A と融合可能な節々(B C D E)が best に束縛され
-					;; それらの各々をここの some で受け取るんだけど
-					;; B で main を呼んだ時に error　をシグナリングされると
-					;; 残ってる C D E が実行されないうちに handler-case まで戻っちゃっ手
-					;; 結局 A は失敗だったって事になってしまうので
-					;; 下の main で handler-case するべきかもしれん
 					(destructuring-bind (clause (flag resolted mgu)) best
-		;			  (format t "SELECTED-CLAUSE: ~A~%" (flexpr.dump::clause->string selected-clause (operator +OR+))  )
-		;			  (format t "PAIR-CLAUSE: ~A~%" (flexpr.dump::clause->string clause (operator +OR+)) )
-		;			  (format t "RESOLUTED: ~A~%~%" (flexpr.dump::clause->string resolted (operator +OR+)))
-		;			  (sleep 0.3)
 					  (cond 
-						 ((and flag
-							   (null (clause-%literals resolted))) 
-						  ;;
-						  ;; 存在量化されていた項 exist-terms
-						  ;; が最終的になにに置換されたのかを
-						  ;; 以下の substrule とから求めて
-						  ;; values で t と返す
-						  ;;
-						  (print (cons mgu substrule))
+						 ((and flag (null (clause-%literals resolted))) 
+						  (setf specific-term
+								(reverse-unify 
+								  exist-terms
+								  (addrule substrule mgu))) 
 						  t)
+
 						 (t 
 						   (handler-case 
 							 (main 
-							 (append 
-								(remove clause clause-form :test #'%clause=)
-								(list 
-								  (clause 
-									(clause-%literals clause)
-									(1+ (clause-used clause)))))
-							 resolted
-							 (1- dep)
-							 (if (not (eq mgu t)) 
-							   (cons mgu substrule)
-							   substrule))
+							   (append 
+							     (remove clause clause-form :test #'%clause=)
+								 (list 
+								   (clause 
+								   (clause-%literals clause)
+								   (1+ (clause-used clause)))))
+							   resolted
+							   (1- dep)
+							   (addrule substrule mgu))
 							 (maximum-depth-exceeded-error (c)
-								(declare (ignore c))
-							;	(format t "!!! GUARD INNER ERROR !!!~%")
-								nil
-								)
-							 )
-						   )))) best))))
+								(declare (ignore c)) nil)))))) best))))
 
 		  (or
 			;; 結論の否定を前提の節に作用させれば
 			;; 手っ取り早く矛盾を導けるだろうというヒューリスティクスが以下
-			(some 
-			  (lambda (c-clause)
-				(handler-case 
-				 	(main 
-				  		(remove c-clause clause-form :test #'%clause=)  
-						c-clause 
-						depth
-						nil) 
-				(maximum-depth-exceeded-error (c) 
-					(declare (ignore c)) 
-					;(format t "!!! GUARD OUTER ERROR1 !!!~%")
-					nil))) 
-				conseq-clause-form)
+		    (when (some 
+					(lambda (c-clause)
+					  (handler-case 
+						(main 
+						  (remove c-clause clause-form :test #'%clause=)  
+				          c-clause 
+					      depth
+					      nil) 
+					  (maximum-depth-exceeded-error (c) 
+						(declare (ignore c)) nil))) 
+					conseq-clause-form)
+			  (list t specific-term))	
 
-			 ; (format t "!! SECOND RESOLUTION !!~%")
+			  (format t "!! SECOND RESOLUTION !!~%")
 			
 			;; 上の経験則は必ずしも成り立たないので
 			;; こっから全探索
+			;; まだテストが少ないからなんとも言えないけど
+			;; 上のやつで、(52/54)はうまくいってしまう
 
-			(some 
+			(when (some 
 			  	  ;; 前提の節についての探索を行う
 				  (lambda (p-clause)
 					(handler-case 
@@ -213,14 +197,13 @@
 					  		depth
 							nil)
 					  (maximum-depth-exceeded-error (c)
-						(declare (ignore c)) 
-				;		(format t "!!! GUARD OUTER ERROR2 !!!~%")
-						nil))) 
+						(declare (ignore c)) nil))) 
 				  (sort 
 					premises-clause-form
 					(lambda (c1 c2) 
 					  (< (length (clause-%literals c1))
 						 (length (clause-%literals c2))))))
+			  (list t specific-term))
 			
 			(error (make-condition 'undeterminable-error)))))))
 

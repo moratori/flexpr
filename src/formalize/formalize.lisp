@@ -39,27 +39,23 @@
 
 
 
-
-
-@export
-(defun %formalize (lexpr op flag)
-  ;; ここのフラグが立っていると rename しない
-  (let ((r (literalize 
-		  (remove-operator 
-		    (remove-disuse-quant lexpr)))))
-	(c/dnf 
+(defun %formalize (lexpr op)
+  ;; ここのフラグが立っていると rename remove-op remove-dis しない
+  (c/dnf 
 	  (prefix 
-		(if flag r
-		  (rename-bound-var r nil nil))) op)))
+		(rename-bound-var 
+		  (literalize 
+			(remove-operator 
+			  (remove-disuse-quant lexpr))) nil nil)) op))
 
 ;;; スコーレム標準形までもっていく処理
 ;;; 命題論理式の場合はCNFまたはDNF形にするだけ
 ;;; かなりキモい式(同値演算子でやたら式の長さが増えるようなの)をformalizeしようとすると
 ;;; ヒープ食いつぶす場合あり
 @export
-(defun formalize (lexpr &optional (op (operator +AND+)) (quant +EXISTS+) (flag nil))
+(defun formalize (lexpr &optional (op (operator +AND+)) (quant +EXISTS+))
   (skolemization
-	(%formalize lexpr op flag) quant))
+	(%formalize lexpr op) quant))
 
 
 
@@ -159,23 +155,24 @@
 ;;; op が and の時: その節集合は真を表す
 ;;;
 ;;; どちらも、演算における単位元の扱いの性質
+;;;
+;;; bquant で表される 量化子に束縛される変数を取得する
 @export
-(defun convert (lexpr op quant &optional (flag nil))
+(defun convert (lexpr op quant &optional (bquant +FORALL+))
   (assert (or (typep lexpr 'atomic-lexpr)
 			  (typep lexpr 'normal-lexpr)
 		      (typep lexpr 'lexpr)))
   ;; flag がたってたら事情でformalzieされてる式が渡ってきてる
-  (let ((formed (if flag 
-				  (formalize lexpr op quant flag)
-				  (formalize lexpr op quant)
-				  )))
+  (let* ((%formed (%formalize lexpr op))
+	   	 (formed  (skolemization %formed quant)))
 	(unless (closed? formed)
 		(error 
 		  (make-condition 'illformed-error
 			:ie-mes "closed formula required."
 			:ie-val formed
 			:ie-where 'convert)))
-	(reduction-clause-form 
+	(values 
+		(reduction-clause-form 
 		(mapcar 
 		  (lambda (clause)
 			(clause
@@ -183,8 +180,11 @@
 			  (lambda (literal)
 				(literal->%literal literal)) clause)
 			  0)) 
-		  (get-clause formed op)) op)
-	))
+		  (get-clause formed op)) op)  
+		  (when (lexpr-p %formed)
+			(loop for each in (quantsp-each-quant (lexpr-qpart %formed))
+				  if (eq bquant (quant-qnt each))
+				  collect (quant-var each))))))
 
 
 

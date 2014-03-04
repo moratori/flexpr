@@ -333,7 +333,7 @@
 	  (assert-true 
 		(flexpr.infer.general::resolution 
 		  (apply #'pl (first each))
-		  (parse (second each))))))
+		  (parse (second each)))	)))
 
 (define-test resolution-error-test 
 	(dolist (each *resolution-error*)
@@ -350,13 +350,17 @@
 
 
 
-(flexpr.infer.general:resolution 
+(destructuring-bind (result unify) 
+ (flexpr.infer.general:resolution 
   (pl
 	  "Ax.sum(x,ZERO,x)"
-	  "Ax.sum(ZERO,x,x)"
 	  "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))"
-	  "Ax.prd(x,ZERO,ZERO)"
-	  "AnAmAkAp.(sum(k,m,p) & prd(m,n,k) > prd(m,s(n),p))"
+	  
 	)
-  (parse "Ex.(sum(ZERO , s(s(ZERO)) , x))")
+  (parse "Ex.sum(s(ZERO) , s(s(ZERO)) , x)")
+  )
+
+ (print result)
+ (print unify)
+
   )

@@ -220,3 +220,52 @@
 			 0))
 		 (clause-%literals clause))
 	   0))) 
+
+
+
+
+(defun specific-term (term rule)
+  (if (null rule) term
+	(let* ((rest
+			(member-if 
+			  (lambda (x)
+				(term= (car x) term)) rule))
+		   (target (car rest)))
+	  (if (null rest) term
+		 (destructuring-bind (self . new) target
+		(if (vterm-p new) 
+		  (specific-term new (cdr rest))
+		  (apply #'fterm
+			(fterm-fsymbol new)
+			(mapcar 
+			  (lambda (x)
+				;; ここで rule を直に渡してるのはわざとで、
+				;; 関数記号の場合の引数となるシンボルが
+				;; rest 以前に含まれている可能性があるとして
+				;; こうしてるけど 無限ループするんじゃ?
+				;;
+				;; x -> f(x) みたいなパターンでてくるのクソ厄介
+				;; 無限項のパターンマッチは起こってないはずなのに
+				;; これなんでおきんの
+				;; 今は以下のように (cdr rest)にして
+				;; 減らしてるけど、これだと再帰ルールの時とかに誤る
+				(specific-term x (cdr rest))) 
+			  (fterm-terms new)))))))))
+
+
+@export
+(defun reverse-unify (exist-terms rule)
+  ;; exist-terms is (vterm1 vterm2 ...)
+  ;; rule is ((a1 . b1) (a2 . b2) ...)
+  (print exist-terms)
+  (format t " !!!-- DEBUG PRING RULE  --!!!~%~A~%~%~%" rule)
+
+  (mapcar 
+	(lambda (x)
+	  (assert (typep x 'vterm))
+	(cons x (specific-term x rule))) 
+	
+	exist-terms)
+  
+  )
+

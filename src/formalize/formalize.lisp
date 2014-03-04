@@ -42,22 +42,24 @@
 
 
 @export
-(defun %formalize (lexpr op)
-  (c/dnf 
-	(prefix 
-	  (rename-bound-var 
-	    (literalize 
+(defun %formalize (lexpr op flag)
+  ;; ここのフラグが立っていると rename しない
+  (let ((r (literalize 
 		  (remove-operator 
-		    (remove-disuse-quant lexpr))) nil nil))op))
+		    (remove-disuse-quant lexpr)))))
+	(c/dnf 
+	  (prefix 
+		(if flag r
+		  (rename-bound-var r nil nil))) op)))
 
 ;;; スコーレム標準形までもっていく処理
 ;;; 命題論理式の場合はCNFまたはDNF形にするだけ
 ;;; かなりキモい式(同値演算子でやたら式の長さが増えるようなの)をformalizeしようとすると
 ;;; ヒープ食いつぶす場合あり
 @export
-(defun formalize (lexpr &optional (op (operator +AND+)) (quant +EXISTS+))
+(defun formalize (lexpr &optional (op (operator +AND+)) (quant +EXISTS+) (flag nil))
   (skolemization
-	(%formalize lexpr op) quant))
+	(%formalize lexpr op flag) quant))
 
 
 
@@ -158,12 +160,15 @@
 ;;;
 ;;; どちらも、演算における単位元の扱いの性質
 @export
-(defun convert (lexpr op quant)
+(defun convert (lexpr op quant &optional (flag nil))
   (assert (or (typep lexpr 'atomic-lexpr)
 			  (typep lexpr 'normal-lexpr)
 		      (typep lexpr 'lexpr)))
   ;; flag がたってたら事情でformalzieされてる式が渡ってきてる
-  (let ((formed (formalize lexpr op quant)))
+  (let ((formed (if flag 
+				  (formalize lexpr op quant flag)
+				  (formalize lexpr op quant)
+				  )))
 	(unless (closed? formed)
 		(error 
 		  (make-condition 'illformed-error

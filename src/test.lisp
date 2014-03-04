@@ -344,20 +344,19 @@
 		  (parse (second each))))))
 
 
-(print-failures (run-tests '(formalize-test)))
-(print-errors (run-tests '(resolution-test)))
-(print-errors (run-tests '(resolution-error-test)))
+;(print-failures (run-tests '(formalize-test)))
+;(print-errors (run-tests '(resolution-test)))
+;(print-errors (run-tests '(resolution-error-test)))
 
 
 
-#|
 (flexpr.infer.general:resolution 
   (pl
 	  "Ax.sum(x,ZERO,x)"
+	  "Ax.sum(ZERO,x,x)"
 	  "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))"
 	  "Ax.prd(x,ZERO,ZERO)"
 	  "AnAmAkAp.(sum(k,m,p) & prd(m,n,k) > prd(m,s(n),p))"
 	)
-  (parse "Ex.(prd(s(s(s(ZERO))) , s(s(ZERO)) , x))")
+  (parse "Ex.(sum(ZERO , s(s(ZERO)) , x))")
   )
-|#

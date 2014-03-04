@@ -36,14 +36,12 @@
 			  (lambda (x) 
 			  	  (convert x mat-form quants-form)) premises)
 			append each))
-		(tmp 
-		  (normal-lexpr (operator +NEG+) conseq nil))
 		(convf 
-		  (%formalize tmp mat-form)))
+		  (%formalize conseq mat-form nil)))
 	;; conseq から量化子だけを上にもってきてやるようにしなきゃだめだ
 	;; 否定つけて %formalize したら全称量化に化けるに決まってるじゃん
 	;; そうなる前の初めの状態の存在量化の変数をもってこなければ
-	(values convp (convert tmp mat-form quants-form)
+	(values convp (convert (normal-lexpr (operator +NEG+) convf nil) mat-form quants-form t)
 			(when (lexpr-p convf)
 			  (loop for eachq in (quantsp-each-quant (lexpr-qpart convf))
 					if (eq (quant-qnt eachq) +EXISTS+)
@@ -112,6 +110,9 @@
   (multiple-value-bind 
 	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
+	
+	(print exist-terms)
+
 	(let ((clause-form (append premises-clause-form
 							   conseq-clause-form)))
 	  ;; clause-form が矛盾していることを 導く	
@@ -150,7 +151,13 @@
 					  (cond 
 						 ((and flag
 							   (null (clause-%literals resolted))) 
-						  ;(print (cons mgu substrule))
+						  ;;
+						  ;; 存在量化されていた項 exist-terms
+						  ;; が最終的になにに置換されたのかを
+						  ;; 以下の substrule とから求めて
+						  ;; values で t と返す
+						  ;;
+						  (print (cons mgu substrule))
 						  t)
 						 (t 
 						   (handler-case 

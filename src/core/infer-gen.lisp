@@ -11,6 +11,8 @@
 				  :eliminate?
 				  :unify
 				  :reverse-unify)
+	(:import-from :flexpr.formalize.mat
+				  :rename-clause)
 	(:import-from :flexpr.formalize
 				  :formalize
 				  :convert)
@@ -124,7 +126,7 @@
 		  (specific-term nil))
 	  	
 	    (labels 
-		  ((main (clause-form selected-clause dep substrule)
+		  ((main (clause-form selected-clause dep substrule exist-terms)
 				 (when (zerop dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
@@ -141,12 +143,12 @@
 					;; ここでの best が selected-clause とペアになる節
 					
 					(destructuring-bind (clause (flag resolted mgu)) best
+					  
 					  (cond 
 						 ((and flag (null (clause-%literals resolted))) 
 						  (setf specific-term
 								(reverse-unify 
-								  exist-terms
-								  (addrule substrule mgu))) 
+								  exist-terms mgu)) 
 						  t)
 
 						 (t 
@@ -154,13 +156,14 @@
 							 (main 
 							   (append 
 							     (remove clause clause-form :test #'%clause=)
-								 (list 
+								 (list ;; append するための list
 								   (clause 
-								   (clause-%literals clause)
-								   (1+ (clause-used clause)))))
+									 (rename-clause (clause-%literals clause)) 
+									 (1+ (clause-used clause)))))
 							   resolted
 							   (1- dep)
-							   (addrule substrule mgu))
+							   (addrule substrule mgu)
+							   (reverse-unify exist-terms mgu))
 							 (maximum-depth-exceeded-error (c)
 								(declare (ignore c)) nil)))))) best))))
 
@@ -174,18 +177,15 @@
 						  (remove c-clause clause-form :test #'%clause=)  
 				          c-clause 
 					      depth
-					      nil) 
+					      nil
+						  exist-terms) 
 					  (maximum-depth-exceeded-error (c) 
 						(declare (ignore c)) nil))) 
 					conseq-clause-form)
-			  (list t specific-term))	
+			  (list t exist-terms specific-term))	
 
 			  (format t "!! SECOND RESOLUTION !!~%")
 			
-			;; 上の経験則は必ずしも成り立たないので
-			;; こっから全探索
-			;; まだテストが少ないからなんとも言えないけど
-			;; 上のやつで、(52/54)はうまくいってしまう
 
 			(when (some 
 			  	  ;; 前提の節についての探索を行う
@@ -195,7 +195,8 @@
 						  (remove p-clause clause-form :test #'%clause=)
 						  	p-clause
 					  		depth
-							nil)
+							nil
+							exist-terms)
 					  (maximum-depth-exceeded-error (c)
 						(declare (ignore c)) nil))) 
 				  (sort 
@@ -203,7 +204,7 @@
 					(lambda (c1 c2) 
 					  (< (length (clause-%literals c1))
 						 (length (clause-%literals c2))))))
-			  (list t specific-term))
+			  (list t exist-terms specific-term))
 			
 			(error (make-condition 'undeterminable-error)))))))
 

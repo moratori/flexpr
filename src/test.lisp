@@ -136,10 +136,6 @@
 	  "have(Jhon,Car) & have(Jhon,Bike)")
 	  "wants(Mike,Car) & wants(Mike,Bike)")
 
-	; prolog でやるとシングルトンパターンになるやつ
-	; これ最汎単一化子を求めるとこがいけない気がする
-	; mgu(vterm::const:nil , vterm::const:nil)をいじったら
-	; 通ったけど、それってこのケースにしか当てはまらないんじゃ?
 	(("AxAy.(Ez.hate(z,y) > hate(y,x))"
 	  "hate(Jhon,Mike)")
 	  "AxAy.hate(x,y)")
@@ -344,23 +340,30 @@
 		  (parse (second each))))))
 
 
-;(print-failures (run-tests '(formalize-test)))
-;(print-errors (run-tests '(resolution-test)))
-;(print-errors (run-tests '(resolution-error-test)))
+(print-failures (run-tests '(formalize-test)))
+(print-errors (run-tests '(resolution-test)))
+(print-errors (run-tests '(resolution-error-test)))
 
 
-
-(destructuring-bind (result unify) 
+(destructuring-bind (result before unify) 
  (flexpr.infer.general:resolution 
   (pl
-	  "Ax.sum(x,ZERO,x)"
-	  "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))"
-	  
+	
+	"AxAy.(parent(x,y) > ancestor(x,y))"
+	"AxAyAz.(parent(x,y) & parent(x,z) > sibling(y,z) & sibling(z,y))"
+	"AxAyAz.(parent(x,y) & parent(y,z) > gparent(x,z))"
+	"AxAyAz.(sibling(x,y) & parent(x,z) > P(z,y))"
+	"parent(Namihei,Sazae)"
+	"parent(Namihei,Katuo)"
+	"parent(Namihei,Wakame)"
+	"parent(Sazae,Tara)"
 	)
-  (parse "Ex.sum(s(ZERO) , s(s(ZERO)) , x)")
+  (parse 
+	"ExEyEz.(P(x,z) & gparent(y,x))"
+	)
   )
 
- (print result)
- (print unify)
+	(format t "~%~%RESULT = ~A~%BEFORE = ~A~%UNIFY = ~A~%" result before unify)
 
   )
+

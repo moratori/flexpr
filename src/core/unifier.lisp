@@ -42,7 +42,7 @@
 	 ;(acons t1 t2 nil) がもともとだったけど
 	 ;逆にしたら(acons t2 t1 nil)テスト通ったんだけど
 	 ;それってそのテストケースに固有な解決方法になってないか
-	 (acons t2 t1 nil)
+	 (acons t1 t2 nil)
 	 )
 	(t nil)))
 
@@ -253,19 +253,33 @@
 			  (fterm-terms new)))))))))
 
 
+
+
+(defun %reverse-unify (term rule)
+  (if (vterm-p term)
+	(let ((res (find-if (lambda (x) (term= (car x) term)) rule)))
+	  (if (null res) term
+		(cdr res)))
+	 (apply #'fterm (fterm-fsymbol term) 
+			 (mapcar 
+			   (lambda (x)
+				 (%reverse-unify x rule)) 
+			   (fterm-terms term)))
+	))
+
+
 @export
 (defun reverse-unify (exist-terms rule)
   ;; exist-terms is (vterm1 vterm2 ...)
   ;; rule is ((a1 . b1) (a2 . b2) ...)
-  (print exist-terms)
-  (format t " !!!-- DEBUG PRING RULE  --!!!~%~A~%~%~%" rule)
+ ; (print exist-terms)
+;  (format t " !!!-- DEBUG PRING RULE  --!!!~%~A~%~%~%" rule)
 
-  (mapcar 
-	(lambda (x)
-	  (assert (typep x 'vterm))
-	(cons x (specific-term x rule))) 
-	
-	exist-terms)
-  
-  )
+	;(format t "~%~%TERMS = ~A~%~%MGU = ~A~%" exist-terms rule)
+
+	(if (eq rule t) 
+	  exist-terms
+	  (mapcar 
+		(lambda (x) (%reverse-unify x  rule))
+	  exist-terms)))
 

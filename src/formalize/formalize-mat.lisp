@@ -9,6 +9,8 @@
 				  :opr-equal?
 				  :opposite-opr
 				  :clause?
+				  :term=
+				  :substitute-term
 				  :literal?)
 	(:import-from :flexpr.error
 				  :struct-unmatch-error
@@ -152,4 +154,49 @@
 (defmethod get-clause ((lexpr lexpr) (op operator))
   (get-clause (lexpr-expr lexpr) op))
 
+
+
+
+
+
+
+(defun collect-free (term)
+  (cond 
+	((and (vterm-p term) (not (vterm-const term))) (list term))
+	((fterm-p term) 
+	 (loop for each in (fterm-terms term) :append (collect-free each)))
+	(t nil)))
+
+
+
+
+@export
+(defun rename-clause (%literals-list)
+  (assert (every (lambda (x) (typep x '%literal)) %literals-list))
+
+  (let ((bounds 
+		  (loop for each in 
+				(remove-duplicates 
+				  (loop :for each-lit :in %literals-list
+				:append 
+				(loop for each-term in (%literal-terms each-lit)
+					  :append (collect-free each-term)))
+				 :test  #'term=)
+				collect (cons each (vterm (gensym +RENAME-PREFIX+) nil)))))
+ 
+	(mapcar 
+	  (lambda (each) 
+		(%literal 
+		  (%literal-negation each)
+		  (%literal-pred each)
+		  (mapcar 
+			(lambda (x)
+			  (assert (or (vterm-p x) (fterm-p x)))
+			  (reduce 
+				(lambda (acc y)
+				  (substitute-term acc (car y) (cdr y))
+				  ) bounds :initial-value x)
+			  ) 
+			(%literal-terms each))
+		  (%literal-used each))) %literals-list)))
 

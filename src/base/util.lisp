@@ -311,6 +311,21 @@
 	   :test #'%literal=))))
 
 
+;; これとおんなじようなのが unifier にも定義されてるけど後でこれ
+;; 使うようにリファクタリング〜
+@export
+(defun substitute-term (term old new)
+  (cond 
+	((vterm-p term)
+	 (if (term= old term) new term))
+	((fterm-p term)
+	 (apply #'fterm 
+			(fterm-fsymbol term)
+			(mapcar 
+			  (lambda (x) 
+				(substitute-term x old new)) 
+				(fterm-terms term))))
+	(t (error "subst error ! ~A" term))))
 
 
 

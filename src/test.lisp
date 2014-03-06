@@ -403,3 +403,13 @@
   "(((P > (R & ~S)) > P) > P)"
   )
 
+
+
+(infer 
+  "Es.hb(s)"
+
+  "AxAs.(~onbox(s) > at(Box,x,pushbox(x,s)))"
+  "As.onbox(climbbox(s))"
+  "As.(onbox(s) & at(Box,C,s) > hb(grasp(s)))"
+  "AxAs.(at(Box,x,s) > at(Box,x,climbbox(s)))"
+  "Es.~onbox(s)")

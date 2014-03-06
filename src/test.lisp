@@ -119,6 +119,22 @@
 	(("~(P - P)")
 	 "Q - R")
 
+	(("P > Q")
+	 "~(P & ~Q)")
+
+
+	(("(P V Q) & (~P V ~Q)")
+	 "P - ~Q"
+	 )
+
+	(("P - ~Q")
+	 "(P V Q) & (~P V ~Q)"
+	 )
+
+	(()
+	 "(P - ~Q) - ((P V Q) & (~P V ~Q))")
+
+
 	(("Ax.(number(x) > number(succ(x)))"
 	  "number(Zero)")
 	  "number(succ(succ(succ(succ(Zero)))))")
@@ -311,6 +327,20 @@
 (defun pl (&rest strings)
   (mapcar #'parse strings))
 
+
+(defun infer (conseq &rest premises)
+  (destructuring-bind (r b u)
+	(flexpr.infer.general::resolution
+	  (apply #'pl premises)
+	  (parse conseq))
+	(format t "~%~%RESULT~%~A~%TERM~%~A~%~%" r 
+			(loop for eachb in b
+				  for eachu in u
+				  collect 
+				  (cons (flexpr.dump::term->string eachb)
+						(flexpr.dump::term->string eachu))))))
+
+
 (define-test formalize-test 
 	(dolist (each-case *formalize-test-data*)
 	  (destructuring-bind (data fa fo ca co) each-case
@@ -340,30 +370,36 @@
 		  (parse (second each))))))
 
 
-(print-failures (run-tests '(formalize-test)))
-(print-errors (run-tests '(resolution-test)))
-(print-errors (run-tests '(resolution-error-test)))
+;(print-failures (run-tests '(formalize-test)))
+;(print-errors (run-tests '(resolution-test)))
+;(print-errors (run-tests '(resolution-error-test)))
 
 
-(destructuring-bind (result before unify) 
- (flexpr.infer.general:resolution 
-  (pl
-	
-	"AxAy.(parent(x,y) > ancestor(x,y))"
-	"AxAyAz.(parent(x,y) & parent(x,z) > sibling(y,z) & sibling(z,y))"
-	"AxAyAz.(parent(x,y) & parent(y,z) > gparent(x,z))"
-	"AxAyAz.(sibling(x,y) & parent(x,z) > P(z,y))"
-	"parent(Namihei,Sazae)"
-	"parent(Namihei,Katuo)"
-	"parent(Namihei,Wakame)"
-	"parent(Sazae,Tara)"
-	)
-  (parse 
-	"ExEyEz.(P(x,z) & gparent(y,x))"
-	)
+
+(infer 
+  "Ex.(sister(x,Katuo) & R(Tara,x))"
+
+  "AxAyAz.(parent(x,y) & parent(x,z) > sibling(y,z) & sibling(z,y))"
+  "AxAyAz.(sibling(x,y) & parent(x,z) > R(z,y))"
+  "AxAy.(sibling(x,y) & female(x) > sister(x,y))"
+  "female(Wakame)"
+  "female(Sazae)"
+  "parent(Namihei,Sazae)"
+  "parent(Namihei,Katuo)"
+  "parent(Namihei,Wakame)"
+  "parent(Sazae,Tara)"
+
   )
 
-	(format t "~%~%RESULT = ~A~%BEFORE = ~A~%UNIFY = ~A~%" result before unify)
+(infer 
+  "Ex.sum(s(ZERO),s(ZERO),x)"
 
+  "Ax.(sum(x,ZERO,x) & sum(ZERO,x,x))"
+  "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))"  
+  )
+
+
+(infer 
+  "(((P > (R & ~S)) > P) > P)"
   )
 

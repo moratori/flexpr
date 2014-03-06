@@ -112,13 +112,6 @@
   (primary-short clause-form*))
 
 
-(defun choices (selected-clause all) 
-	(cf-sort
-	  (loop for each-c in all
-			for rule = (multiple-value-list (resolution? each-c selected-clause)) 
-			if (not (null (first rule)))
-			  collect (list each-c rule))))
-
 ;;; 
 ;;; 導出に失敗 => unterminable error
 ;;; 導出に成功!
@@ -132,41 +125,45 @@
 	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
 	
-	(let ((clause-form (append premises-clause-form conseq-clause-form))
+	(let ((clause-form (append premises-clause-form
+							   conseq-clause-form))
+		  ;; これは副作用なので扱い注意
 		  (specific-term nil))
+	  
+		(format t "CLAUSE FORM~%~A~%~%"
+				(flexpr.dump:clause-form->string clause-form (operator +AND+)))
 
 	    (labels 
-		  ((main (clause-form r-clause-form selected-clause dep exist-terms)
-
+		  ((main (clause-form selected-clause dep exist-terms)
 				 (when (zerop dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
 										  :mde-where 'resolution)))
-
-				 ;; choices には今までの導出で出てきた節は含まれていない
-				 ;; choices* にはそれらが含まれている
-				 (let*  ((choices  (choices selected-clause clause-form))
-					     (choices* (append choices 
-										   (when (every (lambda (x) (> (clause-used x)  0)) clause-form)
-											 (choices selected-clause r-clause-form)))))
+				 (let ((best
+						 (cf-sort
+						   (loop for each-c in clause-form
+								 for rule = (multiple-value-list (resolution? each-c selected-clause)) 
+								 if (not (null (first rule)))
+								   collect (list each-c rule)))))
 
 				   (some 
-					 (lambda (each-choice)
+					 (lambda (best)
 					;; ここでの best が selected-clause とペアになる節
 					
-					(destructuring-bind (clause (flag resolted mgu)) each-choice
+					(destructuring-bind (clause (flag resolted mgu)) best
 					  
 					 ;(format t "SELECTED~%~A~%~%OPPOSITE~%~A~%~%RESOLUTED~%~A~%~%=================================~%" 
-					;	  (flexpr.dump:clause->string selected-clause #0=(operator +OR+)) 
+					;		  (flexpr.dump:clause->string selected-clause #0=(operator +OR+)) 
 					;	  (flexpr.dump:clause->string clause #0#) 
-					;	  (flexpr.dump:clause->string resolted #0#))
-					 ;(sleep 0.3)
+					;		  (flexpr.dump:clause->string resolted #0#))
+					  ;(sleep 0.4)
 
 					  (cond 
 						 ((and flag (null (clause-%literals resolted))) 
 						  (setf specific-term
 								(reverse-unify 
-								  exist-terms mgu)) t)
+								  exist-terms mgu)) 
+						  t)
 
 						 (t 
 						   (handler-case 
@@ -176,20 +173,16 @@
 								 (list ;; append するための list
 								   (clause 
 									 (rename-clause (clause-%literals clause)) 
-									 (1+ (clause-used clause)))))
-
-							   (adjoin 
-								 (clause 
+									 (1+ (clause-used clause))))
+								 (list
+								   (clause 
 									 (clause-%literals selected-clause)
-									 (1+ (clause-used selected-clause)))
-								 r-clause-form
-								 :test #'%clause=)
-
+									 (1+ (clause-used selected-clause)))))
 							   resolted
 							   (1- dep)
 							   (reverse-unify exist-terms mgu))
 							 (maximum-depth-exceeded-error (c)
-								(declare (ignore c)) nil)))))) choices*))))
+								(declare (ignore c)) nil)))))) best))))
 
 		  (or
 			;; 結論の否定を前提の節に作用させれば
@@ -199,7 +192,6 @@
 					  (handler-case 
 						(main 
 						  (remove c-clause clause-form :test #'%clause=)  
-						  nil
 				          c-clause 
 					      depth
 						  exist-terms) 
@@ -208,16 +200,15 @@
 					conseq-clause-form)
 			  (list t exist-terms specific-term))	
 
-			  (format t "!! SECOND RESOLUTION !!~%" )
-
+			  (format t "!! SECOND RESOLUTION !!~%")
+			
 
 			(when (some 
 			  	  ;; 前提の節についての探索を行う
 				  (lambda (p-clause)
 					(handler-case 
 						(main 
-						    (remove p-clause clause-form :test #'%clause=)
-							nil
+						  (remove p-clause clause-form :test #'%clause=)
 						  	p-clause
 					  		depth
 							exist-terms)

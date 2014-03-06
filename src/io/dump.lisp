@@ -221,7 +221,7 @@
 		(apply #'atomic-lexpr 
 			   (%literal-pred %literal)
 			   (%literal-terms %literal)))))
-
+@export
 (defun clause->string (clause op)
   (assert (typep clause 'clause))
   (format nil 

@@ -46,7 +46,11 @@
 				  :components 
 					((:file "unifier")
 					 (:file "infer-gen")
-					 (:file "infer-sld")))))))))
+					 (:file "infer-sld")))))
+			 (:module "interface"
+			  :serial t
+			  :components 
+				((:file "repl")))))))
 
 
 

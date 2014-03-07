@@ -1,13 +1,13 @@
 
 
 
-(ns:defns flexpr.parser
+(ns:defns flexpr.system.parser
 	(:use :cl
-		  :flexpr.constant
-		  :flexpr.struct)
-	(:import-from :flexpr.util
+		  :flexpr.system.constant
+		  :flexpr.system.struct)
+	(:import-from :flexpr.system.util
 				  :opr->strength)
-	(:import-from :flexpr.error
+	(:import-from :flexpr.system.error
 				  :illformed-parse-error))
 
 

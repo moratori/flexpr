@@ -4,11 +4,11 @@
 (ql:quickload :lisp-unit)
 (use-package :lisp-unit)
 
-(import '(flexpr.constant:+FORALL+
-		  flexpr.constant:+EXISTS+))
+(import '(flexpr.system.constant:+FORALL+
+		  flexpr.system.constant:+EXISTS+))
 
-(defvar *and* (flexpr.struct:operator flexpr.constant:+AND+))
-(defvar *or* (flexpr.struct:operator flexpr.constant:+OR+))
+(defvar *and* (flexpr.system.struct:operator flexpr.system.constant:+AND+))
+(defvar *or* (flexpr.system.struct:operator flexpr.system.constant:+OR+))
 
 
 ;; テストデータ作るのが死ぬほど大変なので
@@ -303,26 +303,26 @@
 
 
 (defun parse (str)
-  (flexpr.parser:string->lexpr str))
+  (flexpr.system.parser:string->lexpr str))
 
 (defun dump1  (lexpr)
   "convert lexpr to string expression from inner structure.
   lexpr must be atomic-lexpr or normal-lexpr or lexpr"
-  (flexpr.dump:lexpr->string lexpr))
+  (flexpr.system.dump:lexpr->string lexpr))
 
 (defun dump2 (clause-form op)
   "convert clause form to string expression.
   clause form must be set of set of %literal structure."
-  (flexpr.dump:clause-form->string clause-form op))
+  (flexpr.system.dump:clause-form->string clause-form op))
 
 (defun formal (str op q)
   "convert to prenex normal form end matrix is cnf or dnf"
-  (dump1 (flexpr.formalize:formalize (parse str) op q)))
+  (dump1 (flexpr.system.formalize:formalize (parse str) op q)))
 
 (defun convert (str op q)
   "convert to clause form"
   (dump2 
-	(flexpr.formalize:convert (parse str) op q) op))
+	(flexpr.system.formalize:convert (parse str) op q) op))
 
 (defun pl (&rest strings)
   (mapcar #'parse strings))
@@ -330,15 +330,15 @@
 
 (defun infer (conseq &rest premises)
   (destructuring-bind (r b u)
-	(flexpr.infer.general::resolution
+	(flexpr.system.infer.wrap::resolution
 	  (apply #'pl premises)
 	  (parse conseq))
 	(format t "~%~%RESULT~%~A~%TERM~%~A~%~%" r 
 			(loop for eachb in b
 				  for eachu in u
 				  collect 
-				  (cons (flexpr.dump::term->string eachb)
-						(flexpr.dump::term->string eachu))))))
+				  (cons (flexpr.system.dump::term->string eachb)
+						(flexpr.system.dump::term->string eachu))))))
 
 
 (define-test formalize-test 
@@ -357,15 +357,15 @@
 (define-test resolution-test
 	(dolist (each *resolution-test-data*)
 	  (assert-true 
-		(flexpr.infer.general::resolution 
+		(flexpr.system.infer.wrap::resolution
 		  (apply #'pl (first each))
 		  (parse (second each)))	)))
 
 (define-test resolution-error-test 
 	(dolist (each *resolution-error*)
 	  (assert-error
-		'flexpr.error:undeterminable-error
-		(flexpr.infer.general::resolution 
+		'flexpr.system.error:undeterminable-error
+		(flexpr.system.infer.wrap::resolution
 		  (apply #'pl (first each))
 		  (parse (second each))))))
 
@@ -413,3 +413,14 @@
   "As.(onbox(s) & at(Box,C,s) > hb(grasp(s)))"
   "AxAs.(at(Box,x,s) > at(Box,x,climbbox(s)))"
   "Es.~onbox(s)")
+
+
+
+(infer 
+  "Ex.(cat(x) & cute(x) & blueyes(x))"
+
+  "Ax.(cat(x) > animal(x))"
+  "Ax.(cat(x) > cute(x))"
+  "Ex.(cat(x) & blueyes(x))"
+  
+  )

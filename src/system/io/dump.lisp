@@ -1,10 +1,10 @@
 
 
-(ns:defns flexpr.dump
+(ns:defns flexpr.system.dump
 	(:use :cl 
-		  :flexpr.constant
-		  :flexpr.struct)
-	(:import-from :flexpr.util
+		  :flexpr.system.constant
+		  :flexpr.system.struct)
+	(:import-from :flexpr.system.util
 				  :opr-equal?
 				  :opr->strength
 				  :opr-strong?
@@ -12,7 +12,7 @@
 				  :literal?
 				  :lexpr-literal?
 				  :gliteral?)
-	(:import-from :flexpr.error
+	(:import-from :flexpr.system.error
 				  :struct-unmatch-error)
 	(:import-from :optima
 				  :match))

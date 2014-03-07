@@ -1,22 +1,22 @@
 
 
-(ns:defns flexpr.infer.general
+(ns:defns flexpr.system.infer.general
 	(:use :cl
-		  :flexpr.constant
-		  :flexpr.struct)
-	(:import-from :flexpr.util
+		  :flexpr.system.constant
+		  :flexpr.system.struct)
+	(:import-from :flexpr.system.util
 				  :%literal=
 				  :%clause=)
-	(:import-from :flexpr.unifier
+	(:import-from :flexpr.system.unifier
 				  :eliminate?
 				  :unify
 				  :reverse-unify)
-	(:import-from :flexpr.formalize.mat
+	(:import-from :flexpr.system.formalize.mat
 				  :rename-clause)
-	(:import-from :flexpr.formalize
+	(:import-from :flexpr.system.formalize
 				  :formalize
 				  :convert)
-	(:import-from :flexpr.error
+	(:import-from :flexpr.system.error
 				  :maximum-depth-exceeded-error
 				  :undeterminable-error))
 
@@ -127,7 +127,11 @@
 ;;; 
 
 @export
-(defun resolution (premises conseq &optional (depth +DEPTH+))
+(defun resolution-gen (premises conseq &optional (depth +DEPTH+))
+  (assert (and 
+			(every (lambda (x) (typep x 'lexpr-type)) premises)
+			(typep conseq 'lexpr-type)))
+
   (multiple-value-bind 
 	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
@@ -141,18 +145,20 @@
 				 (when (zerop dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
-										  :mde-where 'resolution)))
+										  :mde-where 'resolution-gen)))
 
 				 ;; choices には今までの導出で出てきた節は含まれていない
 				 ;; choices* にはそれらが含まれている
 				 (let*  ((choices  (choices selected-clause clause-form))
 					     (choices* (append choices 
+										   ;; clause-form の節がすでに一度以上使われた節であるなら
+										   ;; いままでに導出されたやつをくっつける
 										   (when (every (lambda (x) (> (clause-used x)  0)) clause-form)
 											 (choices selected-clause r-clause-form)))))
 
 				   (some 
 					 (lambda (each-choice)
-					;; ここでの best が selected-clause とペアになる節
+					;; ここでの each-choice が selected-clause とペアになる節
 					
 					(destructuring-bind (clause (flag resolted mgu)) each-choice
 					  
@@ -209,7 +215,6 @@
 			  (list t exist-terms specific-term))	
 
 			  (format t "!! SECOND RESOLUTION !!~%" )
-
 
 			(when (some 
 			  	  ;; 前提の節についての探索を行う

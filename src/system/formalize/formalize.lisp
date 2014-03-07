@@ -1,13 +1,13 @@
 
 
-(ns:defns flexpr.formalize
+(ns:defns flexpr.system.formalize
 	(:use :cl
-		  :flexpr.constant
-		  :flexpr.struct
-		  :flexpr.formalize.opr
-		  :flexpr.formalize.quant
-		  :flexpr.formalize.mat)
-	(:import-from :flexpr.util
+		  :flexpr.system.constant
+		  :flexpr.system.struct
+		  :flexpr.system.formalize.opr
+		  :flexpr.system.formalize.quant
+		  :flexpr.system.formalize.mat)
+	(:import-from :flexpr.system.util
 				  :literal?
 				  :opr-equal?
 				  :closed?
@@ -16,7 +16,7 @@
 				  :%literal=
 				  :opposite-%literal=
 				  :%clause=)
-	(:import-from :flexpr.error
+	(:import-from :flexpr.system.error
 				  :illformed-error))
 
 

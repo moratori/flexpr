@@ -1,17 +1,17 @@
 
-(ns:defns flexpr.formalize.quant
+(ns:defns flexpr.system.formalize.quant
 	(:use :cl
-		  :flexpr.constant
-		  :flexpr.struct)
+		  :flexpr.system.constant
+		  :flexpr.system.struct)
 	(:import-from :optima
 				  :match)
-	(:import-from :flexpr.util
+	(:import-from :flexpr.system.util
 				  :term-using?
 				  :term=
 				  :opr-equal?
 				  :qnt-equal?
 				  :opposite-qnt)
-	(:import-from :flexpr.error
+	(:import-from :flexpr.system.error
 				  :struct-unmatch-error
 				  :illformed-formalize-error))
 

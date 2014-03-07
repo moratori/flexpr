@@ -1,6 +1,6 @@
 
 
-(ns:defns flexpr.constant
+(ns:defns flexpr.system.constant
 	(:use :cl))
 
 ;; defconstant でやると再定義エラーが起きてしまう -> asdファイルの書き方おかしいのかな?

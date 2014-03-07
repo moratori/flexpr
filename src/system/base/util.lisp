@@ -1,13 +1,13 @@
 
 
 
-(ns:defns flexpr.util
+(ns:defns flexpr.system.util
 	(:use :cl
-		  :flexpr.constant
-		  :flexpr.struct)
+		  :flexpr.system.constant
+		  :flexpr.system.struct)
 	(:import-from :optima
 				  :match)
-	(:import-from :flexpr.error
+	(:import-from :flexpr.system.error
 				  :struct-unmatch-error))
 
 @export

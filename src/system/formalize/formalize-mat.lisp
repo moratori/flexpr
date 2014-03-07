@@ -1,18 +1,18 @@
 
-(ns:defns flexpr.formalize.mat
+(ns:defns flexpr.system.formalize.mat
 	(:use :cl
-		  :flexpr.constant
-		  :flexpr.struct)
+		  :flexpr.system.constant
+		  :flexpr.system.struct)
 	(:import-from :optima
 				  :match)
-	(:import-from :flexpr.util
+	(:import-from :flexpr.system.util
 				  :opr-equal?
 				  :opposite-opr
 				  :clause?
 				  :term=
 				  :substitute-term
 				  :literal?)
-	(:import-from :flexpr.error
+	(:import-from :flexpr.system.error
 				  :struct-unmatch-error
 				  :illformed-error))
 

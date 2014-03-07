@@ -1,10 +1,10 @@
 
 
 
-(ns:defns flexpr.struct
+(ns:defns flexpr.system.struct
 	(:use :cl 
-		  :flexpr.constant)
-	(:import-from :flexpr.error
+		  :flexpr.system.constant)
+	(:import-from :flexpr.system.error
 				  :initval-required-error)
 	(:export 
 	  ;; defstruct で暗黙的に定義される関数が
@@ -92,6 +92,7 @@
 (deftype quantsp-type ()
   `(satisfies quantsp-pred))
 
+@export
 (deftype lexpr-type ()
   `(satisfies lexpr-pred))
 

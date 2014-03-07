@@ -1,6 +1,6 @@
 
 
-(ns:defns flexpr.error
+(ns:defns flexpr.system.error
 	(:use :cl))
 
 @export

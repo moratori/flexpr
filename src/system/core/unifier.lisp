@@ -1,12 +1,12 @@
 
 
-(ns:defns flexpr.unifier
+(ns:defns flexpr.system.unifier
 	(:use :cl
-		  :flexpr.constant
-		  :flexpr.struct)
-	(:import-from :flexpr.util
+		  :flexpr.system.constant
+		  :flexpr.system.struct)
+	(:import-from :flexpr.system.util
 				  :term=)
-	(:import-from :flexpr.error
+	(:import-from :flexpr.system.error
 				  :struct-unmatch-error))
 
 

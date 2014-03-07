@@ -16,6 +16,9 @@
 		((:module "src"
 		  :serial t
 		  :components 
+		  	((:module "system"
+			  :serial t
+			  :components 
 				((:module "constant"
 				  :serial t
 				  :components 
@@ -43,7 +46,7 @@
 				  :components 
 					((:file "unifier")
 					 (:file "infer-gen")
-					 (:file "infer-sld")))))))
+					 (:file "infer-sld")))))))))
 
 
 

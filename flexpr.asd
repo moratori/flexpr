@@ -51,7 +51,8 @@
 			 (:module "interface"
 			  :serial t
 			  :components 
-				((:file "loaddef")
+				((:file "constant")
+				 (:file "loaddef")
 				 (:file "repl")))))))
 
 

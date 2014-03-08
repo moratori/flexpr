@@ -1,0 +1,15 @@
+
+#
+# this is comment
+#
+
+%Animal {Ax.mortal(x);     Ex.foo(x);
+ Mamal{
+		Ax.taisei(x);
+		Human{
+			Ax.greed(x);
+			Ax.ugly(x);
+		}
+	}
+
+}

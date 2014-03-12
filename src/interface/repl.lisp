@@ -36,7 +36,7 @@
 (defcompo help ()
   (format t "Command Help~%")
   (format t "~2t :load <Filename>               load a definition file~%")
-  (format t "~2t :save <axiomatic system name>  save current system")
+  (format t "~2t :save <axiomatic system name>  save current system~%")
   (format t "~2t :desc <axiomatic system name>  describe axiomatic system~%")
   (format t "~2t :set  <New axiomatic system>   change current axiomatic system~%")
   (format t "~2t :add  <Formula>                add formula to current axiomatic system~%")

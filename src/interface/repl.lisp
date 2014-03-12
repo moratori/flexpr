@@ -23,7 +23,7 @@
   `(defun ,fname ,(append arg '(&rest dummy)) ,@body))
 
 (defvar +CSTART+ #\:)
-(defvar *axioms* (list (list "nil" nil nil)))
+(defvar *axioms* (list (list "nil" nil)))
 (defvar *current* "nil")
 
 
@@ -35,9 +35,11 @@
 
 (defcompo help ()
   (format t "Command Help~%")
-  (format t "~2t :load <Filename>                load a definition file~%")
-  (format t "~2t :desc <axiomatic system name>   describe axiomatic system~%")
-  (format t "~2t :set  <New axiomatic system>    change current axiomatic system~%")
+  (format t "~2t :load <Filename>               load a definition file~%")
+  (format t "~2t :save <axiomatic system name>  save current system")
+  (format t "~2t :desc <axiomatic system name>  describe axiomatic system~%")
+  (format t "~2t :set  <New axiomatic system>   change current axiomatic system~%")
+  (format t "~2t :add  <Formula>                add formula to current axiomatic system~%")
   (format t "~2t :list  enumerate the axiomatic system that are currently defined~%")
   (format t "~2t :help  show this help~%")
   (format t "~2t :exit  exit from REPL~%")
@@ -49,8 +51,7 @@
   (force-output t))
 
 (defun current ()
-  (if (null *current*)
-	"NIL" (string-upcase *current*)))
+  (string-upcase *current*))
 
 (defun prompt () 
   (format t "(~A)>>> " (current))
@@ -104,7 +105,7 @@
 		(let ((raw (primitive-load-file path))
 			  (name (pathname-name path)))
 		  (push 
-			(list name raw (mapcar #'string->lexpr raw))
+			(list name (mapcar #'string->lexpr raw))
 			*axioms*)
 		  (format t "~A load ok~%" name)
 		  (setax name))))
@@ -114,19 +115,50 @@
 	  (format t "~%Runtime error: unexpected error occured~%"))))
 
 (defun desc (axname)
-  (let ((r (existax? axname)))
+  (let ((r (existax? (if (string= "" axname) *current* axname))))
 	(if (null r)
-		(format t "undefined axiomatic system: ~A~%")
-		(destructuring-bind (name raw obj) r
-		  (declare (ignore raw))
+		(format t "undefined axiomatic system: ~A~%" axname)
+		(destructuring-bind (name obj) r
 		  (format t "~A is consist of: ~%" name)
 		  (loop for oe in obj
 				do 
 				(format t "~A~%" (lexpr->string oe)))
 		  (format t "~%")))))
 
+
+
+(defun adddef (line)
+  (if (string= *current* "nil")
+	(format t "adding formula to this axiomatic system is not allowed~%")
+	(destructuring-bind (name obj) (existax? *current*)
+	  (let ((new (hook (lambda () (string->lexpr line)))))
+		(setf *axioms*
+			(cons 
+			  (list name (cons new obj))
+			  (remove-if 
+				(lambda (x)
+				(string= name (car x))) *axioms*)))nil))))
+
+
+(defun save (line)
+  (let* ((target (if (string= line "") *current* line))
+		(r (existax? target)))
+	(if (null r)
+	  (format t "undefined axiomatic system: ~A~%" target)
+	  (handler-case 
+		(with-open-file (out target :direction :output :if-exists :supersede)
+		  (destructuring-bind (name obj) r
+			(dolist (each obj)
+			  (format out "~A~%" (lexpr->string each)))))
+		(file-error (c)
+			(declare (ignore c))
+			(format t "file error occurred~%"))))))
+
+
 (defvar *case*
   (list 
+	 (cons ":save"  #'save)
+	 (cons ":add"   #'adddef)
 	 (cons ":load"  #'loadax)
 	 (cons ":set"   #'setax)
 	 (cons ":list"  #'listup)
@@ -154,7 +186,7 @@
 	  (funcall fun (string-trim +CHAR-BUG+ arg)))))
 
 (defun execute-resolution (line)
-  (destructuring-bind (name raw obj) (existax? *current*)
+  (destructuring-bind (name obj) (existax? *current*)
 	(handler-case 
 	  (format t "~A~%" (hook (lambda () (resolution obj (string->lexpr line)))))
 	  (undeterminable-error (c)

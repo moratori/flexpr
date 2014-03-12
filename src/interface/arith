@@ -1,0 +1,6 @@
+
+
+ Ax.sum(x,ZERO,x) # here is reverse base condition
+
+# base condition
+	Ax.sum(ZERO,x,x)

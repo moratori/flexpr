@@ -1,0 +1,15 @@
+
+
+
+# here is comment
+	# comment too
+  #comment
+
+Ax.(animal(x) > mortal(x)) # animal must die
+
+#  and lovely?
+Ax.(cat(x) > cute(x)) # yeah! cat is soo cute!!
+
+
+
+

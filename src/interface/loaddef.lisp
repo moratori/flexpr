@@ -13,13 +13,17 @@
 
 
 ;; コメント取り除いて行で読み込む
+
+@export
 (defun primitive-load-file (path)
   (with-open-file (in path :direction :input :if-does-not-exist :error)
 	(loop for line = (read-line in nil) 
 		  while line
-		  for fix = (string-trim +CHAR-BUG+ line)
-		  if (string/= "" fix)
-		    collect (subseq fix 0 (position +COMMENT-START+ fix :test #'char=)))))
+		  for fix1 = (string-trim +CHAR-BUG+ line)
+		  for fix2 = (string-trim +CHAR-BUG+ 
+								 (subseq  fix1 0 (position +COMMENT-START+ fix1 :test #'char=))) 
+		  if (string/= "" fix2)
+		    collect fix2)))
 
 ;; 全部の行をくっつけるだけ
 (defun load-def-file (path)
@@ -84,7 +88,7 @@
 				  (+ count (length #0#) 1))))))
 		(main str 0 nil 0)))))
 
-
+#|
 (defun parse-definition (path)
   (let ((target (load-def-file path)))
 	(labels 
@@ -97,9 +101,4 @@
 		  )
 		))
 	  (main target nil nil))))
-
-
-
-
-
-
+|#

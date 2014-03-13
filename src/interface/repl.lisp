@@ -203,7 +203,13 @@
 		(declare (ignore c))
 		(format t "undeterminable: ~A~%" line))
 	  (error (c)
-		 (unexpected c))) 
+		 (unexpected c))
+	  	  ;; sb-sys:interactive-interrupt を捕まえれば
+		  ;; ctrl+c を処理できるんだけどそれだとsbcl実装依存になってしまう
+		  ;; ので condition を捕まえるんだけど、それだと何でもかんでも
+		  ;; 捕まえちゃうのでやばい(危ない)
+	  (condition (c)
+		(format t "~A~%" c))) 
 	  (format t "evaluation took ~A sec~%" (- (get-universal-time) start)))))
 
 

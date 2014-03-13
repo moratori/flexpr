@@ -118,9 +118,12 @@
 	  (lambda ()
 		(let ((raw (primitive-load-file path))
 			  (name (pathname-name path)))
-		  (push 
-			(list name (mapcar #'string->lexpr raw))
-			*axioms*)
+		  (setf *axioms*
+			(cons 
+			  (list name (mapcar #'string->lexpr raw))
+			  (remove-if 
+				(lambda (x) 
+				  (string= name (car x))) *axioms*)))
 		  (format t "~A load ok~%" name)
 		  (setax name))))
 	(caught-error (c)

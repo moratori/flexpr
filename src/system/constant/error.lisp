@@ -1,7 +1,23 @@
 
 
 (ns:defns flexpr.system.error
-	(:use :cl))
+	(:use :cl)
+	(:export
+	  :mde-val-of
+	  :mde-where
+	  :sue-val-of
+	  :sue-where-of
+	  :ire-where-of
+	  :ie-val-of
+	  :ie-mes-of
+	  :ie-where-of
+	  :ipe-mes-of
+	  :ipe-val-of
+	  :ipe-where-of
+	  :ife-mes-of
+	  :ife-val-of
+	  :ife-where-of
+	  ))
 
 @export
 (define-condition undeterminable-error (error)

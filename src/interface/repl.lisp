@@ -16,6 +16,7 @@
 	(:import-from
 	  :flexpr.system.dump
 	  :lexpr->string
+	  :term->string
 	  ))
 
 
@@ -26,12 +27,10 @@
 (defvar *axioms* (list (list "nil" nil)))
 (defvar *current* "nil")
 
+(define-condition caught-error (error) ())
 
-;; *axioms* ::= ((AX-NAME:String RAW-DEF:LIST COMPILED-DEF:LIST)*)
 
 
-(defcompo quit ()
-  (format t "bye!~%") t)
 
 (defcompo help ()
   (format t "Command Help~%")
@@ -45,17 +44,55 @@
   (format t "~2t :exit  exit from REPL~%")
   (format t "~2t :quit  alias of :exit~%~%"))
 
+
+(defun hook (proc)
+  (handler-case 
+	(funcall proc)
+	(struct-unmatch-error (c)
+		(format t "~%Internal error: struct unmatch error occurred~%")
+		(format t "struct: ~A~%where: ~A~%~%" 
+				(sue-val-of c) (sue-where-of c))
+		(error (make-condition 'caught-error)))
+	(initval-required-error (c)
+		(format t "~%Internal error: initval required error occurred~%")
+		(format t "where: ~A~%~%" (ire-where-of c))
+		(error (make-condition 'caught-error)))
+	(illformed-error (c)
+		(format t "~%Runtime error: illformed error occurred~%")
+		(format t "mes: ~A~%val: ~A~%where: ~A~%~%"
+				(ie-mes-of c) (ie-val-of c) (ie-where-of c))
+		(error (make-condition 'caught-error)))
+	(illformed-parse-error (c)
+		(format t "~%Runtime error: illformed parse error occurred~%")
+		(format t "mes: ~A~%val: ~A~%where: ~A~%~%"
+				(ipe-mes-of c) (ipe-val-of c) (ipe-where-of c))
+		(error (make-condition 'caught-error)))
+	(illformed-formalize-error (c)
+		(format t "~%Runtime error: illformed formalize error occurred~%")	
+		(format t "mes: ~A~%val: ~A~%where: ~A~%~%"
+				(ife-mes-of c) (ife-val-of c) (ife-where-of c))
+		(error (make-condition 'caught-error)))))
+
+
+(defun unexpected (c)
+  (print c)	   
+  (format t "~%Runtime error: unexpected error occured~%"))
+
+
 (defun credit ()
   (format t "Theorem Prover 1.0~%")
   (help)
   (force-output t))
+
+(defcompo quit ()
+  (format t "bye!~%") t)
 
 (defun current ()
   (string-upcase *current*))
 
 (defun prompt () 
   (format t "(~A)>>> " (current))
-  (force-output t))
+  (force-output *standard-output*))
 
 (defcompo listup ()
   (if (null *axioms*)
@@ -74,29 +111,6 @@
 	(progn (setf *current* axname) nil)))
 
 
-(defun hook (proc)
-  (handler-case 
-	(funcall proc)
-	(struct-unmatch-error (c)
-		(format t "~%Internal error: struct unmatch error occurred~%")
-		(format t "struct: ~A~%where: ~A~%~%" 
-				(sue-val-of c) (sue-where-of c)))
-	(initval-required-error (c)
-		(format t "~%Internal error: initval required error occurred~%")
-		(format t "where: ~A~%~%" (ire-where-of c)))
-	(illformed-error (c)
-		(format t "~%Runtime error: illformed-error occurred~%")
-		(format t "mes: ~A~%val: ~A~%where: ~A~%~%"
-				(ie-mes-of c) (ie-val-of c) (ie-where-of c)))
-	(illformed-parse-error (c)
-		(format t "~%Runtime error: illformed parse error occurred~%")
-		(format t "mes: ~A~%val: ~A~%where: ~A~%~%"
-				(ipe-mes-of c) (ipe-val-of c) (ipe-where-of c)))
-	(illformed-formalize-error (c)
-		(format t "~%Runtime error: illformed formalize error occurred~%")	
-		(format t "mes: ~A~%val: ~A~%where: ~A~%~%"
-				(ife-mes-of c) (ife-val-of c) (ife-where-of c)))))
-
 
 (defun loadax (path)
   (handler-case 
@@ -109,10 +123,16 @@
 			*axioms*)
 		  (format t "~A load ok~%" name)
 		  (setax name))))
+	(caught-error (c)
+		(declare (ignore c)))
+	(stream-error (c)
+	  (declare (ignore c))
+	  (format t "%Runtime error: file error occurred~%"))
 	(file-error (c)
+	  (declare (ignore c))
 	  (format t "~%Runtime error: file error occurred~%"))
 	(error (c)
-	  (format t "~%Runtime error: unexpected error occured~%"))))
+	  (unexpected c))))
 
 (defun desc (axname)
   (let ((r (existax? (if (string= "" axname) *current* axname))))
@@ -128,16 +148,23 @@
 
 
 (defun adddef (line)
-  (if (string= *current* "nil")
-	(format t "adding formula to this axiomatic system is not allowed~%")
-	(destructuring-bind (name obj) (existax? *current*)
-	  (let ((new (hook (lambda () (string->lexpr line)))))
-		(setf *axioms*
-			(cons 
-			  (list name (cons new obj))
-			  (remove-if 
-				(lambda (x)
-				(string= name (car x))) *axioms*)))nil))))
+  (if (string= line "")
+	(format t "formula required~%")
+    (if (string= *current* "nil")
+	   (format t "adding formula to this axiomatic system is not allowed~%")
+	   (destructuring-bind (name obj) (existax? *current*)
+	     (handler-case
+		   (let ((new (hook (lambda () (string->lexpr line)))))
+		   (setf *axioms*
+			   (cons 
+			     (list name (cons new obj))
+			     (remove-if 
+				   (lambda (x)
+				   (string= name (car x))) *axioms*)))nil)
+		   (caught-error (c)
+		     (declare (ignore c)))
+		   (error (c)
+		     (unexpected c)))))))
 
 
 (defun save (line)
@@ -153,6 +180,32 @@
 		(file-error (c)
 			(declare (ignore c))
 			(format t "file error occurred~%"))))))
+
+
+(defun execute-resolution (line)
+  (destructuring-bind (name obj) (existax? *current*)
+	(let ((start (get-universal-time)))
+	 (handler-case 
+	  (destructuring-bind (status exist spec) 
+		(hook (lambda () (resolution obj (string->lexpr line))))
+		(declare (ignore exist))
+		(format t "~A is ~A under the ~A~%" 
+				line (if status "provable" "not provable")
+				*current*)
+		(unless (null spec)
+		  (format t "specific term: ")
+		  (dolist (each spec)
+			(format t "~A " (term->string each)))
+		  (format t "~%")))
+	  (caught-error (c)
+	    (declare (ignore c)))
+	  (undeterminable-error (c)
+		(declare (ignore c))
+		(format t "undeterminable: ~A~%" line))
+	  (error (c)
+		 (unexpected c))) 
+	  (format t "evaluation took ~A sec~%" (- (get-universal-time) start)))))
+
 
 
 (defvar *case*
@@ -171,7 +224,8 @@
 (defun parse-line (s)
   (coerce 
 	(loop 
-	  for char being the elements of s
+	  for i from 0 below (length s)
+	  for char = (char s i)
 	  while (char/= char #\Space)
 	  collect char)
 	'string))
@@ -184,15 +238,6 @@
 	(if (null fun)
 	  (format t "Undefined command: ~A~%" cmd)
 	  (funcall fun (string-trim +CHAR-BUG+ arg)))))
-
-(defun execute-resolution (line)
-  (destructuring-bind (name obj) (existax? *current*)
-	(handler-case 
-	  (format t "~A~%" (hook (lambda () (resolution obj (string->lexpr line)))))
-	  (undeterminable-error (c)
-		(declare (ignore c))
-		(format t "undeterminable: ~A~%" line)))))
-
 
 
 (defun main ()
@@ -212,6 +257,7 @@
 		   (return-from exit)))
 		(t 
 		  (execute-resolution line))))
+	(force-output *standard-output*)
 	(prompt)))
 
 

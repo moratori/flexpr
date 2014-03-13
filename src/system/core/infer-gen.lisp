@@ -214,7 +214,7 @@
 					conseq-clause-form)
 			  (list t exist-terms specific-term))	
 
-			  (format t "!! SECOND RESOLUTION !!~%" )
+			 ; (format t "!! SECOND RESOLUTION !!~%" )
 
 			(when (some 
 			  	  ;; 前提の節についての探索を行う

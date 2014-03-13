@@ -1,6 +1,6 @@
 
 
-(load "~/.quicklisp/setup.lisp")
+;(load "~/.quicklisp/setup.lisp")
 (ql:quickload :flexpr)
 
 

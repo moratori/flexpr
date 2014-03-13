@@ -1,6 +1,0 @@
-cat(Dai)
-Ax.(cat(x) > animal(x))
-cat(Kuro)
-cat(Miko)
-Ax.(animal(x) > mortal(x))
-Ax.(cat(x) > cute(x))

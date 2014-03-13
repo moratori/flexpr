@@ -7,8 +7,30 @@
 
 
 #|
-	<DEFINITION> ::= <CLASS-NAME> {<LOGICAL-EXPR>* <DEFINITION>*}
- |#
+	<DEFINITION> ::= <CLASS-NAME> { <LOGICAL-EXPR>* <DEFINITION>* }
+
+
+
+	ex)
+
+
+	#
+    # this is comment
+    #
+
+	%Animal {Ax.mortal(x);     Ex.foo(x);
+ 		Mamal{
+			Ax.taisei(x);
+			Human{
+				Ax.greed(x);
+				Ax.ugly(x);
+			}
+		}
+
+	}
+
+
+|#
 
 
 

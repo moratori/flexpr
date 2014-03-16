@@ -116,8 +116,9 @@
   (handler-case 
 	(hook 
 	  (lambda ()
-		(let ((raw (primitive-load-file path))
-			  (name (pathname-name path)))
+		(let* ((npath (string-trim '(#\" #\') path))
+			  (raw (primitive-load-file npath))
+			  (name (pathname-name npath)))
 		  (setf *axioms*
 			(cons 
 			  (list name (mapcar #'string->lexpr raw))

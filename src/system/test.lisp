@@ -259,8 +259,40 @@
 	  "AnAmAkAp.(sum(k,m,p) & prd(m,n,k) > prd(m,s(n),p))")
 	 "Ex.prd(s(s(s(s(ZERO)))),s(s(s(ZERO))),x)")
 
+	(("AxAyAz.(parent(x,y) & parent(x,z) > sibling(y,z) & sibling(z,y))"
+  	  "AxAyAz.(sibling(x,y) & parent(x,z) > R(z,y))"
+  	  "AxAy.(sibling(x,y) & female(x) > sister(x,y))"
+      "female(Wakame)"
+      "female(Sazae)"
+      "parent(Namihei,Sazae)"
+      "parent(Namihei,Katuo)"
+      "parent(Namihei,Wakame)"
+      "parent(Sazae,Tara)")
+	 "Ex.(sister(x,Katuo) & R(Tara,x))")
+
+
+	(("Ax.(sum(x,ZERO,x) & sum(ZERO,x,x))"
+  	  "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))")
+	 "Ex.sum(s(ZERO),s(ZERO),x)")
+
+	(()
+	 "(((P > (R & ~S)) > P) > P)")
+
+
+	(("AxAs.(~onbox(s) > at(Box,x,pushbox(x,s)))"
+	  "As.onbox(climbbox(s))"
+	  "As.(onbox(s) & at(Box,C,s) > hb(grasp(s)))"
+	  "AxAs.(at(Box,x,s) > at(Box,x,climbbox(s)))"
+	  "Es.~onbox(s)")	 
+	"Es.hb(s)")
+
+	(("Ax.(cat(x) > animal(x))"
+	  "Ax.(cat(x) > cute(x))"
+	  "Ex.(cat(x) & blueyes(x))")	 
+	 "Ex.(cat(x) & cute(x) & blueyes(x))")
 
 	))
+
 
 
 (defvar *resolution-error*
@@ -370,57 +402,14 @@
 		  (parse (second each))))))
 
 
+
+
+
+
 (print-failures (run-tests '(formalize-test)))
-(print-errors (run-tests '(resolution-test)))
+(time 
+  (print-errors (run-tests '(resolution-test))))
 (print-errors (run-tests '(resolution-error-test)))
 
 
 
-(infer 
-  "Ex.(sister(x,Katuo) & R(Tara,x))"
-
-  "AxAyAz.(parent(x,y) & parent(x,z) > sibling(y,z) & sibling(z,y))"
-  "AxAyAz.(sibling(x,y) & parent(x,z) > R(z,y))"
-  "AxAy.(sibling(x,y) & female(x) > sister(x,y))"
-  "female(Wakame)"
-  "female(Sazae)"
-  "parent(Namihei,Sazae)"
-  "parent(Namihei,Katuo)"
-  "parent(Namihei,Wakame)"
-  "parent(Sazae,Tara)"
-
-  )
-
-(infer 
-  "Ex.sum(s(ZERO),s(ZERO),x)"
-
-  "Ax.(sum(x,ZERO,x) & sum(ZERO,x,x))"
-  "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))"  
-  )
-
-
-(infer 
-  "(((P > (R & ~S)) > P) > P)"
-  )
-
-
-
-(infer 
-  "Es.hb(s)"
-
-  "AxAs.(~onbox(s) > at(Box,x,pushbox(x,s)))"
-  "As.onbox(climbbox(s))"
-  "As.(onbox(s) & at(Box,C,s) > hb(grasp(s)))"
-  "AxAs.(at(Box,x,s) > at(Box,x,climbbox(s)))"
-  "Es.~onbox(s)")
-
-
-
-(infer 
-  "Ex.(cat(x) & cute(x) & blueyes(x))"
-
-  "Ax.(cat(x) > animal(x))"
-  "Ax.(cat(x) > cute(x))"
-  "Ex.(cat(x) & blueyes(x))"
-  
-  )

@@ -119,6 +119,13 @@
 			if (not (null (first rule)))
 			  collect (list each-c rule))))
 
+;; 前までは 深度が1深まる毎にlimitを1減らしてたけど
+;; 深くなればなるほどその枝の重要度を減らして行く事にする
+;; それより幅優先で探索スべき? -> この線形探索結構効率いいと思う
+(defun newdupf (limit)
+  (lambda (x) 
+	(- x 1 (floor (/ limit (+ x (/ limit 10)))))))
+
 ;;; 
 ;;; 導出に失敗 => unterminable error
 ;;; 導出に成功!
@@ -127,7 +134,7 @@
 ;;; 
 
 @export
-(defun resolution-gen (premises conseq &optional (depth +DEPTH+))
+(defun resolution-gen (premises conseq &optional (depth +DEPTH+) (func (newdupf depth)))
   (assert (and 
 			(every (lambda (x) (typep x 'lexpr-type)) premises)
 			(typep conseq 'lexpr-type)))
@@ -141,8 +148,7 @@
 
 	    (labels 
 		  ((main (clause-form r-clause-form selected-clause dep exist-terms)
-
-				 (when (zerop dep)
+				 (when (> 1 dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
 										  :mde-where 'resolution-gen)))
@@ -192,7 +198,7 @@
 								 :test #'%clause=)
 
 							   resolted
-							   (1- dep)
+							   (funcall func  dep)
 							   (reverse-unify exist-terms mgu))
 							 (maximum-depth-exceeded-error (c)
 								(declare (ignore c)) nil)))))) choices*))))

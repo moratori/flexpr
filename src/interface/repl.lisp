@@ -193,7 +193,7 @@
 		(hook (lambda () (resolution obj (string->lexpr line))))
 		(declare (ignore exist))
 		(format t "~A is ~A under the ~A~%" 
-				line (if status "provable" "not provable")
+				line (if status "PROVABLE" "NOT provable")
 				*current*)
 		(unless (null spec)
 		  (format t "specific term: ")

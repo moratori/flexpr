@@ -16,8 +16,19 @@
 	(:import-from
 	  :flexpr.system.dump
 	  :lexpr->string
-	  :term->string
-	  ))
+	  :term->string)
+	(:import-from :flexpr.interface.config
+	  :loadconfig)
+	(:import-from :flexpr.system.formalize
+				  :%formalize)
+	(:import-from :flexpr.system.formalize
+				  :formalize)
+	(:import-from :flexpr.system.constant
+				  :+AND+
+				  :+FORALL+)
+	(:import-from :flexpr.system.struct
+				  :operator)
+	)
 
 
 (defmacro defcompo (fname arg &rest body)
@@ -35,8 +46,9 @@
 (defcompo help ()
   (format t "Command Help~%")
   (format t "~2t :load <Filename>               load a definition file~%")
-  (format t "~2t :save <axiomatic system name>  save current system~%")
-  (format t "~2t :desc <axiomatic system name>  describe axiomatic system~%")
+  (format t "~2t :save <Axiomatic system name>  save current system~%")
+  (format t "~2t :desc <Axiomatic system name>  describe axiomatic system~%")
+  (format t "~2t :form <Formula>                convert it into formal form~%")
   (format t "~2t :set  <New axiomatic system>   change current axiomatic system~%")
   (format t "~2t :add  <Formula>                add formula to current axiomatic system~%")
   (format t "~2t :list  enumerate the axiomatic system that are currently defined~%")
@@ -80,19 +92,25 @@
 
 
 (defun credit ()
-  (format t "Theorem Prover 1.0~%")
-  (help)
-  (force-output t))
+  (unless +SILENT+
+	(format t "Theorem Prover 1.0~%")
+	(help)
+	(force-output *standard-output*)))
 
 (defcompo quit ()
-  (format t "bye!~%") t)
+  (unless +SILENT+
+	 (format t "bye!~%")) t)
 
 (defun current ()
   (string-upcase *current*))
 
+
 (defun prompt () 
-  (format t "(~A)>>> " (current))
+  (if +SILENT+
+	(format t "~%")
+	(format t "(~A)>>> " (current)))
   (force-output *standard-output*))
+
 
 (defcompo listup ()
   (if (null *axioms*)
@@ -125,7 +143,8 @@
 			  (remove-if 
 				(lambda (x) 
 				  (string= name (car x))) *axioms*)))
-		  (format t "~A load ok~%" name)
+		 (unless +SILENT+
+		   (format t "~A load ok~%" name)) 
 		  (setax name))))
 	(caught-error (c)
 		(declare (ignore c)))
@@ -216,6 +235,27 @@
 		(format t "~A~%" c))) 
 	  (format t "evaluation took ~A sec~%" (- (get-universal-time) start)))))
 
+(defun conv-formal (lexpr)
+  (handler-case
+	(progn
+	(hook 
+	  (lambda ()
+		(format t "prenex normal form~%~2t~A~%~%" 
+				(lexpr->string 
+				  (%formalize 
+					(string->lexpr lexpr))))))
+	(hook 
+	  (lambda ()
+		(format t "skolem normal form~%~2t~A~%" 
+				(lexpr->string 
+				  (formalize 
+					(string->lexpr lexpr)
+					(operator +AND+)
+					+FORALL+))))))
+	(caught-error (c)
+	  (declare (ignore c)))
+	(error (c)
+	  (unexpected c))))
 
 
 (defvar *case*
@@ -225,6 +265,7 @@
 	 (cons ":load"  #'loadax)
 	 (cons ":set"   #'setax)
 	 (cons ":list"  #'listup)
+	 (cons ":form"  #'conv-formal)
 	 (cons ":desc"  #'desc)
 	 (cons ":help"  #'help)
 	 (cons ":quit"  #'quit)
@@ -251,13 +292,14 @@
 
 
 (defun main ()
+  (loadconfig)
   (credit)
   (prompt)
   
   (loop 
 	:named exit
 	:do
-	(let ((line (read-line t nil nil)))
+	(let ((line (read-line *standard-input* nil nil)))
 	  (cond 
 		((null line) 
 		 (quit) (return-from exit))

@@ -53,6 +53,7 @@
 			  :components 
 				((:file "constant")
 				 (:file "loaddef")
+				 (:file "config")
 				 (:file "repl")))))))
 
 

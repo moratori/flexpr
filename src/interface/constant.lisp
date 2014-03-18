@@ -23,4 +23,7 @@
 (defvar +BLOCK-END+ #\})
 
 @export
+(defvar +SILENT+ nil)
+
+@export
 (define-condition illformed-definition-error (error) ())

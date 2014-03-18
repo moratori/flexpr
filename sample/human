@@ -1,0 +1,2 @@
+Ax.(human(x) > mortal(x))
+human(Socrates)

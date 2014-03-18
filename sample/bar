@@ -1,0 +1,7 @@
+ontable(B1,S0)
+ontable(B2,S0)
+ontable(B3,S0)
+
+AbAs.(ontable(b,s) > holding(b,liftup(b,CATCHER,s)))
+Ab1Ab2As.(holding(b1,s) > on(b1,b2,liftdown(b1,b2,s)))
+

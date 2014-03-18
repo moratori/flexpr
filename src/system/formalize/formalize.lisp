@@ -39,7 +39,7 @@
 
 
 
-(defun %formalize (lexpr op)
+(defun %formalize (lexpr &optional (op (operator +AND+)))
   ;; ここのフラグが立っていると rename remove-op remove-dis しない
   (c/dnf 
 	  (prefix 

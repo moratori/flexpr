@@ -1,0 +1,5 @@
+AxAs.(~onbox(s) > at(BOX,x,pushbox(x,s)))
+As.onbox(climbbox(s))
+As.(onbox(s) & at(BOX,TARGET,s) > have(grasp(s)))
+AxAs.(at(BOX,x,s) > at(BOX,x,climbbox(s)))
+~onbox(S0)

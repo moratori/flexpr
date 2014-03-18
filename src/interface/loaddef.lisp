@@ -84,7 +84,7 @@
 	 (animal (mamal (human)) (fish) )
 |#
 
-
+@export
 (defun split (str delimiter)
   (assert (typep delimiter 'character))
   (let ((pos (position delimiter str :test #'char=)))

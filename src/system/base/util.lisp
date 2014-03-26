@@ -313,6 +313,7 @@
 
 ;; これとおんなじようなのが unifier にも定義されてるけど後でこれ
 ;; 使うようにリファクタリング〜
+;; これ超使うからdefmethodで全部の型で使えるようにしよう
 @export
 (defun substitute-term (term old new)
   (cond 

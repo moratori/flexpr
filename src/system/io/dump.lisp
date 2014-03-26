@@ -238,3 +238,28 @@
 				  clause
 				  (operator (opposite-opr op)))) clause-form)))
 
+
+@export
+(defun lexpr->string_clear (lexpr)
+  ;; lexpr must be prenex normal form
+  ;; gensymして正規化された束縛変数だと余りにも見づらいので
+  ;; 適当にw x y zとかに置き換えるだけのクソ機能
+  (let ((conv (lexpr->string lexpr)))
+	(if (typep lexpr 'lexpr)
+	  (let ((qpart (quantsp-each-quant (lexpr-qpart lexpr))))
+		;; ここのマジックナンバー 5っていうのは
+		;; 置き換える束縛変数用に w x y zしか用意しないクソ仕様なので
+		;; てか本来束縛変数は 可算無限なんだからそれを、すべて慣例的な変数名で
+		;; 表すこと自体不可能
+		(if (< (length qpart) 5)
+		  (let ((rule (mapcar #'list qpart (list (vterm '|w| nil)
+												 (vterm '|x| nil)
+												 (vterm '|y| nil)
+												 (vterm '|z| nil)))))
+			;; pass ...
+			)
+		  conv))conv)))
+
+
+
+

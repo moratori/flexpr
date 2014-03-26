@@ -405,11 +405,7 @@
 
 
 
-
 (print-failures (run-tests '(formalize-test)))
-(time 
-  (print-errors (run-tests '(resolution-test))))
+(print-errors (run-tests '(resolution-test)))
 (print-errors (run-tests '(resolution-error-test)))
-
-
 

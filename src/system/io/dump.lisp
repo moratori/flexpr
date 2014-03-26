@@ -11,6 +11,7 @@
 				  :opposite-opr
 				  :literal?
 				  :lexpr-literal?
+				  :substitute-term
 				  :gliteral?)
 	(:import-from :flexpr.system.error
 				  :struct-unmatch-error)
@@ -242,24 +243,34 @@
 @export
 (defun lexpr->string_clear (lexpr)
   ;; lexpr must be prenex normal form
+  ;; 
   ;; gensymして正規化された束縛変数だと余りにも見づらいので
   ;; 適当にw x y zとかに置き換えるだけのクソ機能
+  ;; lexprの束縛変数がgensym使って正規化されてる時に使わないとなんの意味もないどころか
+  ;; parse されたての式に使ったら束縛変数増やすことになりかねないので要注意
   (let ((conv (lexpr->string lexpr)))
 	(if (typep lexpr 'lexpr)
 	  (let ((qpart (quantsp-each-quant (lexpr-qpart lexpr))))
-		;; ここのマジックナンバー 5っていうのは
+		;; ここのマジックナンバー 7っていうのは
 		;; 置き換える束縛変数用に w x y zしか用意しないクソ仕様なので
 		;; てか本来束縛変数は 可算無限なんだからそれを、すべて慣例的な変数名で
 		;; 表すこと自体不可能
-		(if (< (length qpart) 5)
-		  (let ((rule (mapcar #'list qpart (list (vterm '|w| nil)
-												 (vterm '|x| nil)
-												 (vterm '|y| nil)
-												 (vterm '|z| nil)))))
-			;; pass ...
-			)
+		;; どうしても x1 x2 みたいにしかなり得ない
+		(if (< (length qpart) 7)
+		  (let ((rule (mapcar 
+						(lambda (x y) (list (quant-var x) y)) 
+						qpart 
+						(list 
+						  (vterm '|x| nil)
+						  (vterm '|y| nil)
+						  (vterm '|z| nil)
+						  (vterm '|w| nil)
+						  (vterm '|u| nil)
+						  (vterm '|v| nil)))))
+			(lexpr->string 
+			  (reduce 
+				(lambda (init x) 
+				  (destructuring-bind (old new) x
+					(substitute-term init old new))) rule :initial-value lexpr)))
 		  conv))conv)))
-
-
-
 

@@ -16,6 +16,7 @@
 	(:import-from
 	  :flexpr.system.dump
 	  :lexpr->string
+	  :lexpr->string_clear
 	  :term->string)
 	(:import-from :flexpr.interface.config
 	  :loadconfig)
@@ -241,17 +242,17 @@
 	(hook 
 	  (lambda ()
 		(format t "prenex normal form~%~2t~A~%~%" 
-				(lexpr->string 
-				  (%formalize 
-					(string->lexpr lexpr))))))
+				(if +UGLY-PRINTING+ 
+				  (lexpr->string (%formalize (string->lexpr lexpr)))
+				  (lexpr->string_clear (%formalize (string->lexpr lexpr)))))))
 	(hook 
 	  (lambda ()
 		(format t "skolem normal form~%~2t~A~%" 
-				(lexpr->string 
-				  (formalize 
-					(string->lexpr lexpr)
-					(operator +AND+)
-					+FORALL+))))))
+				(if +UGLY-PRINTING+
+					(lexpr->string 
+					  (formalize (string->lexpr lexpr)(operator +AND+) +FORALL+))  
+					(lexpr->string_clear 
+					  (formalize (string->lexpr lexpr)(operator +AND+) +FORALL+)))))))
 	(caught-error (c)
 	  (declare (ignore c)))
 	(error (c)

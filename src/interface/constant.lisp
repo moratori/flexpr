@@ -26,4 +26,7 @@
 (defvar +SILENT+ nil)
 
 @export
+(defvar +UGLY-PRINTING+ t)
+
+@export
 (define-condition illformed-definition-error (error) ())

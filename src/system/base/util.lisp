@@ -311,22 +311,52 @@
 	   :test #'%literal=))))
 
 
-;; これとおんなじようなのが unifier にも定義されてるけど後でこれ
+;; これとおんなじようなのが unifier にも冗長に定義されてるけど後でこれ
 ;; 使うようにリファクタリング〜
 ;; これ超使うからdefmethodで全部の型で使えるようにしよう
+;; てかなんでこんな使うやつちゃんと書かなかったんだろう
+;; ==> たしか 項の書き換えが初めに必要になった 量化子に束縛された
+;; 変数の正規化は綺麗に書けない系のやつだったからそこでやっつけた気がする
 @export
-(defun substitute-term (term old new)
-  (cond 
-	((vterm-p term)
-	 (if (term= old term) new term))
-	((fterm-p term)
-	 (apply #'fterm 
-			(fterm-fsymbol term)
-			(mapcar 
-			  (lambda (x) 
-				(substitute-term x old new)) 
-				(fterm-terms term))))
-	(t (error "subst error ! ~A" term))))
+(defgeneric substitute-term (target old new)
+	(:documentation "substitute old term"))
 
+(defmethod substitute-term ((target vterm) old new)
+	(if (term= old target) new target))
+
+(defmethod substitute-term ((target fterm) old new)
+  (apply #'fterm 
+		 (fterm-fsymbol target)
+		 (mapcar 
+		   (lambda (x) 
+			 (substitute-term x old new)) 
+		   (fterm-terms target))))
+
+(defmethod substitute-term ((target atomic-lexpr) old new)
+  (apply #'atomic-lexpr 
+		 (atomic-lexpr-pred-sym target)
+		 (mapcar 
+		   (lambda (term) 
+			 (substitute-term term old new))  (atomic-lexpr-terms target))))
+
+(defmethod substitute-term ((target normal-lexpr) old new)
+  (normal-lexpr 
+	(normal-lexpr-operator target)
+	(substitute-term (normal-lexpr-l-lexpr target) old new)
+	(let ((it (normal-lexpr-r-lexpr target)))
+	  (unless (null it)
+		(substitute-term it old new)))))
+
+(defmethod substitute-term ((target lexpr) old new)
+  (lexpr 
+	(let ((qeach (quantsp-each-quant (lexpr-qpart target))))
+	  (apply #'quantsp
+			 (mapcar 
+			   (lambda (x)
+				 (quant 
+				   (quant-qnt x)
+				   (substitute-term (quant-var x) old new)
+				   (quant-neg x))) qeach)))
+	(substitute-term (lexpr-expr target) old new)))
 
 

@@ -25,17 +25,21 @@
 			 (setf +DEPTH+ (parse-integer x))))
 	 (cons "NOREPL" 
 		   (lambda (x)
-			 (setf +SILENT+ (when (string= x "True") t))))))
+			 (setf +SILENT+ (when (string= x "True") t))))
+	 (cons "UGLY_PRINTING"
+		   (lambda (x)
+			 (setf +UGLY-PRINTING+ (when (string= x "True") t))))))
 
 (defvar +DEFAULT-CONFIG+
-  (format nil "~A~%~A~%~A~%~A~%~A~%"
+  (format nil "~A~%~A~%~A~%~A~%~A~%~A~%"
 
    "VARIABLE_PREFIX = v_"
    "SKOLEM_CONSTANT_PREFIX = SC_"
    "SKOLEM_FUNCTION_PREFIX = SF_"
    "DEPTH_OF_SEARCH = 50"
    "NOREPL = False"
-		  
+   "UGLY_PRINTING = True"
+
    ))
 
 

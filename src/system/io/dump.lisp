@@ -248,6 +248,7 @@
   ;; 適当にw x y zとかに置き換えるだけのクソ機能
   ;; lexprの束縛変数がgensym使って正規化されてる時に使わないとなんの意味もないどころか
   ;; parse されたての式に使ったら束縛変数増やすことになりかねないので要注意
+  ;; つまり、自由変数を含むようなやつにやってもだめ
   (let ((conv (lexpr->string lexpr)))
 	(if (typep lexpr 'lexpr)
 	  (let ((qpart (quantsp-each-quant (lexpr-qpart lexpr))))
@@ -273,4 +274,33 @@
 				  (destructuring-bind (old new) x
 					(substitute-term init old new))) rule :initial-value lexpr)))
 		  conv))conv)))
+
+
+@export
+(defun mgu->string (mgu)
+  (when (listp mgu)
+	(loop for each in mgu
+		if (listp each)
+		  collect 
+		  (destructuring-bind (old . new) each
+			(format nil "~A -> ~A"
+				(term->string old)
+				(term->string new))))))
+
+;; resolution-gen で出力された defnode の結果を dot 形式の文字列にする
+@export
+(defun defnode->dot (defnode)
+  (apply #'concatenate 'string 
+		 (append
+		   (mapcar 
+		   (lambda (x)
+			 (destructuring-bind (lexpr name) x
+			   (format nil "~2t~A[label = \"~A\"];~%" name lexpr)))
+		   defnode)
+		   (list (format nil "~%")))))
+
+
+
+
+
 

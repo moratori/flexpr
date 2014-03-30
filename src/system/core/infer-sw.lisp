@@ -20,7 +20,7 @@
 
 
 @export
-(defun resolution (premises conseq &optional (depth +DEPTH+))
+(defun resolution (premises conseq &key (depth +DEPTH+) (output nil))
   (if (which? premises conseq)
 	(error "undefined!!")
-	(resolution-gen premises conseq depth)))
+	(resolution-gen premises conseq :depth depth :output output)))

@@ -402,10 +402,16 @@
 		  (parse (second each))))))
 
 
-
-
-
+#|
 (print-failures (run-tests '(formalize-test)))
 (print-errors (run-tests '(resolution-test)))
 (print-errors (run-tests '(resolution-error-test)))
+|#
+
+(flexpr.system.infer.wrap:resolution 
+  (pl "Ax.(P(x) > Q(x))")
+  (parse "Ax.(~Q(x) > ~P(x))")
+  :output t
+  )
+
 

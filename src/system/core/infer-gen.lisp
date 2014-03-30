@@ -18,7 +18,11 @@
 				  :convert)
 	(:import-from :flexpr.system.error
 				  :maximum-depth-exceeded-error
-				  :undeterminable-error))
+				  :undeterminable-error)
+	(:import-from :flexpr.system.dump
+				  :clause->string
+				  :mgu->string)
+	)
 
 
 ;;; 任意の一階述語論理式の集合に対して
@@ -133,8 +137,27 @@
 ;;;     2. conseqに存在量化子は含まれていなかった => (t nil)
 ;;; 
 
+
+(defmacro special-let* (bounds &rest body)
+  ;;; 値 output が tの場合のみちゃんと束縛を作る
+  ;;; nilの時はboundsをnilで埋める
+  ;;; このマクロは output を意図的に自由変数としてもつ
+  `(if output 
+	 (let* ,bounds ,@body)
+	 (let* 
+	   ,(mapcar 
+		  (lambda (x) 
+			(destructuring-bind (sym expr) x
+			  (list sym nil)
+			  )
+			) bounds)
+	   ,@body
+	   )
+	 )
+  )
+
 @export
-(defun resolution-gen (premises conseq &optional (depth +DEPTH+) (func (newdupf depth)))
+(defun resolution-gen (premises conseq &key (depth +DEPTH+) (func (newdupf depth)) (output t))
   (assert (and 
 			(every (lambda (x) (typep x 'lexpr-type)) premises)
 			(typep conseq 'lexpr-type)))
@@ -144,10 +167,19 @@
 	(preproc premises conseq)
 	
 	(let ((clause-form (append premises-clause-form conseq-clause-form))
-		  (specific-term nil))
+		  (specific-term nil)
+		  (defnode nil)
+		  (noderel nil))
 
 	    (labels 
-		  ((main (clause-form r-clause-form selected-clause dep exist-terms)
+		  ((main (clause-form     ;; 節集合
+				  r-clause-form   ;; 今まで導出された全てを持つリスト
+				  selected-clause ;; 先の導出(又は初期値として)選ばれた節
+				  dep             ;; 現在の深さ 
+				  exist-terms 
+				  lookup
+				  node-relation   ;; ノードとノードの関係
+				  )
 				 (when (> 1 dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
@@ -164,46 +196,86 @@
 
 				   (some 
 					 (lambda (each-choice)
-					;; ここでの each-choice が selected-clause とペアになる節
-					
+
+					;; ここでの clause が selected-clause とペアになる節					
 					(destructuring-bind (clause (flag resolted mgu)) each-choice
+						(special-let* 
+						  ((selected-clause-name (funcall lookup selected-clause))
+						   (opposite-clause-name (funcall lookup clause))
+						   (resolted-clause-name (funcall lookup resolted))
+						   (mgu-str 
+							 (mgu->string mgu))
+						   (relation 
+							 (append 
+							   (list (list selected-clause-name resolted-clause-name mgu-str)
+									 (list opposite-clause-name resolted-clause-name mgu-str))
+							   node-relation)))
 					  
-					 ;(format t "SELECTED~%~A~%~%OPPOSITE~%~A~%~%RESOLUTED~%~A~%~%=================================~%" 
-					;	  (flexpr.dump:clause->string selected-clause #0=(operator +OR+)) 
-					;	  (flexpr.dump:clause->string clause #0#) 
-					;	  (flexpr.dump:clause->string resolted #0#))
-					 ;(sleep 0.3)
+						  (cond 
+							((and flag (null (clause-%literals resolted))) 
+							 (print relation)
+							 (print (funcall lookup nil))
+							 
+							 ;; output が真なら最後結果値を返すために
+							 ;; setfする. したの 一番下の some で listに包んで返す必要あり
+							 (when output
+							   ;; nil でlookupを呼ぶと今までためたplistを返す
+							   (setf noderel  relation
+								     defnode  (funcall lookup nil)))
 
-					  (cond 
-						 ((and flag (null (clause-%literals resolted))) 
-						  (setf specific-term
-								(reverse-unify 
-								  exist-terms mgu)) t)
-
-						 (t 
-						   (handler-case 
-							 (main 
-							   (append 
-							     (remove clause clause-form :test #'%clause=)
-								 (list ;; append するための list
+							 (setf specific-term (reverse-unify  exist-terms mgu)) 
+							 t)
+							
+							(t 
+							  
+							  (handler-case 
+							   (main 
+								 (append 
+								   (remove clause clause-form :test #'%clause=)
+								   (list ;; append するための list
+									 (clause 
+									   (rename-clause (clause-%literals clause)) 
+									   (1+ (clause-used clause)))))
+							     (adjoin 
 								   (clause 
-									 (rename-clause (clause-%literals clause)) 
-									 (1+ (clause-used clause)))))
-
-							   (adjoin 
-								 (clause 
-									 (clause-%literals selected-clause)
-									 (1+ (clause-used selected-clause)))
-								 r-clause-form
-								 :test #'%clause=)
-
-							   resolted
-							   (funcall func  dep)
-							   (reverse-unify exist-terms mgu))
+								     (clause-%literals selected-clause)
+								     (1+ (clause-used selected-clause)))
+								   r-clause-form
+								   :test #'%clause=)
+							     resolted
+							     (funcall func  dep)
+							     (reverse-unify exist-terms mgu)
+							     lookup
+							     relation)
 							 (maximum-depth-exceeded-error (c)
-								(declare (ignore c)) nil)))))) choices*))))
+								(declare (ignore c)) nil))))))) 
+					 choices*))))
 
-		  (or
+		 ;; 以下の let 束縛はグラフにするための
+		 ;; lookup : LEXPR -> UNIQUE_NAME
+		(let* ((prefix "NODE")
+			   (defnode 
+				(when output 
+				  (mapcar 
+					(lambda (x)
+					  (cons x (symbol-name (gensym prefix)))) clause-form)))
+			   (lookup 
+				 (lambda (x)
+				   (if (null x) 
+					 (mapcar 
+					   (lambda (x)
+						 (destructuring-bind (lexpr . name) x
+						   ;; ここの +OR+ は 節が何で結合してるかを表してる
+						   ;; 普通は V なので OR
+						   (cons (clause->string lexpr (operator +OR+)) name)))
+					   defnode)
+					 (let ((i (assoc x defnode :test #'%clause=)))
+					   (if (null i)
+						 (let ((name (symbol-name (gensym prefix)))) 
+						   (setf defnode (acons x name defnode))
+						   name)
+						 (cdr i)))))))
+		(or
 			;; 結論の否定を前提の節に作用させれば
 			;; 手っ取り早く矛盾を導けるだろうというヒューリスティクスが以下
 		    (when (some 
@@ -214,13 +286,14 @@
 						  nil
 				          c-clause 
 					      depth
-						  exist-terms) 
+						  exist-terms
+						  lookup
+						  nil) 
 					  (maximum-depth-exceeded-error (c) 
 						(declare (ignore c)) nil))) 
 					conseq-clause-form)
 			  (list t exist-terms specific-term))	
 
-			 ; (format t "!! SECOND RESOLUTION !!~%" )
 
 			(when (some 
 			  	  ;; 前提の節についての探索を行う
@@ -231,7 +304,9 @@
 							nil
 						  	p-clause
 					  		depth
-							exist-terms)
+							exist-terms
+							lookup
+							nil)
 					  (maximum-depth-exceeded-error (c)
 						(declare (ignore c)) nil))) 
 				  (sort 
@@ -241,5 +316,5 @@
 						 (length (clause-%literals c2))))))
 			  (list t exist-terms specific-term))
 			
-			(error (make-condition 'undeterminable-error)))))))
+			(error (make-condition 'undeterminable-error))))))))
 

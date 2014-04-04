@@ -17,7 +17,8 @@
 	  :flexpr.system.dump
 	  :lexpr->string
 	  :lexpr->string_clear
-	  :term->string)
+	  :term->string
+	  :out-tree)
 	(:import-from :flexpr.interface.config
 	  :loadconfig)
 	(:import-from :flexpr.system.formalize
@@ -49,9 +50,10 @@
   (format t "~2t :load <Filename>               load a definition file~%")
   (format t "~2t :save <Axiomatic system name>  save current system~%")
   (format t "~2t :desc <Axiomatic system name>  describe axiomatic system~%")
-  (format t "~2t :form <Formula>                convert it into formal form~%")
   (format t "~2t :set  <New axiomatic system>   change current axiomatic system~%")
+  (format t "~2t :form <Formula>                convert it into formal form~%")
   (format t "~2t :add  <Formula>                add formula to current axiomatic system~%")
+  (format t "~2t :out  <Formula>                execute resolution and outputs the proof figure~%")
   (format t "~2t :list  enumerate the axiomatic system that are currently defined~%")
   (format t "~2t :help  show this help~%")
   (format t "~2t :exit  exit from REPL~%")
@@ -206,12 +208,14 @@
 			(format t "file error occurred~%"))))))
 
 
-(defun execute-resolution (line)
+(defun execute-resolution (line &optional (flag nil))
   (destructuring-bind (name obj) (existax? *current*)
-	(let ((start (get-universal-time)))
+	(let ((start (get-universal-time))
+		  (outdata nil))
 	 (handler-case 
-	  (destructuring-bind (status exist spec) 
-		(hook (lambda () (resolution obj (string->lexpr line))))
+	  
+	   (destructuring-bind (status exist spec . more) 
+		(hook (lambda () (resolution obj (string->lexpr line) :output flag)))
 		(declare (ignore exist))
 		(format t "~A is ~A under the ~A~%" 
 				line (if status "PROVABLE" "NOT provable")
@@ -220,7 +224,10 @@
 		  (format t "specific term: ")
 		  (dolist (each spec)
 			(format t "~A " (term->string each)))
-		  (format t "~%")))
+		  (format t "~%"))
+		(when flag
+		  (setf outdata more)))
+	  
 	  (caught-error (c)
 	    (declare (ignore c)))
 	  (undeterminable-error (c)
@@ -234,7 +241,29 @@
 		  ;; 捕まえちゃうのでやばい(危ない)
 	  (condition (c)
 		(format t "~A~%" c))) 
-	  (format t "evaluation took ~A sec~%" (- (get-universal-time) start)))))
+	  (format t "evaluation took ~A sec~%" (- (get-universal-time) start))
+	  outdata)))
+
+
+(defun out-resolution (line)
+  (let ((result (execute-resolution line t)))
+	(if (null result)
+	  (format t "proof figure doesn't exist~%")
+	  (destructuring-bind (defnode relation) result
+		(format t "input filename: ")
+		(force-output *standard-output*)
+		(let ((name (loop for name = (read-line *standard-input* nil nil)
+				while (string= name "")
+				finally (return name))))
+		  (if (null name)
+			(format t "~%aborted~%")
+			(out-tree name defnode relation)
+			)
+		  )
+		  )
+	  )
+	)
+  )
 
 (defun conv-formal (lexpr)
   (handler-case
@@ -265,6 +294,7 @@
 	 (cons ":add"   #'adddef)
 	 (cons ":load"  #'loadax)
 	 (cons ":set"   #'setax)
+	 (cons ":out"   #'out-resolution)
 	 (cons ":list"  #'listup)
 	 (cons ":form"  #'conv-formal)
 	 (cons ":desc"  #'desc)

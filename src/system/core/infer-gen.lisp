@@ -151,10 +151,16 @@
 			  (list sym nil)
 			  )
 			) bounds)
-	   ,@body
-	   )
-	 )
-  )
+	   ,@body)))
+
+(defun dump-defnode (defnode)
+  (mapcar 
+	(lambda (x)
+	  (destructuring-bind (lexpr . name) x
+		;; ここの +OR+ は 節が何で結合してるかを表してる
+		;; ;; 普通は V なので OR
+		(cons (clause->string lexpr (operator +OR+)) name)))
+	defnode))
 
 @export
 (defun resolution-gen (premises conseq &key (depth +DEPTH+) (func (newdupf depth)) (output t))
@@ -168,8 +174,8 @@
 	
 	(let ((clause-form (append premises-clause-form conseq-clause-form))
 		  (specific-term nil)
-		  (defnode nil)
-		  (noderel nil))
+		  (defnode-result nil)
+		  (noderel-result nil))
 
 	    (labels 
 		  ((main (clause-form     ;; 節集合
@@ -203,26 +209,31 @@
 						  ((selected-clause-name (funcall lookup selected-clause))
 						   (opposite-clause-name (funcall lookup clause))
 						   (resolted-clause-name (funcall lookup resolted))
-						   (mgu-str 
-							 (mgu->string mgu))
+						   ;(mgu-str 
+						    ;(mgu->string mgu))
 						   (relation 
 							 (append 
-							   (list (list selected-clause-name resolted-clause-name mgu-str)
-									 (list opposite-clause-name resolted-clause-name mgu-str))
+							   (list (list selected-clause-name 
+										   resolted-clause-name 
+										  ; mgu-str
+										   )
+									 (list opposite-clause-name 
+										   resolted-clause-name 
+										  ; mgu-str
+										   ))
 							   node-relation)))
 					  
 						  (cond 
 							((and flag (null (clause-%literals resolted))) 
-							 (print relation)
-							 (print (funcall lookup nil))
+							 ;(print relation)
+							 ;(print (funcall lookup nil))
 							 
 							 ;; output が真なら最後結果値を返すために
 							 ;; setfする. したの 一番下の some で listに包んで返す必要あり
 							 (when output
 							   ;; nil でlookupを呼ぶと今までためたplistを返す
-							   (setf noderel  relation
-								     defnode  (funcall lookup nil)))
-
+							   (setf noderel-result  relation
+								     defnode-result  (funcall lookup nil)))
 							 (setf specific-term (reverse-unify  exist-terms mgu)) 
 							 t)
 							
@@ -262,13 +273,7 @@
 			   (lookup 
 				 (lambda (x)
 				   (if (null x) 
-					 (mapcar 
-					   (lambda (x)
-						 (destructuring-bind (lexpr . name) x
-						   ;; ここの +OR+ は 節が何で結合してるかを表してる
-						   ;; 普通は V なので OR
-						   (cons (clause->string lexpr (operator +OR+)) name)))
-					   defnode)
+					(dump-defnode defnode) 			 
 					 (let ((i (assoc x defnode :test #'%clause=)))
 					   (if (null i)
 						 (let ((name (symbol-name (gensym prefix)))) 
@@ -292,7 +297,11 @@
 					  (maximum-depth-exceeded-error (c) 
 						(declare (ignore c)) nil))) 
 					conseq-clause-form)
-			  (list t exist-terms specific-term))	
+			  	
+			  	(let ((tmp (list t exist-terms specific-term)))
+				  (if output 
+					(append tmp (list defnode-result noderel-result))
+					tmp)))	
 
 
 			(when (some 
@@ -314,7 +323,10 @@
 					(lambda (c1 c2) 
 					  (< (length (clause-%literals c1))
 						 (length (clause-%literals c2))))))
-			  (list t exist-terms specific-term))
+			  (let ((tmp (list t exist-terms specific-term)))
+				  (if output 
+					(append tmp (list defnode-result noderel-result))
+					tmp)))
 			
 			(error (make-condition 'undeterminable-error))))))))
 

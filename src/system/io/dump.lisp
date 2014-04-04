@@ -289,18 +289,28 @@
 
 ;; resolution-gen で出力された defnode の結果を dot 形式の文字列にする
 @export
-(defun defnode->dot (defnode)
-  (apply #'concatenate 'string 
+(defun defnode->dot (stream defnode)
+  (format stream "~A"
+		  (apply #'concatenate 'string 
 		 (append
 		   (mapcar 
 		   (lambda (x)
-			 (destructuring-bind (lexpr name) x
+			 (destructuring-bind (lexpr . name) x
 			   (format nil "~2t~A[label = \"~A\"];~%" name lexpr)))
 		   defnode)
-		   (list (format nil "~%")))))
+		   (list (format nil "~%"))))))
 
 
+@export
+(defun relation->dot (stream relation)
+  (dolist (each relation)
+	(destructuring-bind (from to) each
+	  (format stream "~2t~A -> ~A;~%" from to))))
 
-
-
-
+@export
+(defun out-tree (path defnode relation)
+  (with-open-file (out path :direction :output :if-exists :supersede)
+	(format out "digraph ~A {~%" (pathname-name path))
+	(defnode->dot out defnode)
+	(relation->dot out relation)
+	(format out "}")))

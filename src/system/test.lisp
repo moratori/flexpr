@@ -408,10 +408,20 @@
 (print-errors (run-tests '(resolution-error-test)))
 |#
 
+
+
+(destructuring-bind (a b c d e) 
 (flexpr.system.infer.wrap:resolution 
-  (pl "Ax.(P(x) > Q(x))")
-  (parse "Ax.(~Q(x) > ~P(x))")
-  :output t
+  (pl "P V Q"
+	  "P > (R V S)"
+	  "Q > (T V S)"
+	  "(~R & ~T)"
+	  )
+  (parse "S")
+  :output t)
+  (flexpr.system.dump::out-tree "~/Desktop/tree.dot"
+							d e	)
   )
+
 
 

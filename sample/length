@@ -1,0 +1,2 @@
+len(NIL,ZERO)
+AeAcAn.(len(c,n) > len(cons(e,c),succ(n)))

@@ -401,10 +401,10 @@
 		  (apply #'pl (first each))
 		  (parse (second each))))))
 
-#|
+;;#|
 (print-failures (run-tests '(formalize-test)))
 (print-errors (run-tests '(resolution-test)))
 (print-errors (run-tests '(resolution-error-test)))
-|#
+;;|#
 
 

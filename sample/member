@@ -1,0 +1,2 @@
+AxAy.member(x,cons(x,y))
+AtAeAc.(member(t,c) > member(t,cons(e,c)))

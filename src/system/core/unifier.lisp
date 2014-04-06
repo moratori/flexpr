@@ -100,6 +100,27 @@
 	  (subst-old-rule x (list y))) 
 	old-rules :initial-value new-rules))
 
+;;; ルールresultが関数の定義をみたしてないなら
+;;; nilを返す
+;;; x = y -> f(x) = f(y)
+;;; ((x . foo) (x . buz)  (y . bar) ...) 
+;;; こんな場合
+(defun absurd (result)
+  (cond
+	((typep result 'boolean) result)
+	(t
+	  (loop named exit 
+			for x in result
+			finally (return-from exit result)
+			do 
+			(loop for y in result
+				  do
+				  (destructuring-bind (x1 . x2) x
+					(destructuring-bind (y1 . y2) y
+					  (when (and 
+							  (term= x1 y1)
+							  (not (term= x2 y2)))
+						(return-from exit nil)))))))))
 
 ;; 前に得られた置換にも遡って置換した方がいいかもしれない
 ;; いまのだと 
@@ -135,10 +156,11 @@
 			(if (null argv1) result
 			  (let ((unifier (mgu (car argv1) 
 								  (car argv2))))
+				;(print unifier)
 					(cond 
 					  ;; 単一化は失敗
 					  ((null unifier) nil)
-					  
+
 					  ((listp unifier)
 						(apply #'main 
 							   (append (subst-old-rule result unifier) 
@@ -156,9 +178,11 @@
 						   	   (cdr argv1)
 							   (cdr argv2))))))))
 		
-		(main nil
+		(absurd
+		  (main nil
 		  	  (fterm-terms t1)
-			  (fterm-terms t2))))))
+			  (fterm-terms t2))
+		  )))))
 
 
 
@@ -175,6 +199,7 @@
 			 (apply #'fterm (atomic-lexpr-pred-sym lexpr2)
 							(atomic-lexpr-terms    lexpr2)))))
 
+
 @export
 (defun eliminate? (lit1 lit2)
   (assert (and (typep lit1 '%literal)
@@ -182,17 +207,20 @@
   (cond 
 	((eq (%literal-negation lit1)
 		 (%literal-negation lit2)) nil)
-	(t (mgu 
+	(t 
+	 (mgu 
 		 (apply #'atomic-lexpr 
 		   (%literal-pred lit1) (%literal-terms lit1))
 		 (apply #'atomic-lexpr 
-		   (%literal-pred lit2) (%literal-terms lit2))))))
+		   (%literal-pred lit2) (%literal-terms lit2))) 
+	  )))
 
 
 
 @export
 (defun unify (rule clause)
   ;; ( (term1 . new1) (term2 . new2) )
+  ;; rule が ((a . b) (a . c) ...) みたいだと困る
   (if (eq rule t) clause
 	 (clause
 	   (mapcar 
@@ -219,7 +247,7 @@
 			   (mapcar #'main (%literal-terms x)))
 			 0))
 		 (clause-%literals clause))
-	   0))) 
+	   0))  ) 
 
 
 

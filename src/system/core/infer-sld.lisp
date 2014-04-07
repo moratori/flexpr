@@ -10,5 +10,10 @@
 
 
 @export
-(defun resolution-sld (premises conseq &optional (depth +DEPTH+))
+(defun resolution-sld (premises-clause-form 
+					   conseq-clause-form 
+					   &key 
+					     (depth +DEPTH+))
+
+
   )

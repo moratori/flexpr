@@ -13,9 +13,6 @@
 				  :reverse-unify)
 	(:import-from :flexpr.system.formalize.mat
 				  :rename-clause)
-	(:import-from :flexpr.system.formalize
-				  :formalize
-				  :convert)
 	(:import-from :flexpr.system.error
 				  :maximum-depth-exceeded-error
 				  :undeterminable-error)
@@ -29,23 +26,6 @@
 ;;; 充足不可能性を確認する. 
 
 
-
-
-;; 
-;; (values {C1,C2,C3...} {C1,C2,C3...})
-;; 上の合併集合から空節が求まればおｋ
-(defun preproc (premises conseq &optional (quants-form +FORALL+) (mat-form (operator +AND+))) 
-  (multiple-value-bind 
-	(lexpr exist-terms) 
-	(convert (normal-lexpr (operator +NEG+) conseq nil) mat-form quants-form )
-	(values 
-	  (loop for each in 
-	    (mapcar 
-		  (lambda (x) 
-			(convert x mat-form quants-form)) premises)
-			append each)
-	  lexpr
-	  exist-terms)))
 
 ;; (values flag result)
 ;; flag で導出できたかいなか
@@ -162,20 +142,56 @@
 		(cons (clause->string lexpr (operator +OR+)) name)))
 	defnode))
 
-@export
-(defun resolution-gen (premises conseq &key (depth +DEPTH+) (func (newdupf depth)) (output t))
-  (assert (and 
-			(every (lambda (x) (typep x 'lexpr-type)) premises)
-			(typep conseq 'lexpr-type)))
+;; Logical inference per second
+(defun lips (total start)
+  (/ total (- (get-universal-time) start)))
 
-  (multiple-value-bind 
-	(premises-clause-form conseq-clause-form exist-terms)
-	(preproc premises conseq)
-	
-	(let ((clause-form (append premises-clause-form conseq-clause-form))
+
+(defun call-main (main fuse-list universe-clause depth exist-terms lookup)
+  (some 
+	(lambda (c-clause)
+	  (handler-case 
+		(funcall main 
+		  (remove c-clause universe-clause :test #'%clause=)  
+		  nil
+		  c-clause 
+		  depth
+		  exist-terms
+		  lookup
+		  nil) 
+	  (maximum-depth-exceeded-error (c) 
+		(declare (ignore c)) nil))) 
+	fuse-list))
+
+@export
+(defun resolution-gen (premises-clause-form 
+					   conseq-clause-form 
+					   exist-terms 
+					   &key (depth +DEPTH+) 
+					        (func (newdupf depth)) 
+							(output nil))
+
+  (let*  ((clause-form (append premises-clause-form conseq-clause-form))
+		  ;; 以下は何らかの副作用を持つ変数なので扱い注意
 		  (specific-term nil)
 		  (defnode-result nil)
-		  (noderel-result nil))
+		  (noderel-result nil)
+		  (prefix "NODE")
+		  (defnode 
+			(when output 
+			  (mapcar 
+				(lambda (x)
+				  (cons x (symbol-name (gensym prefix)))) clause-form)))
+		  (lookup 
+			(lambda (x)
+			  (if (null x) 
+				(dump-defnode defnode) 			 
+				(let ((i (assoc x defnode :test #'%clause=)))
+				  (if (null i)
+					(let ((name (symbol-name (gensym prefix)))) 
+					  (setf defnode (acons x name defnode))
+					  name)
+					(cdr i)))))))
 
 	    (labels 
 		  ((main (clause-form     ;; 節集合
@@ -209,24 +225,16 @@
 						  ((selected-clause-name (funcall lookup selected-clause))
 						   (opposite-clause-name (funcall lookup clause))
 						   (resolted-clause-name (funcall lookup resolted))
-						   ;(mgu-str 
-						    ;(mgu->string mgu))
 						   (relation 
 							 (append 
 							   (list (list selected-clause-name 
-										   resolted-clause-name 
-										  ; mgu-str
-										   )
+										   resolted-clause-name)
 									 (list opposite-clause-name 
-										   resolted-clause-name 
-										  ; mgu-str
-										   ))
+										   resolted-clause-name))
 							   node-relation)))
 					  
 						  (cond 
 							((and flag (null (clause-%literals resolted))) 
-							 ;(print relation)
-							 ;(print (funcall lookup nil))
 							 
 							 ;; output が真なら最後結果値を返すために
 							 ;; setfする. したの 一番下の some で listに包んで返す必要あり
@@ -262,71 +270,29 @@
 								(declare (ignore c)) nil))))))) 
 					 choices*))))
 
-		 ;; 以下の let 束縛はグラフにするための
-		 ;; lookup : LEXPR -> UNIQUE_NAME
-		(let* ((prefix "NODE")
-			   (defnode 
-				(when output 
-				  (mapcar 
-					(lambda (x)
-					  (cons x (symbol-name (gensym prefix)))) clause-form)))
-			   (lookup 
-				 (lambda (x)
-				   (if (null x) 
-					(dump-defnode defnode) 			 
-					 (let ((i (assoc x defnode :test #'%clause=)))
-					   (if (null i)
-						 (let ((name (symbol-name (gensym prefix)))) 
-						   (setf defnode (acons x name defnode))
-						   name)
-						 (cdr i)))))))
-		(or
-			;; 結論の否定を前提の節に作用させれば
-			;; 手っ取り早く矛盾を導けるだろうというヒューリスティクスが以下
-		    (when (some 
-					(lambda (c-clause)
-					  (handler-case 
-						(main 
-						  (remove c-clause clause-form :test #'%clause=)  
-						  nil
-				          c-clause 
-					      depth
-						  exist-terms
-						  lookup
-						  nil) 
-					  (maximum-depth-exceeded-error (c) 
-						(declare (ignore c)) nil))) 
-					conseq-clause-form)
-			  	
-			  	(let ((tmp (list t exist-terms specific-term)))
-				  (if output 
-					(append tmp (list defnode-result noderel-result))
-					tmp)))	
+	    (if (or (call-main 
+					#'main
+					conseq-clause-form 
+					clause-form
+					depth
+					exist-terms
+					lookup)
 
+				(call-main 
+				    #'main
+				    (sort premises-clause-form
+				      (lambda (c1 c2) 
+					    (< (length (clause-%literals c1))
+						   (length (clause-%literals c2)))))
+				    clause-form
+				    depth
+				    exist-terms
+				    lookup))
 
-			(when (some 
-			  	  ;; 前提の節についての探索を行う
-				  (lambda (p-clause)
-					(handler-case 
-						(main 
-						    (remove p-clause clause-form :test #'%clause=)
-							nil
-						  	p-clause
-					  		depth
-							exist-terms
-							lookup
-							nil)
-					  (maximum-depth-exceeded-error (c)
-						(declare (ignore c)) nil))) 
-				  (sort 
-					premises-clause-form
-					(lambda (c1 c2) 
-					  (< (length (clause-%literals c1))
-						 (length (clause-%literals c2))))))
-			  (let ((tmp (list t exist-terms specific-term)))
-				  (if output 
-					(append tmp (list defnode-result noderel-result))
-					tmp)))
-			
-			(error (make-condition 'undeterminable-error))))))))
+			(let ((tmp (list t exist-terms specific-term)))
+			  (if output 
+				(append tmp (list defnode-result noderel-result))
+				tmp))
+
+			(error (make-condition 'undeterminable-error))))))
 

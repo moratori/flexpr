@@ -47,7 +47,7 @@
 			   do (unless (null rule)
 					(return-from exit (list rule x y)))))))
 	(if (null res)
-	  (values nil nil)
+	  (values nil nil nil)
 	  (destructuring-bind (rule lit1 lit2) res
 		(values 
 		  t
@@ -100,7 +100,7 @@
 	(cf-sort
 	  (loop for each-c in all
 			for rule = (multiple-value-list (resolution? each-c selected-clause)) 
-			if (not (null (first rule)))
+			if (first rule)
 			  collect (list each-c rule))))
 
 ;; 前までは 深度が1深まる毎にlimitを1減らしてたけど
@@ -158,6 +158,7 @@
 		  depth
 		  exist-terms
 		  lookup
+		  nil
 		  nil) 
 	  (maximum-depth-exceeded-error (c) 
 		(declare (ignore c)) nil))) 
@@ -201,6 +202,7 @@
 				  exist-terms 
 				  lookup
 				  node-relation   ;; ノードとノードの関係
+				  app-flag            ;; 導出済み(前提にはなかった節)をくっつけるべきかのflag
 				  )
 				 (when (> 1 dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
@@ -211,10 +213,17 @@
 				 ;; choices* にはそれらが含まれている
 				 (let*  ((choices  (choices selected-clause clause-form))
 					     (choices* (append choices 
-										   ;; clause-form の節がすでに一度以上使われた節であるなら
-										   ;; いままでに導出されたやつをくっつける
-										   (when (every (lambda (x) (> (clause-used x)  0)) clause-form)
-											 (choices selected-clause r-clause-form)))))
+									;; clause-form の節がすでに一度以上使われた節であるなら
+									;; いままでに導出されたやつをくっつける
+									;; 毎回 every で clause-form を走査するのは非効率的なので
+									;; 一回ここにきたらフラグたてる
+									(cond 
+									  (app-flag 
+										(choices selected-clause r-clause-form))
+									  ((every (lambda (x) (> (clause-used x)  0)) clause-form)
+									    (setf app-flag t)
+									    (choices selected-clause r-clause-form))
+									  (t nil)))))
 
 				   (some 
 					 (lambda (each-choice)
@@ -249,50 +258,55 @@
 							  
 							  (handler-case 
 							   (main 
-								 (append 
-								   (remove clause clause-form :test #'%clause=)
-								   (list ;; append するための list
-									 (clause 
-									   (rename-clause (clause-%literals clause)) 
-									   (1+ (clause-used clause)))))
-							     (adjoin 
+								 
+								 (if (member clause clause-form :test #'%clause=)
+								   (append 
+									 (remove clause clause-form :test #'%clause=)
+									 (list ;; append するための list
+									   (clause 
+										 (rename-clause (clause-%literals clause)) 
+									     (1+ (clause-used clause)))))
+									 clause-form)
+							     
+								 (adjoin 
 								   (clause 
 								     (clause-%literals selected-clause)
 								     (1+ (clause-used selected-clause)))
 								   r-clause-form
 								   :test #'%clause=)
+
 							     resolted
 							     (funcall func  dep)
 							     (reverse-unify exist-terms mgu)
 							     lookup
-							     relation)
+							     relation
+								 app-flag)
 							 (maximum-depth-exceeded-error (c)
 								(declare (ignore c)) nil))))))) 
 					 choices*))))
 
-	    (if (or (call-main 
-					#'main
-					conseq-clause-form 
-					clause-form
-					depth
-					exist-terms
-					lookup)
+	    (unless (or (call-main 
+				 	  #'main
+					  conseq-clause-form 
+					  clause-form
+					  depth
+					  exist-terms
+					  lookup)
+					
+					(call-main 
+					  #'main
+				      (sort premises-clause-form
+				        (lambda (c1 c2) 
+					      (< (length (clause-%literals c1))
+						     (length (clause-%literals c2)))))
+				      clause-form
+				      depth
+				      exist-terms
+				      lookup))
+			(error (make-condition 'undeterminable-error)))
 
-				(call-main 
-				    #'main
-				    (sort premises-clause-form
-				      (lambda (c1 c2) 
-					    (< (length (clause-%literals c1))
-						   (length (clause-%literals c2)))))
-				    clause-form
-				    depth
-				    exist-terms
-				    lookup))
-
-			(let ((tmp (list t exist-terms specific-term)))
+	    (let ((tmp (list t exist-terms specific-term)))
 			  (if output 
 				(append tmp (list defnode-result noderel-result))
-				tmp))
-
-			(error (make-condition 'undeterminable-error))))))
+				tmp)))))
 

@@ -1,0 +1,4 @@
+Ax.~R(x,x)
+AxAyAz.(parent(x,y) & parent(x,z) & R(y,z) > sibling(y,z))
+parent(Namihei,Katuo)
+parent(Namihei,Wakame)

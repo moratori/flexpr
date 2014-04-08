@@ -1,6 +1,0 @@
-even(ZERO)
-Ax.(even(x) > even(s(s(ZERO))))
-odd(s(ZERO))
-Ax.(odd(x) > odd(s(s(ZERO))))
-
-Ax.(even(x) > sum(x,ZERO,z))

@@ -31,13 +31,47 @@
 	  exist-terms)))
 
 
+(defun single? (l)
+  (and (not (null l))
+	   (null (cdr l))))
+
+;; 正のリテラルが1つ
+(defun rule-clause? (clause)
+  (= 1
+	 (count-if 
+	   (lambda (x)
+		 (not (%literal-negation x)))
+	   (clause-%literals clause))))
+
+(defun fact-clause? (clause)
+  (and
+	(single? (clause-%literals clause))
+	(not (%literal-negation 
+		   (car (clause-%literals clause))))))
+
+
+;; goal節であるか?
+;; 全て否定のリテラル. goal clause <- horn-clause
+(defun goal-clause? (conseq)
+  (and 
+	(single? conseq)
+	;; 上２つで １つの節であるかをしらべる
+	(every 
+	  (lambda (x)
+		(%literal-negation x))
+	  (clause-%literals (car conseq)))))
 
 ;; t -> sld
 ;; nil -> gen
 (defun which? (premises-clause-form conseq-clause-form)
-  nil ;(format t "--- PREMISES ---~%~A~%~%--- CONSEQ ---~%~A~%~%" premises conseq)
+  (and 
+	  (every (lambda (x) 
+			   (or (fact-clause? x)
+				   (rule-clause? x)))
+			 premises-clause-form)
+	  (goal-clause? conseq-clause-form))
+  nil
   )
-
 
 @export
 (defun resolution (premises conseq &key (depth +DEPTH+) (output nil))

@@ -15,6 +15,7 @@ female(Fune)
 female(Sazae)
 female(Wakame)
 
+
 # rule of family
 AxAy.(parent(x,y) & male(x) > father(x,y))
 AxAy.(parent(x,y) & female(x) > mother(x,y))
@@ -22,3 +23,5 @@ AxAy.(parent(x,y) > ancestor(x,y))
 AxAyAz.(parent(x,y) & ancestor(y,z) > ancestor(x,z))
 AxAyAz.(parent(x,y) & parent(x,z) > sibling(y,z))
 AxAyAz.(sibling(x,y) & parent(x,z) & male(z) > nephew(z,y))
+
+

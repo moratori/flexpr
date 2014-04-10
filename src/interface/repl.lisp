@@ -96,7 +96,7 @@
 
 (defun credit ()
   (unless +SILENT+
-	(format t "Theorem Prover 1.0~%")
+	(format t "Flexpr Theorem Prover 1.0~%")
 	(help)
 	(force-output *standard-output*)))
 
@@ -341,6 +341,7 @@
 		   (return-from exit)))
 		(t 
 		  (execute-resolution line))))
+	(format t "~%")
 	(force-output *standard-output*)
 	(prompt)))
 

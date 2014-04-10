@@ -18,8 +18,7 @@
 				  :undeterminable-error)
 	(:import-from :flexpr.system.dump
 				  :clause->string
-				  :mgu->string)
-	)
+				  :mgu->string))
 
 
 ;;; 任意の一階述語論理式の集合に対して
@@ -73,7 +72,7 @@
   (length (clause-%literals (second (second clause*)))))
 
 
-;;; 導出後の節が最も小さくなるものを優先
+;;; 導出後の節が最も小さくなるものを優先(これ必ずしもよくないので後で改良)
 ;;; 但しそれも節の大きさが同じ場合、使われたことの回数が少ない
 ;;; 節を優先して使う
 (defun primary-short (clause-form*)
@@ -147,8 +146,30 @@
   (/ total (- (get-universal-time) start)))
 
 
-(defun call-main (main fuse-list universe-clause depth exist-terms lookup)
-  (some 
+(defun lookupper (clause-form)
+  (let*
+	((prefix "NODE")
+	 (defnode 
+	   (mapcar 
+		 (lambda (x)
+		   (cons x (symbol-name (gensym prefix)))) clause-form))
+	 (lookup 
+	   (lambda (x)
+		 (if (null x) 
+		   (dump-defnode defnode) 			 
+		   (let ((i (assoc x defnode :test #'%clause=)))
+			 (if (null i)
+			   (let ((name (symbol-name (gensym prefix)))) 
+				 (setf defnode (acons x name defnode))
+				 name)
+			   (cdr i)))))))
+	lookup))
+
+
+;;; 結論となる節が複数ある場合、
+;;; 並行してmainを呼ぶ
+(defun call-main (main fuse-list universe-clause depth exist-terms)
+  (some
 	(lambda (c-clause)
 	  (handler-case 
 		(funcall main 
@@ -157,44 +178,22 @@
 		  c-clause 
 		  depth
 		  exist-terms
-		  lookup
+		  (lookupper universe-clause)
 		  nil
 		  nil) 
 	  (maximum-depth-exceeded-error (c) 
-		(declare (ignore c)) nil))) 
+		(declare (ignore c)) nil)))	
 	fuse-list))
 
 @export
 (defun resolution-gen (premises-clause-form 
 					   conseq-clause-form 
-					   exist-terms 
+					   original-exist-terms 
 					   &key (depth +DEPTH+) 
 					        (func (newdupf depth)) 
 							(output nil))
 
-  (let*  ((clause-form (append premises-clause-form conseq-clause-form))
-		  ;; 以下は何らかの副作用を持つ変数なので扱い注意
-		  (specific-term nil)
-		  (defnode-result nil)
-		  (noderel-result nil)
-		  (prefix "NODE")
-		  (defnode 
-			(when output 
-			  (mapcar 
-				(lambda (x)
-				  (cons x (symbol-name (gensym prefix)))) clause-form)))
-		  (lookup 
-			(lambda (x)
-			  (if (null x) 
-				(dump-defnode defnode) 			 
-				(let ((i (assoc x defnode :test #'%clause=)))
-				  (if (null i)
-					(let ((name (symbol-name (gensym prefix)))) 
-					  (setf defnode (acons x name defnode))
-					  name)
-					(cdr i)))))))
-
-	    (labels 
+  (labels 
 		  ((main (clause-form     ;; 節集合
 				  r-clause-form   ;; 今まで導出された全てを持つリスト
 				  selected-clause ;; 先の導出(又は初期値として)選ばれた節
@@ -212,18 +211,15 @@
 				 ;; choices には今までの導出で出てきた節は含まれていない
 				 ;; choices* にはそれらが含まれている
 				 (let*  ((choices  (choices selected-clause clause-form))
+						 (checked  (unless app-flag 
+									 (every (lambda (x) (> (clause-used x)  0)) clause-form)))
 					     (choices* (append choices 
 									;; clause-form の節がすでに一度以上使われた節であるなら
 									;; いままでに導出されたやつをくっつける
 									;; 毎回 every で clause-form を走査するのは非効率的なので
 									;; 一回ここにきたらフラグたてる
-									(cond 
-									  (app-flag 
-										(choices selected-clause r-clause-form))
-									  ((every (lambda (x) (> (clause-used x)  0)) clause-form)
-									    (setf app-flag t)
-									    (choices selected-clause r-clause-form))
-									  (t nil)))))
+									(when (or app-flag checked)
+									   (choices selected-clause r-clause-form)))))
 
 				   (some 
 					 (lambda (each-choice)
@@ -245,14 +241,19 @@
 						  (cond 
 							((and flag (null (clause-%literals resolted))) 
 							 
-							 ;; output が真なら最後結果値を返すために
-							 ;; setfする. したの 一番下の some で listに包んで返す必要あり
-							 (when output
-							   ;; nil でlookupを呼ぶと今までためたplistを返す
-							   (setf noderel-result  relation
-								     defnode-result  (funcall lookup nil)))
-							 (setf specific-term (reverse-unify  exist-terms mgu)) 
-							 t)
+							 (let ((base 
+									(list 
+									  t 
+									  original-exist-terms 
+									  (reverse-unify  exist-terms mgu))))
+							  (if output 
+								(append 
+								  base 
+								  (list 
+									(funcall lookup nil)
+									relation 
+										))
+								base)))
 							
 							(t 
 							  
@@ -280,33 +281,30 @@
 							     (reverse-unify exist-terms mgu)
 							     lookup
 							     relation
-								 app-flag)
+								 (or app-flag checked))
 							 (maximum-depth-exceeded-error (c)
 								(declare (ignore c)) nil))))))) 
 					 choices*))))
 
-	    (unless (or (call-main 
+
+		(let* ((clause-form (append premises-clause-form conseq-clause-form))
+			   (res1 (call-main 
 				 	  #'main
 					  conseq-clause-form 
 					  clause-form
 					  depth
-					  exist-terms
-					  lookup)
-					
-					(call-main 
-					  #'main
-				      (sort premises-clause-form
-				        (lambda (c1 c2) 
-					      (< (length (clause-%literals c1))
-						     (length (clause-%literals c2)))))
-				      clause-form
-				      depth
-				      exist-terms
-				      lookup))
+					  original-exist-terms))
+			   (res2 (when (null res1)
+					   (call-main 
+						 #'main
+						 (sort premises-clause-form
+						   (lambda (c1 c2) 
+					         (< (length (clause-%literals c1))
+						        (length (clause-%literals c2)))))
+						 clause-form
+						 depth
+						 original-exist-terms))))
+		  (unless (or res1 res2)
 			(error (make-condition 'undeterminable-error)))
-
-	    (let ((tmp (list t exist-terms specific-term)))
-			  (if output 
-				(append tmp (list defnode-result noderel-result))
-				tmp)))))
+		  (or res1 res2))))
 

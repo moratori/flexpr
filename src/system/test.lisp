@@ -291,6 +291,33 @@
 	  "Ex.(cat(x) & blueyes(x))")	 
 	 "Ex.(cat(x) & cute(x) & blueyes(x))")
 
+	(("AxAy.(P(x,y) > Q(x) V R(y,x))"
+	  "AxAy.(R(y,x) & S(x) > T(y) & U(x))"
+	  "AxAy.(S(x) & P(x,y))")
+	 "AxAy.(~T(x) V ~U(y) > ~R(x,y))")
+
+	((
+	  "Ac.append(NIL,c,c)"
+	  "AxAyAzAr.(append(x,y,z) > append(cons(r,x),y,cons(r,z)))"
+	  "reverse(NIL,NIL)"
+	  "AxAyAzAe.(reverse(x,z) & append(z,cons(e,NIL),y) > reverse(cons(e,x),y))")
+	 "Ex.reverse(cons(A,cons(B,cons(C,cons(D,cons(E,cons(F,cons(G,NIL))))))),x)"
+	 )
+
+	((
+	"Ax.sum(ZERO,x,x)"
+	"AxAyAz.(sum(x,y,z) > sum(s(x),y,s(z)))"
+
+	"Ax.mult(x,ZERO,ZERO)"
+	"AkAmAnAp.(sum(k,m,p) & mult(m,n,k) > mult(m,s(n),p))"
+
+	"fact(ZERO,s(ZERO))"
+	"AmAkAr.(mult(m,s(k),r) & fact(k,m) > fact(s(k),r))"
+		)
+	
+	 "Ex.fact(s(s(s(ZERO))),x)"
+	 )
+
 	))
 
 

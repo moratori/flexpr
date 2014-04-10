@@ -70,4 +70,4 @@
 (defvar +SKOLEM_FUNC+ "SF_")
 
 @export
-(defvar +DEPTH+ 50)
+(defvar +DEPTH+ 100)

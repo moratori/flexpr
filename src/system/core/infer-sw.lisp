@@ -64,14 +64,19 @@
 ;; t -> sld
 ;; nil -> gen
 (defun which? (premises-clause-form conseq-clause-form)
-  (and 
+  (if (and 
 	  (every (lambda (x) 
 			   (or (fact-clause? x)
 				   (rule-clause? x)))
 			 premises-clause-form)
 	  (goal-clause? conseq-clause-form))
-  nil
+	(cons #'resolution-sld "SLD")
+	(cons #'resolution-gen "GEN")
+	)
+  
   )
+
+
 
 @export
 (defun resolution (premises conseq &key (depth +DEPTH+) (output nil))
@@ -79,13 +84,17 @@
 	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
 
-	(funcall 
-	  (if (which? premises-clause-form conseq-clause-form)
-		  #'resolution-sld 
-		  #'resolution-gen)
-		premises-clause-form 
-		conseq-clause-form
-		exist-terms
-		:depth depth 
-		:output output)))
+	(destructuring-bind (func . id) 
+	  (which? premises-clause-form conseq-clause-form)
+	  (append 
+		(funcall 
+		  func
+		  premises-clause-form 
+		  conseq-clause-form
+		  exist-terms
+		  :depth depth 
+		  :output output)
+		(list id)))))
+
+
 

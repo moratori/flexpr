@@ -300,17 +300,30 @@
 		   defnode)
 		   (list (format nil "~%"))))))
 
-
 @export
 (defun relation->dot (stream relation)
   (dolist (each relation)
 	(destructuring-bind (from to) each
 	  (format stream "~2t~A -> ~A;~%" from to))))
 
+(defun simplify (defnode relation)
+  (remove-if 
+	(lambda (x)
+	  (destructuring-bind (lexpr . name) x
+		(every 
+		  (lambda (x)
+			(and 
+			  (string/= (first x) name)
+			  (string/= (second x) name))) 
+		  relation)))
+	defnode))
+
 @export
 (defun out-tree (path defnode relation)
   (with-open-file (out path :direction :output :if-exists :supersede)
 	(format out "digraph ~A {~%" (pathname-name path))
-	(defnode->dot out defnode)
+	(defnode->dot out (simplify defnode relation))
 	(relation->dot out relation)
 	(format out "}")))
+
+

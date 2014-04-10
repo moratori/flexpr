@@ -217,6 +217,7 @@
 	   (destructuring-bind (status exist spec . more) 
 		(hook (lambda () (resolution obj (string->lexpr line) :output flag)))
 		(declare (ignore exist))
+		(format t "resolution mode: ~A~%" (car (last more)))
 		(format t "~A is ~A under the ~A~%" 
 				line (if status "PROVABLE" "NOT provable")
 				*current*)
@@ -226,7 +227,7 @@
 			(format t "~A " (term->string each)))
 		  (format t "~%"))
 		(when flag
-		  (setf outdata more)))
+		  (setf outdata (butlast more))))
 	  
 	  (caught-error (c)
 	    (declare (ignore c)))

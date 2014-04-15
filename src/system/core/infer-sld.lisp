@@ -160,6 +160,7 @@
 			exist-terms
 			lookup
 			node-relation
+			app-flag
 			)
 
  			(when (> 1 dep)
@@ -168,9 +169,12 @@
 								     :mde-where 'resolution-sld)))
 
 			(let* ((choices (choices goal-clause clause-form))
+				   (checked 
+					 (unless app-flag
+					   (every (lambda (x) (> (clause-used x)  0)) clause-form)))
 				   (choices* 
 					 (append choices
-							 (when (every (lambda (x) (> (clause-used x) 0)) clause-form)
+							 (when (or app-flag checked) 
 								(choices goal-clause r-clause-form)))))
 			  
 			  (some 
@@ -218,7 +222,8 @@
 							(1- dep)
 							(reverse-unify exist-terms mgu)
 							lookup
-							relation)
+							relation
+							(or app-flag checked))
 						  (maximum-depth-exceeded-error (c)
 							(declare (ignore c)) nil)))))))
 				choices))))
@@ -229,9 +234,10 @@
 				  normal
 				  nil 
 				  (car conseq-clause-form)
-				  depth
+				  (* 2 depth)
 				  original-exist-terms
 				  (lookupper clause-form)
+				  nil
 				  nil)))
 	  (unless res
 		(error (make-condition 'undeterminable-error)))

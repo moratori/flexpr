@@ -18,8 +18,12 @@
 				  :undeterminable-error)
 	(:import-from :flexpr.system.dump
 				  :clause->string
-				  :mgu->string))
-
+				  :mgu->string)
+	(:import-from 
+	  :parallel
+	  :mp-some
+	  )
+	)
 
 ;;; 任意の一階述語論理式の集合に対して
 ;;; 充足不可能性を確認する. 
@@ -169,18 +173,19 @@
 ;;; 結論となる節が複数ある場合、
 ;;; 並行してmainを呼ぶ
 (defun call-main (main fuse-list universe-clause depth exist-terms)
-  (some
-	(lambda (c-clause)
-	  (handler-case 
-		(funcall main 
-		  (remove c-clause universe-clause :test #'%clause=)  
-		  nil
-		  c-clause 
-		  depth
-		  exist-terms
-		  (lookupper universe-clause)
-		  nil
-		  nil) 
+  (mp-some
+		(lambda (c-clause)
+			(handler-case 
+				(funcall 
+					main 
+					(remove c-clause universe-clause :test #'%clause=)  
+					nil
+					c-clause 
+					depth
+					exist-terms
+					(lookupper universe-clause)
+					nil
+					nil) 
 	  (maximum-depth-exceeded-error (c) 
 		(declare (ignore c)) nil)))	
 	fuse-list))

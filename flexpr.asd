@@ -8,7 +8,11 @@
 
 
 (defsystem flexpr
-	:depends-on (:optima :namespace)
+	:depends-on (
+				 :optima 
+				 :namespace 
+				 :parallel
+ 				 )
 	:serial t
 	:version "1.0"
 	:author "moratori"

@@ -296,6 +296,7 @@
 	  "AxAy.(S(x) & P(x,y))")
 	 "AxAy.(~T(x) V ~U(y) > ~R(x,y))")
 
+	#|
 	((
 	  "Ac.append(NIL,c,c)"
 	  "AxAyAzAr.(append(x,y,z) > append(cons(r,x),y,cons(r,z)))"
@@ -318,6 +319,7 @@
 	 "Ex.fact(s(s(s(ZERO))),x)"
 	 )
 
+	|#
 	))
 
 
@@ -428,6 +430,7 @@
 		  (apply #'pl (first each))
 		  (parse (second each))))))
 
+
 ;;#|
 (print-failures (run-tests '(formalize-test)))
 (print-errors (run-tests '(resolution-test)))
@@ -435,3 +438,8 @@
 ;;|#
 
 
+#|
+(loop repeat 50
+			do 
+			(run-tests '(resolution-test resolution-error-test)))
+|#

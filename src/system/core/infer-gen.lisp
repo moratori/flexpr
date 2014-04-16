@@ -19,10 +19,10 @@
 	(:import-from :flexpr.system.dump
 				  :clause->string
 				  :mgu->string)
-	(:import-from 
-	  :parallel
-	  :mp-some
-	  )
+;	(:import-from 
+;	  :parallel
+;	  :mp-some
+;	  )
 	)
 
 ;;; 任意の一階述語論理式の集合に対して
@@ -173,7 +173,7 @@
 ;;; 結論となる節が複数ある場合、
 ;;; 並行してmainを呼ぶ
 (defun call-main (main fuse-list universe-clause depth exist-terms)
-  (mp-some
+  (some ;mp-some
 		(lambda (c-clause)
 			(handler-case 
 				(funcall 
@@ -226,7 +226,7 @@
 									(when (or app-flag checked)
 									   (choices selected-clause r-clause-form)))))
 
-				   (some 
+				   (some ;mp-some 
 					 (lambda (each-choice)
 
 					;; ここでの clause が selected-clause とペアになる節					

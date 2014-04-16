@@ -16,7 +16,10 @@
 				  :unify)
 	(:import-from :flexpr.system.error
 				  :maximum-depth-exceeded-error
-				  :undeterminable-error))
+				  :undeterminable-error)
+	;(:import-from :parallel
+	;							:mp-some)
+	)
 
 
 (defun resolution? (goal-clause clause)
@@ -177,7 +180,7 @@
 							 (when (or app-flag checked) 
 								(choices goal-clause r-clause-form)))))
 			  
-			  (some 
+			  (some ;mp-some 
 				(lambda (cand)
 				  (destructuring-bind (clause (flag resolted mgu)) cand
 					(special-let* 

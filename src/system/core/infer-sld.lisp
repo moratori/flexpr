@@ -17,9 +17,8 @@
 	(:import-from :flexpr.system.error
 				  :maximum-depth-exceeded-error
 				  :undeterminable-error)
-	;(:import-from :parallel
-	;							:mp-some)
 	)
+
 
 
 (defun resolution? (goal-clause clause)
@@ -180,7 +179,8 @@
 							 (when (or app-flag checked) 
 								(choices goal-clause r-clause-form)))))
 			  
-			  (some ;mp-some 
+			  (some	
+					
 				(lambda (cand)
 				  (destructuring-bind (clause (flag resolted mgu)) cand
 					(special-let* 
@@ -229,7 +229,8 @@
 							(or app-flag checked))
 						  (maximum-depth-exceeded-error (c)
 							(declare (ignore c)) nil)))))))
-				choices))))
+				choices*
+				))))
 		
 	(let* ((normal (normalize premises-clause-form))
 		   (clause-form (append normal conseq-clause-form))

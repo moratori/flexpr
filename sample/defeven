@@ -1,0 +1,10 @@
+even(ZERO)
+AxEn.(even(x) - twice(n,x))
+Ax.(even(x) > even(s(s(x))))
+
+AxAyAzExnEyn.(sum(x,y,z) & twice(xn,x) & twice(yn,y) > Ezn.twice(zn,z))
+
+Ax.sum(x,ZERO,x)
+AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))
+
+

@@ -360,3 +360,63 @@
 	(substitute-term (lexpr-expr target) old new)))
 
 
+
+;;; clauseはリテラルがorでくっついてるものなので
+;;; ここでのトートロジーとは
+;;; P V ~P となるようなものが含まれているか否かを調べる
+@export
+(defun tautology? (clause)
+	(let ((literals (clause-%literals clause)))
+
+		(let ((tmp 	(some 
+			(lambda (lit1)
+				(some 
+					(lambda (lit2)
+						(opposite-%literal= lit1 lit2))
+					literals))
+			literals)))
+			(when tmp 
+				(format t "Tautology hit!!~%"))
+			tmp
+			)
+		
+		))
+
+
+
+
+(defmethod fuzzy-term= ((term1 vterm) (term2 vterm))
+	(or 
+		(eq (vterm-var term1) (vterm-var term2))
+		(and 
+			(not (vterm-const term1))
+			(not (vterm-const term2)))))
+
+
+(defmethod fuzzy-term= ((term1 fterm) (term2 fterm))
+	(let ((terms1 (fterm-terms term1))
+				(terms2 (fterm-terms term2)))
+		(and 
+			(eq (fterm-fsymbol term1)
+					(fterm-fsymbol term2))
+			(every 
+				(lambda (x y)
+					(fuzzy-term= x y)) terms1 terms2))))
+
+(defmethod fuzzy-term= (term1 term2) nil)
+
+
+
+@export
+(defun rename-alphabet-literal? (lit1 lit2)
+	(and
+		(eq (%literal-negation lit1)
+				(%literal-negation lit2))
+		(eq (%literal-pred lit1)
+				(%literal-pred lit2))
+		(every 
+			(lambda (x y) (fuzzy-term= x y))
+			(%literal-terms lit1)
+			(%literal-terms lit2))))
+
+

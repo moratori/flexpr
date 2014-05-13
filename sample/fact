@@ -1,8 +1,8 @@
-Ax.sum(ZERO,x,x)
-AxAyAz.(sum(x,y,z) > sum(s(x),y,s(z)))
+Ax.+(ZERO,x,x)
+AxAyAz.(+(x,y,z) > +(s(x),y,s(z)))
 
-Ax.mult(x,ZERO,ZERO)
-AkAmAnAp.(sum(k,m,p) & mult(m,n,k) > mult(m,s(n),p))
+Ax.*(x,ZERO,ZERO)
+AkAmAnAp.(+(k,m,p) & *(m,n,k) > *(m,s(n),p))
 
-fact(ZERO,s(ZERO))
-AmAkAr.(mult(m,s(k),r) & fact(k,m) > fact(s(k),r))
+!(ZERO,s(ZERO))
+AmAkAr.(*(m,s(k),r) & !(k,m) > !(s(k),r))

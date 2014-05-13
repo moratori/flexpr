@@ -1,0 +1,6 @@
+ontable(A,S0)
+ontable(B,S0)
+ontable(C,S0)
+
+AxAs.(ontable(x,s) > holding(x,after(lift(x),s)))
+AxAyAs.(holding(x,s) > on(x,y,after(put(x,y),s)))

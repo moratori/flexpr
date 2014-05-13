@@ -5,7 +5,9 @@
 (use-package :lisp-unit)
 
 (import '(flexpr.system.constant:+FORALL+
-		  flexpr.system.constant:+EXISTS+))
+					flexpr.system.constant:+EXISTS+
+					flexpr.system.util:tautology?
+					))
 
 (defvar *and* (flexpr.system.struct:operator flexpr.system.constant:+AND+))
 (defvar *or* (flexpr.system.struct:operator flexpr.system.constant:+OR+))
@@ -42,6 +44,7 @@
 
 (defvar *resolution-test-data*
   '(
+
 	(()
 	 "P V ~P")
 	(() 
@@ -272,7 +275,7 @@
 
 
 	(("Ax.(sum(x,ZERO,x) & sum(ZERO,x,x))"
-  	  "AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))")
+  	"AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))")
 	 "Ex.sum(s(ZERO),s(ZERO),x)")
 
 	(()
@@ -316,6 +319,12 @@
 		)
 	
 	 "Ex.fact(s(s(s(ZERO))),x)"
+	 )
+
+	(("Ax.(P(x) & Q(x))"
+		"Ax.(P(x) & R(x))"
+		"Ax.(R(x) & S(x))")
+	 "Ax.P(x)"
 	 )
 
 
@@ -429,10 +438,10 @@
 		  (apply #'pl (first each))
 		  (parse (second each))))))
 
+(print-errors 
+	(run-tests '(resolution-error-test)))
 
-(time 
-	(loop repeat 10 
-			do
-			(run-tests '(resolution-test resolution-error-test))))
+(print-errors 
+	(run-tests '(resolution-test)))
 
 

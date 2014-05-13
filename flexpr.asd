@@ -32,7 +32,8 @@
 				  :serial t
 				  :components 
 					((:file "struct")
-					 (:file "util")))
+					 (:file "util")
+           (:file "unifier")))
 				 (:module "io"
 				  :serial t
 				  :components 
@@ -48,8 +49,7 @@
 				 (:module "core"
 				  :serial t
 				  :components 
-					((:file "unifier")
-					 (:file "infer-gen")
+					((:file "infer-gen")
 					 (:file "infer-sld")
 					 (:file "infer-sw")))))
 			 (:module "interface"

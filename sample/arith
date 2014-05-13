@@ -1,4 +1,2 @@
 Ax.sum(x,ZERO,x)
 AxAyAz.(sum(x,y,z) > sum(x,s(y),s(z)))
-
-

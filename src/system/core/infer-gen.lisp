@@ -13,15 +13,16 @@
 				  :reverse-unify)
 	(:import-from :flexpr.system.formalize.mat
 				  :rename-clause)
+	(:import-from :flexpr.system.formalize
+								:remove-alphabet-equal)
 	(:import-from :flexpr.system.error
 				  :maximum-depth-exceeded-error
 				  :undeterminable-error)
 	(:import-from :flexpr.system.dump
 				  :clause->string
 				  :mgu->string)
-	(:import-from 
-	  :parallel
-	  :mp-some
+	(:import-from :parallel
+					:mp-some
 	  )
 	)
 
@@ -174,7 +175,7 @@
 ;;; 結論となる節が複数ある場合、
 ;;; 並行してmainを呼ぶ
 (defun call-main (main fuse-list universe-clause depth exist-terms)
-  (mp-some
+  (some
 		(lambda (c-clause)
 			(handler-case 
 				(funcall 
@@ -199,6 +200,7 @@
 					        (func (newdupf depth)) 
 							(output nil))
 
+
   (labels 
 		  ((main (clause-form     ;; 節集合
 				  r-clause-form   ;; 今まで導出された全てを持つリスト
@@ -213,6 +215,7 @@
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
 										  :mde-where 'resolution-gen)))
+
 
 				 ;; choices には今までの導出で出てきた節は含まれていない
 				 ;; choices* にはそれらが含まれている

@@ -10,6 +10,7 @@
 				  :resolution-sld)
 	(:import-from :flexpr.system.formalize
 				  :formalize
+					:remove-alphabet-equal
 				  :convert))
 
 
@@ -22,11 +23,13 @@
 	(lexpr exist-terms) 
 	(convert (normal-lexpr (operator +NEG+) conseq nil) mat-form quants-form )
 	(values 
-	  (loop for each in 
-	    (mapcar 
-		  (lambda (x) 
-			(convert x mat-form quants-form)) premises)
-			append each)
+	(remove-alphabet-equal
+		(loop 
+			for each in 
+			(mapcar 
+				(lambda (x) 
+					(convert x mat-form quants-form)) premises)
+			append each))	
 	  lexpr
 	  exist-terms)))
 

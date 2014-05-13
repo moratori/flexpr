@@ -2,3 +2,6 @@ Ac.append(NIL,c,c)
 AxAyAzAr.(append(x,y,z) > append(cons(r,x),y,cons(r,z)))
 reverse(NIL,NIL)
 AxAyAzAe.(reverse(x,z) & append(z,cons(e,NIL),y) > reverse(cons(e,x),y))
+
+#Ax.eq(x,x)
+#AxAyAxrAyr.(eq(xr,yr) & eq(x,y) > eq(cons(x,xr),cons(y,yr)))

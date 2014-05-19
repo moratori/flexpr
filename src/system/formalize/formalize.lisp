@@ -8,6 +8,7 @@
 		  :flexpr.system.formalize.quant
 		  :flexpr.system.formalize.mat)
 	(:import-from :flexpr.system.util
+					:term=
 				  :literal?
 				  :opr-equal?
 				  :closed?
@@ -210,13 +211,19 @@
 
 ;; 各節のリテラルの変数名を付け替える
 (defun rename-clause-form (clause-form)
-	(mapcar 
-		(lambda (x)
-			(assert (typep x 'clause))
-			(clause 
-				(rename-clause (clause-%literals x))
-				(clause-used x)))
-		clause-form))
+	(let (bounds-rule)
+		(values 
+			(loop for x in clause-form
+						collect 
+						(progn 
+							(assert (typep x 'clause))
+							(multiple-value-bind (new-literals bounds)
+								(rename-clause (clause-%literals x))
+								(setf bounds-rule (append bounds-rule bounds))
+								(clause 
+									new-literals
+									(clause-used x)))))	
+			bounds-rule)))
 
 
 ;;; {{P} , {P , Q} , {R , S} ...}
@@ -236,8 +243,8 @@
 (defun convert (lexpr op quant &optional (bquant +FORALL+))
 
   (assert (or (typep lexpr 'atomic-lexpr)
-			  (typep lexpr 'normal-lexpr)
-		      (typep lexpr 'lexpr)))
+							(typep lexpr 'normal-lexpr)
+							(typep lexpr 'lexpr)))
 
 
 (let* ((%formed (%formalize lexpr op))
@@ -249,25 +256,32 @@
 						:ie-mes "closed formula required."
 						:ie-val formed
 						:ie-where 'convert)))
-	(values 
-		(remove-if 
-			#'tautology?
-			;; 以下でリネームしたいんだけど、exist の回収ができなくなるのでちょっと
-			;; 考えなければ. でこのままだと mgu が計算できない
-			;(rename-clause-form 
-				(reduction-clause-form 
+	
+	(multiple-value-bind 
+		;; 以下でリネームしたいんだけど、exist の回収ができなくなるのでちょっと
+		;; ;; 考えなければ. でこのままだと mgu が計算できない
+		(clause-form bounds)
+		(rename-clause-form 
+			(reduction-clause-form 
 					(mapcar 
 						(lambda (clause)
 							(clause
 								(mapcar 
 									(lambda (literal)
 										(literal->%literal literal)) clause)0)) 
-				(get-clause formed op)) op)
-				;)
-			)  
-		;; exist-termを回収する処理
-		(when (lexpr-p %formed)
-				(loop for each in (quantsp-each-quant (lexpr-qpart %formed))
-							if (eq bquant (quant-qnt each))
-							collect (quant-var each))))))
+				(get-clause formed op)) op))
+		(values 
+			(remove-if #'tautology? clause-form)
+			(when (lexpr-p %formed)
+				(let ((old (loop for each in (quantsp-each-quant (lexpr-qpart %formed))
+												 if (eq bquant (quant-qnt each))
+												 collect (quant-var each))))
+					(mapcar 
+						(lambda (x)
+							(let ((r (assoc x bounds :test #'term=)))
+								(if (null r) x 
+									(cdr r)))) old)))))))
+
+
+
 

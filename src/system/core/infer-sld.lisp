@@ -171,13 +171,13 @@
 								     :mde-where 'resolution-sld)))
 
 			(let* ((choices (choices goal-clause clause-form))
-				   (checked 
-					 (unless app-flag
-					   (every (lambda (x) (> (clause-used x)  0)) clause-form)))
-				   (choices* 
-					 (append choices
-							 (when (or app-flag checked) 
-								(choices goal-clause r-clause-form)))))
+						 (checked 
+							 (unless app-flag
+								 (every (lambda (x) (> (clause-used x)  0)) clause-form)))
+						 (choices* 
+							 (append choices
+											 (when (or app-flag checked) 
+												 (choices goal-clause r-clause-form)))))
 			  
 			  (some	
 					
@@ -190,17 +190,16 @@
 						   (relation 
 							 (append 
 							   (list (list selected-clause-name 
-										   resolted-clause-name)
-									 (list opposite-clause-name 
-										   resolted-clause-name))
+														 resolted-clause-name)
+											 (list opposite-clause-name 
+														 resolted-clause-name))
 							   node-relation)))
 
 					(cond
 					  ((and flag (null (clause-%literals resolted)))
-					   (let ((base (list 
-									 t 
-									 original-exist-terms
-									 (reverse-unify exist-terms mgu))))
+					   (let ((base 
+										 (list t original-exist-terms (reverse-unify exist-terms mgu))))
+
 						 (if output 
 						   (append base (list (funcall lookup nil) relation))
 						   base))) 
@@ -211,13 +210,14 @@
 							  (remove clause clause-form :test #'%clause=)
 							  (list ;; append するための list
 								(clause 
-								  (rename-clause (clause-%literals clause)) 
+								  (rename-clause 
+										(clause-%literals clause)) 
 								  (1+ (clause-used clause)))))
 							
 							(adjoin 
 							  (clause 
-								(clause-%literals goal-clause)
-								(1+ (clause-used goal-clause)))
+									(clause-%literals goal-clause)
+									(1+ (clause-used goal-clause)))
 							  r-clause-form
 							  :test #'%clause=)
 

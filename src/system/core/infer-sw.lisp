@@ -21,7 +21,7 @@
 (defun preproc (premises conseq &optional (quants-form +FORALL+) (mat-form (operator +AND+))) 
   (multiple-value-bind 
 	(lexpr exist-terms) 
-	(convert (normal-lexpr (operator +NEG+) conseq nil) mat-form quants-form )
+	(convert (normal-lexpr (operator +NEG+) conseq nil) mat-form quants-form)
 	(values 
 	(remove-alphabet-equal
 		(loop 

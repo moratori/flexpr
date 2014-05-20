@@ -368,17 +368,13 @@
 (defun tautology? (clause)
 	(let ((literals (clause-%literals clause)))
 
-		(let ((tmp 	(some 
+		(some 
 			(lambda (lit1)
 				(some 
 					(lambda (lit2)
 						(opposite-%literal= lit1 lit2))
 					literals))
-			literals)))
-			(when tmp 
-				(format t "Tautology hit!!~%"))
-			tmp
-			)
+			literals)
 		
 		))
 

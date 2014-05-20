@@ -6,8 +6,8 @@
 		  :flexpr.system.struct)
 	(:import-from :flexpr.system.infer.general
 				  :resolution-gen)
-	(:import-from :flexpr.system.infer.sld
-				  :resolution-sld)
+	(:import-from :flexpr.system.infer.snl
+				  :resolution-snl)
 	(:import-from :flexpr.system.formalize
 				  :formalize
 					:remove-alphabet-equal
@@ -64,7 +64,7 @@
 		(%literal-negation x))
 	  (clause-%literals (car conseq)))))
 
-;; t -> sld
+;; t -> snl
 ;; nil -> gen
 (defun which? (premises-clause-form conseq-clause-form)
   (if (and 
@@ -73,11 +73,8 @@
 				   (rule-clause? x)))
 			 premises-clause-form)
 	  (goal-clause? conseq-clause-form))
-	(cons #'resolution-sld "SLD")
-	(cons #'resolution-gen "GEN")
-	)
-  
-  )
+	(cons #'resolution-snl "SNL")
+	(cons #'resolution-gen "GEN")))
 
 
 

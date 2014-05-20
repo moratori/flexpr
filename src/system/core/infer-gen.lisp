@@ -202,7 +202,8 @@
 
 
   (labels 
-		  ((main (clause-form     ;; 節集合
+		  ((main 
+				 (clause-form     ;; 節集合
 				  r-clause-form   ;; 今まで導出された全てを持つリスト
 				  selected-clause ;; 先の導出(又は初期値として)選ばれた節
 				  dep             ;; 現在の深さ 
@@ -219,16 +220,18 @@
 
 				 ;; choices には今までの導出で出てきた節は含まれていない
 				 ;; choices* にはそれらが含まれている
-				 (let*  ((choices  (choices selected-clause clause-form))
-						 (checked  (unless app-flag 
-									 (every (lambda (x) (> (clause-used x)  0)) clause-form)))
-					     (choices* (append choices 
+				 (let*  ((choices  
+									 (choices selected-clause clause-form))
+								 (checked  
+									 (unless app-flag 
+										 (every (lambda (x) (> (clause-used x)  0)) clause-form)))
+								 (choices* (append choices 
 									;; clause-form の節がすでに一度以上使われた節であるなら
 									;; いままでに導出されたやつをくっつける
 									;; 毎回 every で clause-form を走査するのは非効率的なので
 									;; 一回ここにきたらフラグたてる
-									(when (or app-flag checked)
-									   (choices selected-clause r-clause-form)))))
+								   (when (or app-flag checked)
+										 (choices selected-clause r-clause-form)))))
 
 				   (some
 					 (lambda (each-choice)
@@ -268,22 +271,28 @@
 							  
 							  (handler-case 
 							   (main 
-								 
-								 (if (member clause clause-form :test #'%clause=)
+									 ;; 節 clause は selected-clause と導出に使われる親節であり
+									 ;; resolted-clause を生むもの
+									 ;; この辺で吸収戦略したい
+
+
+									 (if (member clause clause-form :test #'%clause=)
 								   (append 
-									 (remove clause clause-form :test #'%clause=)
-									 (list ;; append するための list
-									   (clause 
-										 (rename-clause (clause-%literals clause)) 
-									     (1+ (clause-used clause)))))
+										 (remove clause clause-form :test #'%clause=)
+										 (list ;; append するための list
+											 (clause 
+												 (rename-clause (clause-%literals clause)) 
+												 (1+ (clause-used clause)))))
 									 clause-form)
-							     
-								 (adjoin 
+
+
+								(adjoin 
 								   (clause 
 								     (clause-%literals selected-clause)
 								     (1+ (clause-used selected-clause)))
 								   r-clause-form
 								   :test #'%clause=)
+								
 
 							     resolted
 							     (funcall func  dep)
@@ -304,6 +313,12 @@
 					  depth
 					  original-exist-terms))
 			   (res2 (when (null res1)
+							;; ユーザ入力節がなくても矛盾しているような
+							;; 節集合はこっちに落ちてくる
+							;; なぜなら、線形戦略は
+							;; S - {C} が充足可能で S が矛盾しているならば
+							;; C(つまりユーザの入力)を頂節とする導出反駁図を
+							;; 必ず導いてくれる完全な戦略だから
 					   (call-main 
 						 #'main
 						 (sort premises-clause-form

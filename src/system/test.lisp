@@ -321,6 +321,7 @@
 	 "Ex.fact(s(s(s(ZERO))),x)"
 	 )
 
+
 	(("Ax.(P(x) & Q(x))"
 		"Ax.(P(x) & R(x))"
 		"Ax.(R(x) & S(x))")
@@ -425,10 +426,11 @@
 
 (define-test resolution-test
 	(dolist (each *resolution-test-data*)
-	  (assert-true 
-		(flexpr.system.infer.wrap::resolution
-		  (apply #'pl (first each))
-		  (parse (second each)))	)))
+		(format t "~%----- TEST CASE -----~%~A~%-----           -----~%" each)
+		(assert-true 
+				(flexpr.system.infer.wrap::resolution
+					(apply #'pl (first each))
+					(parse (second each))))))
 
 (define-test resolution-error-test 
 	(dolist (each *resolution-error*)

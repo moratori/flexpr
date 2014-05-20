@@ -258,8 +258,6 @@
 						:ie-where 'convert)))
 	
 	(multiple-value-bind 
-		;; 以下でリネームしたいんだけど、exist の回収ができなくなるのでちょっと
-		;; ;; 考えなければ. でこのままだと mgu が計算できない
 		(clause-form bounds)
 		(rename-clause-form 
 			(reduction-clause-form 

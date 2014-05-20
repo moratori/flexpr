@@ -1,0 +1,13 @@
+Ax.P(x,E,x)
+Ax.P(E,x,x)
+
+AxAyAzAwAvAu.(P(u,z,w) V ~P(y,z,v) V ~P(x,y,u) V ~P(x,v,w))
+AxAyAzAwAvAu.(P(x,v,w) V ~P(y,z,v) V ~P(x,y,u) V ~P(u,z,w))
+
+Ax.P(x,x,E)
+
+# AxAyAz.(P(x,y,z) > P(y,x,z)) を証明したいから
+# これの否定 -> ExEyEz.(P(x,y,z) & ~P(y,x,z))
+# のスコーレム化した式 = P(a,b,c) & ~P(b,a,c)
+# 以下を追加
+# P(A,B,C)

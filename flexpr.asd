@@ -50,7 +50,7 @@
 				  :serial t
 				  :components 
 					((:file "infer-gen")
-					 (:file "infer-sld")
+					 (:file "infer-snl")
 					 (:file "infer-sw")))))
 			 (:module "interface"
 			  :serial t

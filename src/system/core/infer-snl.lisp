@@ -75,7 +75,7 @@
 
 
 (defun cf-sort (clause-form*)
-  (primary-short clause-form*))
+	(primary-short clause-form*))
 
 
 (defun choices (goal-clause all)

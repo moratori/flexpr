@@ -79,10 +79,11 @@
 
 
 (defun choices (goal-clause all)
-	(loop for each-c in all
-		for res = (resolution? goal-clause each-c)
-		if (first res)
-		collect (list each-c res)))
+	(cf-sort
+		(loop for each-c in all
+					for res = (resolution? goal-clause each-c)
+					if (first res)
+					collect (list each-c res))))
 
 
 ;; 正リテラルを全て左に持ってくる

@@ -426,7 +426,7 @@
 
 (define-test resolution-test
 	(dolist (each *resolution-test-data*)
-		(format t "~%----- TEST CASE -----~%~A~%-----           -----~%" each)
+;		(format t "~%----- TEST CASE -----~%~A~%-----           -----~%" each)
 		(assert-true 
 				(flexpr.system.infer.wrap::resolution
 					(apply #'pl (first each))

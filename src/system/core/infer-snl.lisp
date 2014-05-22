@@ -155,6 +155,7 @@
 					   &key 
 					     (depth +DEPTH+)
 						 (output nil))
+	(print "SNL RESO")
   (labels 
 	((main (clause-form 
 			goal-clause

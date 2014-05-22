@@ -53,28 +53,40 @@
 		   (car (clause-%literals clause))))))
 
 
-;; goal節であるか?
-;; 全て否定のリテラル. goal clause <- horn-clause
-(defun goal-clause? (conseq)
-  (and 
-	(single? conseq)
-	;; 上２つで １つの節であるかをしらべる
+(defun goal-clause? (clause)
 	(every 
 	  (lambda (x)
 		(%literal-negation x))
-	  (clause-%literals (car conseq)))))
+	  (clause-%literals clause)))
+
+;; goal節であるか?
+;; 全て否定のリテラル. goal clause <- horn-clause
+(defun goal-clause-form? (conseq)
+  (and 
+		(single? conseq)
+	;; 上２つで １つの節であるかをしらべる
+		(goal-clause? (car conseq))))
 
 ;; t -> snl
 ;; nil -> gen
 (defun which? (premises-clause-form conseq-clause-form)
-  (if (and 
-	  (every (lambda (x) 
-			   (or (fact-clause? x)
-				   (rule-clause? x)))
-			 premises-clause-form)
-	  (goal-clause? conseq-clause-form))
-	(cons #'resolution-snl "SNL")
-	(cons #'resolution-gen "GEN")))
+	(let ((check-rule 
+					(every (lambda (x) 
+								 (or (fact-clause? x)
+										 (rule-clause? x)))
+							 premises-clause-form)))
+		(cond 
+			((and check-rule 
+						(goal-clause-form? conseq-clause-form))
+			 (values (cons #'resolution-snl "SNL") nil))
+			((and check-rule 
+						(some #'goal-clause? conseq-clause-form)
+						(every 
+							(lambda (x) (or (rule-clause? x) (fact-clause? x)))
+							(remove-if #'goal-clause? conseq-clause-form)))
+			 (values (cons #'resolution-snl "SNL") t))
+			(t 
+				(values (cons #'resolution-gen "GEN") nil)))))
 
 
 
@@ -84,17 +96,34 @@
 	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
 
-	(destructuring-bind (func . id) 
-	  (which? premises-clause-form conseq-clause-form)
-	  (append 
-		(funcall 
-		  func
-		  premises-clause-form 
-		  conseq-clause-form
-		  exist-terms
-		  :depth depth 
-		  :output output)
-		(list id)))))
-
+	;; フラグが t だったら SNL 導出のために変形が必要
+	;; ユーザのクエリを
+	(multiple-value-bind (pair flag)
+			(which? premises-clause-form conseq-clause-form)	
+			(destructuring-bind (func . id) pair
+				(append 
+					(if flag 
+						(let ((for-snl 
+										(append 
+											premises-clause-form 
+											(remove-if #'goal-clause? conseq-clause-form))))
+							(some 
+								(lambda (goal-clause)
+									(funcall 
+										func
+										for-snl
+										(list goal-clause)
+										exist-terms
+										:depth depth 
+										:output output))
+								(remove-if-not #'goal-clause? conseq-clause-form)))
+						(funcall 
+							func
+							premises-clause-form 
+							conseq-clause-form
+							exist-terms
+							:depth depth 
+							:output output))
+					(list id))))))
 
 

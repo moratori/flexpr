@@ -50,6 +50,7 @@
   (format t "~2t :load <Filename>               load a definition file~%")
   (format t "~2t :save <Axiomatic system name>  save current system~%")
   (format t "~2t :desc <Axiomatic system name>  describe axiomatic system~%")
+	(format t "~2t :def  <Axiomatic system name>  define new axiomatic system~%")
   (format t "~2t :set  <New axiomatic system>   change current axiomatic system~%")
   (format t "~2t :form <Formula>                convert it into formal form~%")
   (format t "~2t :add  <Formula>                add formula to current axiomatic system~%")
@@ -138,14 +139,14 @@
 	(hook 
 	  (lambda ()
 		(let* ((npath (string-trim '(#\" #\') path))
-			  (raw (primitive-load-file npath))
-			  (name (pathname-name npath)))
+					 (raw (primitive-load-file npath))
+					 (name (pathname-name npath)))
 		  (setf *axioms*
-			(cons 
-			  (list name (mapcar #'string->lexpr raw))
-			  (remove-if 
-				(lambda (x) 
-				  (string= name (car x))) *axioms*)))
+						(cons 
+							(list name (mapcar #'string->lexpr raw))
+							(remove-if 
+								(lambda (x) 
+									(string= name (car x))) *axioms*)))
 		 (unless +SILENT+
 		   (format t "~A load ok~%" name)) 
 		  (setax name))))
@@ -288,6 +289,38 @@
 	(error (c)
 	  (unexpected c))))
 
+(defun defax (line)
+	(let ((axname (if (string= "" line) 
+									(symbol-name (gensym "TMP"))
+									line)))
+		(handler-case
+			(hook
+				(lambda ()
+					(format t "... ")
+					(force-output *standard-output*)
+					(let ((lexprs 
+									(loop for line = (read-line *standard-input* nil nil)
+										while (string/= line "")
+										collect 
+										(progn 	
+											(format t "... ")
+											(force-output *standard-output*)
+											(string->lexpr line)))))
+						(setf *axioms*
+							(cons 
+								(list axname lexprs)
+								(remove-if 
+									(lambda (x) 
+										(string= axname (car x))) *axioms*)))
+						(setax axname)
+						(unless +SILENT+
+							(format t "~A defined~%" axname))
+						)))	
+		(caught-error (c)
+				(declare (ignore c)))
+			)
+		nil
+	))
 
 (defvar *case*
   (list 
@@ -301,7 +334,8 @@
 	 (cons ":desc"  #'desc)
 	 (cons ":help"  #'help)
 	 (cons ":quit"  #'quit)
-	 (cons ":exit"  #'quit)))
+	 (cons ":exit"  #'quit)
+	 (cons ":def" #'defax)))
 
 
 (defun parse-line (s)

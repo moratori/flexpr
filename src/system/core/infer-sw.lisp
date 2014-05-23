@@ -67,6 +67,18 @@
 	;; 上２つで １つの節であるかをしらべる
 		(goal-clause? (car conseq))))
 
+
+;; horn clause であるか否かを判定する
+(defun horn-clause-form? (clause-form)
+	(every 
+		(lambda (x)
+			(or 
+				(fact-clause? x)
+				(goal-clause? x)
+				(rule-clause? x)))
+		clause-form))
+
+
 ;; t -> snl
 ;; nil -> gen
 (defun which? (premises-clause-form conseq-clause-form)

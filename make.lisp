@@ -1,5 +1,3 @@
-
-
 (ql:quickload :flexpr)
 
 #+sbcl (sb-ext:save-lisp-and-die 

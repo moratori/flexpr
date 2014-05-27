@@ -293,7 +293,12 @@
   (format stream "~A"
 		  (apply #'concatenate 'string 
 		 (append
-		   (mapcar 
+       (let ((normal (format nil "~16R" 
+                             (- #xffffff 
+                                (parse-integer 
+                                  +NODE-COLOR+
+                                  :radix 16)))))
+       (mapcar 
 		   (lambda (x)
 			 (destructuring-bind (lexpr name def?) x
 			   (format 
@@ -301,8 +306,9 @@
            "~2t~A[label=\"~A\",style=\"filled\",fillcolor=\"#~A\"];~%" 
            name 
            lexpr
-           (if def? +NODE-COLOR+ "ffffff"))))
-		   defnode)
+           (if def? +NODE-COLOR+ normal))))
+		   defnode)  
+         ) 
 		   (list (format nil "~%"))))))
 
 @export

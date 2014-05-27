@@ -51,7 +51,7 @@
   (format t "~2t :save <Axiomatic system name>  save current system~%")
   (format t "~2t :desc <Axiomatic system name>  describe axiomatic system~%")
 	(format t "~2t :def  <Axiomatic system name>  define new axiomatic system~%")
-  (format t "~2t :set  <New axiomatic system>   change current axiomatic system~%")
+  (format t "~2t :set  <Axiomatic system name>  change current axiomatic system~%")
   (format t "~2t :form <Formula>                convert it into formal form~%")
   (format t "~2t :add  <Formula>                add formula to current axiomatic system~%")
   (format t "~2t :out  <Formula>                execute resolution and outputs the proof figure~%")

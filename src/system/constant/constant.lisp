@@ -71,3 +71,7 @@
 
 @export
 (defvar +DEPTH+ 100)
+
+@export
+(defvar +NODE-COLOR+ "ee500a")
+

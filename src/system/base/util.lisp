@@ -416,3 +416,14 @@
 			(%literal-terms lit2))))
 
 
+
+@export 
+(defun set-defined-flag (clause &optional (val t))
+  (setf (clause-defined clause) val)
+  clause
+  )
+
+
+
+
+

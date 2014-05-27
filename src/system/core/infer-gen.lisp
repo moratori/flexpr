@@ -6,6 +6,7 @@
 		  :flexpr.system.struct)
 	(:import-from :flexpr.system.util
 				  :%literal=
+          :set-defined-flag
 				  :%clause=)
 	(:import-from :flexpr.system.unifier
 				  :eliminate?
@@ -143,7 +144,10 @@
 	  (destructuring-bind (lexpr . name) x
 		;; ここの +OR+ は 節が何で結合してるかを表してる
 		;; ;; 普通は V なので OR
-		(cons (clause->string lexpr (operator +OR+)) name)))
+		(list
+      (clause->string lexpr (operator +OR+)) 
+      name
+      (clause-defined lexpr))))
 	defnode))
 
 ;; Logical inference per second
@@ -157,7 +161,9 @@
 	 (defnode 
 	   (mapcar 
 		 (lambda (x)
-		   (cons x (symbol-name (gensym prefix)))) clause-form))
+		   (cons x (symbol-name (gensym prefix)))) 
+     (mapcar #'set-defined-flag clause-form)
+     ))
 	 (lookup 
 	   (lambda (x)
 		 (if (null x) 
@@ -280,16 +286,20 @@
 								   (append 
 										 (remove clause clause-form :test #'%clause=)
 										 (list ;; append するための list
-											 (clause 
-												 (rename-clause (clause-%literals clause)) 
-												 (1+ (clause-used clause)))))
+                       (set-defined-flag
+                         (clause 
+                           (rename-clause (clause-%literals clause)) 
+                           (1+ (clause-used clause)))
+                         (clause-defined clause))))
 									 clause-form)
 
 
 								(adjoin 
-								   (clause 
-								     (clause-%literals selected-clause)
-								     (1+ (clause-used selected-clause)))
+								   (set-defined-flag
+                     (clause 
+								       (clause-%literals selected-clause)
+								       (1+ (clause-used selected-clause)))
+                     (clause-defined selected-clause)) 
 								   r-clause-form
 								   :test #'%clause=)
 								

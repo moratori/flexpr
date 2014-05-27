@@ -31,6 +31,7 @@
 		:clause-p
 		:clause-%literals
 		:clause-used
+    :clause-defined
 
 		:operator-p
 		:operator-opr
@@ -140,7 +141,8 @@
 @export
 (defstruct (clause (:constructor clause (%literals used)))
   (%literals nil :type list)
-  (used 0 :type integer))
+  (used 0 :type integer)
+  (defined nil :type t))
 
 
 

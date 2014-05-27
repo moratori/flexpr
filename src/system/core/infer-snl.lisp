@@ -5,7 +5,8 @@
 		  :flexpr.system.constant
 		  :flexpr.system.struct)
 	(:import-from :flexpr.system.util
-				  :%clause=)
+      :set-defined-flag
+      :%clause=)
 	(:import-from :flexpr.system.formalize.mat
 				  :rename-clause)
 	(:import-from :flexpr.system.dump
@@ -111,16 +112,20 @@
 	  (destructuring-bind (lexpr . name) x
 		;; ここの +OR+ は 節が何で結合してるかを表してる
 		;; ;; 普通は V なので OR
-		(cons (clause->string lexpr (operator +OR+)) name)))
+		(list
+      (clause->string lexpr (operator +OR+)) 
+      name
+      (clause-defined lexpr))))
 	defnode))
 
 (defun lookupper (clause-form)
   (let*
 	((prefix "NODE")
 	 (defnode 
-	   (mapcar 
-		 (lambda (x)
-		   (cons x (symbol-name (gensym prefix)))) clause-form))
+	   (mapcar
+       (lambda (x)
+         (cons x (symbol-name (gensym prefix)))) 
+       (mapcar #'set-defined-flag clause-form)))
 	 (lookup 
 	   (lambda (x)
 		 (if (null x) 
@@ -132,6 +137,8 @@
 				 name)
 			   (cdr i)))))))
 	lookup))
+
+
 
 (defmacro special-let* (bounds &rest body)
   ;;; 値 output が tの場合のみちゃんと束縛を作る
@@ -147,6 +154,7 @@
 			  )
 			) bounds)
 	   ,@body)))
+
 
 @export
 (defun resolution-snl (premises-clause-form 
@@ -202,11 +210,14 @@
 							(append 
 							  (remove clause clause-form :test #'%clause=)
 							  (list ;; append するための list
-								(clause 
-								  (rename-clause 
-										(clause-%literals clause)) 
-								  (1+ (clause-used clause)))))
-							
+                  
+                  (set-defined-flag 
+                    (clause 
+                      (rename-clause 
+                        (clause-%literals clause)) 
+                      (1+ (clause-used clause)))
+                    (clause-defined clause))))
+
 							resolted
 							(1- dep)
 							(reverse-unify exist-terms mgu)
@@ -222,11 +233,11 @@
 				 (clause-form (append normal conseq-clause-form))
 				 (res 
 					 (main 
-						 normal
+             normal
 						 ;; 結論となる節がひつとしかないので
 						 ;; (ホーン節を仮定している) car で１つだけとればおｋ
 						 ;; ていうか１つしか無い
-				     (car conseq-clause-form)
+             (car conseq-clause-form)
 				     (* 2 depth)
 				     original-exist-terms
 				     (lookupper clause-form)

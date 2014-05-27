@@ -295,8 +295,13 @@
 		 (append
 		   (mapcar 
 		   (lambda (x)
-			 (destructuring-bind (lexpr . name) x
-			   (format nil "~2t~A[label = \"~A\"];~%" name lexpr)))
+			 (destructuring-bind (lexpr name def?) x
+			   (format 
+           nil 
+           "~2t~A[label=\"~A\",style=\"filled\",fillcolor=\"#~A\"];~%" 
+           name 
+           lexpr
+           (if def? +NODE-COLOR+ "ffffff"))))
 		   defnode)
 		   (list (format nil "~%"))))))
 
@@ -309,7 +314,8 @@
 (defun simplify (defnode relation)
   (remove-if 
 	(lambda (x)
-	  (destructuring-bind (lexpr . name) x
+	  (destructuring-bind (lexpr name def?) x
+      (declare (ignore def?))
 		(every 
 		  (lambda (x)
 			(and 

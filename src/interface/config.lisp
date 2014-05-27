@@ -28,10 +28,13 @@
 			 (setf +SILENT+ (when (string= x "True") t))))
 	 (cons "UGLY_PRINTING"
 		   (lambda (x)
-			 (setf +UGLY-PRINTING+ (when (string= x "True") t))))))
+			 (setf +UGLY-PRINTING+ (when (string= x "True") t))))
+   (cons "NODE_COLOR"
+         (lambda (x)
+           (setf +NODE-COLOR+ x)))))
 
 (defvar +DEFAULT-CONFIG+
-  (format nil "~A~%~A~%~A~%~A~%~A~%~A~%"
+  (format nil "~A~%~A~%~A~%~A~%~A~%~A~%~A~%"
 
    "VARIABLE_PREFIX = v_"
    "SKOLEM_CONSTANT_PREFIX = SC_"
@@ -39,6 +42,7 @@
    "DEPTH_OF_SEARCH = 100"
    "NOREPL = False"
    "UGLY_PRINTING = True"
+   "NODE_COLOR = ee500a"
 
    ))
 
@@ -53,11 +57,12 @@
 	(dolist (each (primitive-load-file +FILENAME+))
 	  (destructuring-bind (name val) (split each #\=)
 		(let* ((fn (string-trim +CHAR-BUG+ name))
-			   (fv (string-trim +CHAR-BUG+ val))
-			   (ins (cdr (assoc fn +REFER+ :test #'string=))))
+           (fv (string-trim +CHAR-BUG+ val))
+			     (ins (cdr (assoc fn +REFER+ :test #'string=))))
+
 		  (when (null ins)
-			(format t "!!! WARNING !!!~%!!! unrecognized field: ~A !!!~%!!! skipped it !!!~%~%" fn))
-		  (funcall ins fv))))	
+        (format t "!!! WARNING !!!~%!!! unrecognized field: ~A !!!~%!!! skipped it !!!~%~%" fn))
+      (funcall ins fv))))	
 	(file-error (c)
 		(declare (ignore c))
 		(write-default))))

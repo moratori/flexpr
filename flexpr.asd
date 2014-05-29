@@ -32,7 +32,8 @@
 				  :components 
 					((:file "struct")
 					 (:file "util")
-           (:file "unifier")))
+           (:file "unifier")
+					 (:file "paramod-unifier")))
 				 (:module "io"
 				  :serial t
 				  :components 

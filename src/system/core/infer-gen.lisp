@@ -22,9 +22,9 @@
 	(:import-from :flexpr.system.dump
 				  :clause->string
 				  :mgu->string)
-	(:import-from :parallel
-					:mp-some
-	  )
+
+	
+
 	)
 
 ;;; 任意の一階述語論理式の集合に対して

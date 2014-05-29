@@ -11,7 +11,6 @@
 	:depends-on (
 				 :optima 
 				 :namespace 
-				 :parallel 
 				 )
 	:serial t
 	:version "1.0"

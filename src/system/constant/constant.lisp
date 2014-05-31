@@ -27,6 +27,15 @@
 (defvar +EXISTS+ 'exists)
 
 
+
+
+@export
+(defvar +EQUAL+ '=)
+
+@export
+(defvar +EQUAL-STR+ "=")
+
+
 @export
 (defvar +NEG-STR+ "~")
 

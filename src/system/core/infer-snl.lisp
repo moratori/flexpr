@@ -12,7 +12,7 @@
 	(:import-from :flexpr.system.dump
 				  :clause->string)
 	(:import-from :flexpr.system.unifier
-				  :eliminate?
+				  :eliminate-gen?
 				  :reverse-unify
 				  :unify)
 	(:import-from :flexpr.system.error
@@ -31,7 +31,7 @@
 	;; clauseが事実節であり、left-literalと融合可能である
 
 	;; (flag resolted rule)
-	(let ((rule (eliminate? 
+	(let ((rule (eliminate-gen? 
 				  left-literal
 				  (car (clause-%literals clause)))))
 	  (if (null rule)

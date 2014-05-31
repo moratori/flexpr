@@ -317,9 +317,12 @@
   ;; P(x,f(3,g(y,1))) => (atomic-lexpr 'P ...)
   (if (func-format? str)
 	(multiple-value-bind (pred-sym terms) (split-func-format str)
-	  (apply #'atomic-lexpr 
-		(intern pred-sym)
-		(mapcar #'string->term terms)))
+	  (apply 
+      #'atomic-lexpr 
+      (if (string= +EQUAL-STR+ pred-sym) 
+        +EQUAL+
+        (intern pred-sym))
+		  (mapcar #'string->term terms)))
 	;; 関数の形をしてなかったら(括弧がなかったら),そのままインターン
 	;; 命題変数として扱うということ
 	(atomic-lexpr (intern str))))

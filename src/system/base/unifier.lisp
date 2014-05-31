@@ -228,7 +228,7 @@
 
 
 @export
-(defun eliminate? (lit1 lit2)
+(defun eliminate-gen? (lit1 lit2)
   ;(format t "ELIMINATE(X,Y) = <~A,~A>~%" (type-of lit1) (type-of lit2))
   (assert (and (typep lit1 '%literal)
 			   (typep lit2 '%literal)))

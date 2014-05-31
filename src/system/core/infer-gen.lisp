@@ -9,9 +9,12 @@
           :set-defined-flag
 				  :%clause=)
 	(:import-from :flexpr.system.unifier
-				  :eliminate?
+				  :eliminate-gen?
 				  :unify
 				  :reverse-unify)
+  (:import-from :flexpr.system.paramod-unifier
+   :eliminate-paramod?
+   :rec-match)
 	(:import-from :flexpr.system.formalize.mat
 				  :rename-clause)
 	(:import-from :flexpr.system.formalize
@@ -22,9 +25,6 @@
 	(:import-from :flexpr.system.dump
 				  :clause->string
 				  :mgu->string)
-
-	
-
 	)
 
 ;;; 任意の一階述語論理式の集合に対して
@@ -42,15 +42,23 @@
   ;; 最初の物を考える
   (assert (and (typep clause1 'clause)
 			   (typep clause2 'clause)))
-  (let ((res 
+  (let* ((paramod-flag nil)
+         (res 
    ;; -- dirty code --
    (loop named exit
 		 for x in (clause-%literals clause1)
 		 do 
 		 (loop for y in (clause-%literals clause2 )
-			   for rule = (eliminate? x y)
-			   do (unless (null rule)
-					(return-from exit (list rule x y)))))))
+           for rule = (eliminate-gen? x y)
+           do 
+           ;; 導出原理が使える時は
+           ;; paramodulationよりもそっちを優先
+           (if (not (null rule))
+             (return-from exit (list rule x y))
+             (let ((rule (eliminate-paramod? x y)))
+               (unless rule
+                 (setf paramod-flag t)
+                 (return-from exit (list rule x y)))))))))
 	(if (null res)
 	  (values nil nil nil)
 	  (destructuring-bind (rule lit1 lit2) res
@@ -96,6 +104,8 @@
 					(clause-%literals
 					  (second (second y)))))))))))
 
+;; 複雑度という指数をいれたらより
+;; ヒューリスティックな探索ができるかも
 
 (defun cf-sort (clause-form*)
   (primary-short clause-form*))

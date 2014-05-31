@@ -96,9 +96,9 @@
 						(every 
 							(lambda (x) (or (rule-clause? x) (fact-clause? x)))
 							(remove-if #'goal-clause? conseq-clause-form)))
-			 (values (cons #'resolution-snl "SNL") t))
+			 (values (cons #'resolution-snl "SNL (for horn clause)") t))
 			(t 
-				(values (cons #'resolution-gen "GEN") nil)))))
+				(values (cons #'resolution-gen "Linear (default)") nil)))))
 
 
 

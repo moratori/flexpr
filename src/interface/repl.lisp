@@ -55,6 +55,7 @@
   (format t "~2t :form <Formula>                convert it into formal form~%")
   (format t "~2t :add  <Formula>                add formula to current axiomatic system~%")
   (format t "~2t :out  <Formula>                execute resolution and outputs the proof figure~%")
+  (format t "~2t :fgen <Boolean>                force (not) to use general method~%")
   (format t "~2t :list  enumerate the axiomatic system that are currently defined~%")
   (format t "~2t :help  show this help~%")
   (format t "~2t :exit  exit from REPL~%")
@@ -322,6 +323,15 @@
 		nil
 	))
 
+
+(defun fgen (line)
+  (if (or (string= line "")
+            (string= line "t"))
+    (setf *GENERAL-MODE* t)
+    (setf *GENERAL-MODE* nil))
+  (format t "general mode: ~A~%" *GENERAL-MODE*)
+  )
+
 (defvar *case*
   (list 
 	 (cons ":save"  #'save)
@@ -335,7 +345,9 @@
 	 (cons ":help"  #'help)
 	 (cons ":quit"  #'quit)
 	 (cons ":exit"  #'quit)
-	 (cons ":def" #'defax)))
+	 (cons ":def" #'defax)
+   (cons ":fgen" #'fgen)))
+
 
 
 (defun parse-line (s)

@@ -211,7 +211,7 @@
 					   :sue-val lexpr
 					   :sue-where 'lexpr->string_lexpr)))))
 
-
+@export
 (defun %literal->string (%literal)
 	(lexpr->string 
 	  (if (%literal-negation %literal)

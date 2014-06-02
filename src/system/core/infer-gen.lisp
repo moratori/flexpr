@@ -7,6 +7,9 @@
 	(:import-from :flexpr.system.util
 				  :%literal=
           :set-defined-flag
+          :equal-literal?
+          :substitute-term
+          :equal-contap?
 				  :%clause=)
 	(:import-from :flexpr.system.unifier
 				  :eliminate-gen?
@@ -14,7 +17,7 @@
 				  :reverse-unify)
   (:import-from :flexpr.system.paramod-unifier
    :eliminate-paramod?
-   :rec-match)
+   :paramod-unify)
 	(:import-from :flexpr.system.formalize.mat
 				  :rename-clause)
 	(:import-from :flexpr.system.formalize
@@ -36,6 +39,7 @@
 ;; flag で導出できたかいなか
 ;; result clause1 と clause2 を融合した結果
 (defun resolution? (clause1 clause2)
+  
   ;; 節 clause1 と clause2 が融合できるか
   ;; できる場合には 単一化した次の節を返してしまう
   ;; clause1 と clause2 を走査して お互いに単一化によって逆になるもの
@@ -49,29 +53,67 @@
 		 for x in (clause-%literals clause1)
 		 do 
 		 (loop for y in (clause-%literals clause2 )
-           for rule = (eliminate-gen? x y)
+           for rule-g = (eliminate-gen? x y)
+           for (rule-p target old new) = (multiple-value-list (eliminate-paramod? x y))
            do 
            ;; 導出原理が使える時は
            ;; paramodulationよりもそっちを優先
-           (if (not (null rule))
-             (return-from exit (list rule x y))
-             (let ((rule (eliminate-paramod? x y)))
-               (unless rule
-                 (setf paramod-flag t)
-                 (return-from exit (list rule x y)))))))))
+           ;; ずーっと導出原理のほうに偏って詰む
+           
+           ;; どちらも等号でかつ導出原理が使えるなら
+           ;; 導出原理を優先なぜなら消えるから
+           (cond 
+             ((and (equal-literal? x)
+                   (equal-literal? y)
+                   rule-g)
+              (return-from exit (list rule-g x y)))
+             (rule-p
+              (setf paramod-flag t)
+              (return-from exit (list rule-p x y target old new)))
+             (rule-g
+               (return-from exit (list rule-g x y))))
+  
+           ))))
 	(if (null res)
 	  (values nil nil nil)
-	  (destructuring-bind (rule lit1 lit2) res
-		(values 
-		  t
-			(unify rule 
-				   (clause
-					 (append 
-					   (remove lit1 (clause-%literals clause1) :test #'%literal=) 
-					   (remove lit2 (clause-%literals clause2) :test #'%literal=))
-					 0))
-			rule
-			)))))
+	  (destructuring-bind (rule lit1 lit2 . more) res
+      (let ((others 
+              (remove-if 
+                (lambda (x) 
+                  (or (%literal= x lit1)
+                      (%literal= x lit2))) 
+                (append 
+                  (clause-%literals clause1)
+                  (clause-%literals clause2)))))
+        (values 
+          t
+          (if paramod-flag 
+            (destructuring-bind (target old new) more
+              ;; ここに来たって事は rule は rec-matchで生成されたもの
+              ;; だよね
+              ;; ここらへんでの clause 生成しまくるのかなり無駄だ
+              (let ((target (car (clause-%literals (unify rule (clause (list target) 0))))))
+               (assert (typep target '%literal)) 
+               ;; ここで target 中の old を new に置き換えてやればいい
+               ;; けどどこを置き換えてやるかがかなり問題
+               ;; とりあえず全部置き換える
+
+              
+              (clause 
+                (cons 
+                  (car 
+                    (clause-%literals 
+                      (paramod-unify 
+                        ;; ここの unify で old を new にするんだけど
+                        ;; old が fterm である場合って上手く動かなくね
+                        ;; unifyだと -> ここ直せばおｋ
+                        (list (cons old new)) 
+                        (clause (list target) 0)))) others)
+                0) 
+              ) 
+              )
+            (unify rule (clause others 0)))
+          rule))))))
 
 ;; もっとも使われてない節を優先
 (defun primary-unused (clause-form*)
@@ -208,6 +250,7 @@
 		(declare (ignore c)) nil)))	
 	fuse-list))
 
+
 @export
 (defun resolution-gen (premises-clause-form 
 					   conseq-clause-form 
@@ -216,6 +259,7 @@
 					        (func (newdupf depth)) 
 							(output nil))
 
+(format t "HERE!!!!!!! GEN MODE!!~%")
 
   (labels 
 		  ((main 
@@ -228,6 +272,9 @@
 				  node-relation   ;; ノードとノードの関係
 				  app-flag            ;; 導出済み(前提にはなかった節)をくっつけるべきかのflag
 				  )
+
+
+
 				 (when (> 1 dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
@@ -254,6 +301,18 @@
 
 					;; ここでの clause が selected-clause とペアになる節					
 					(destructuring-bind (clause (flag resolted mgu)) each-choice
+
+            #|
+            (format t "ParentClause: ~%~A~%" 
+                    (flexpr.system.dump:clause->string clause (operator +OR+)))
+            (format t "ParentClause: ~%~A~%" 
+                    (flexpr.system.dump:clause->string selected-clause (operator +OR+)))
+            (format t "CClause: ~%~A~%~%" 
+                    (flexpr.system.dump:clause->string resolted (operator +OR+)))
+            |#
+
+            ;(sleep 1)
+                    
 						(special-let* 
 						  ((selected-clause-name (funcall lookup selected-clause))
 						   (opposite-clause-name (funcall lookup clause))
@@ -267,7 +326,12 @@
 							   node-relation)))
 					  
 						  (cond 
-							((and flag (null (clause-%literals resolted))) 
+                ;; 空節がでるか
+                ;; ~=(x,x) が出たら終了
+							((or 
+                 (and flag 
+                    (null (clause-%literals resolted)))
+                 (equal-contap? resolted)) 
 							 
 							 (let ((base 
 									(list 
@@ -326,6 +390,9 @@
 
 
 		(let* ((clause-form (append premises-clause-form conseq-clause-form))
+
+         ;; まず入力節自体が等号に関して矛盾していないかチェック
+
 			   (res1 (call-main 
 				 	  #'main
 					  conseq-clause-form 

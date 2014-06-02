@@ -90,13 +90,13 @@
 		(cond 
 			((and check-rule 
 						(goal-clause-form? conseq-clause-form))
-			 (values (cons #'resolution-snl "SNL") nil))
+			 (values (cons #'resolution-gen "SNL (for horn clause)") nil))
 			((and check-rule 
 						(some #'goal-clause? conseq-clause-form)
 						(every 
 							(lambda (x) (or (rule-clause? x) (fact-clause? x)))
 							(remove-if #'goal-clause? conseq-clause-form)))
-			 (values (cons #'resolution-snl "SNL (for horn clause)") t))
+			 (values (cons #'resolution-gen "SNL (for horn clause)") t))
 			(t 
 				(values (cons #'resolution-gen "Linear (default)") nil)))))
 

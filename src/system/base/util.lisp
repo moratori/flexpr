@@ -423,7 +423,27 @@
   clause
   )
 
+@export
+(defun equal-literal? (x)
+  (assert (typep x '%literal))
+  (when (eq +EQUAL+ (%literal-pred x))
+    x)
+  )
 
 
+;; ~=(x,x) みたいなのだったら t
+@export
+(defun equal-contap? (clause)
+  (let* ((%literals (clause-%literals clause))
+         (lit (car %literals)))
+    (and 
+      (= 1 (length %literals))
+      (equal-literal? lit)
+      (%literal-negation lit)
+      (let ((terms (%literal-terms lit)))
+        (print lit)
+        (term= 
+          (first terms)
+          (second terms))))))
 
 

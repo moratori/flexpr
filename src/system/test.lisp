@@ -188,9 +188,7 @@
 		"Ax.((even(x) > odd(succ(x))) & (odd(x) > even(succ(x))))")
 	    "even(succ(succ(succ(succ(Zero)))))")
 
-	 (( "Ax.=(x,x)"
-		"AxAy.(=(x,y) - =(y,x))"
-		"AxAyAz.(=(x,y) & =(y,z) > =(x,z))"
+	 ((
 		)
 	    "=(Z,C) & =(C,D) > =(Z,D)")
 
@@ -214,6 +212,8 @@
 	   "parent(S,T)")
 	   "R(T,K) & sibling(K,W)")
 
+
+   #|
 	 ((
 	   "Ax.=(x,x)"
 	   "AxAy.(=(x,y) - =(y,x))"
@@ -227,6 +227,7 @@
 	   )
 
 	   "=(f(ZERO,ZERO),ZERO)")
+   |#
 
 
 	 (("Ax.sum(x,ZERO,x)"
@@ -299,13 +300,17 @@
 	  "AxAy.(S(x) & P(x,y))")
 	 "AxAy.(~T(x) V ~U(y) > ~R(x,y))")
 
+
 	((
 	  "Ac.append(NIL,c,c)"
 	  "AxAyAzAr.(append(x,y,z) > append(cons(r,x),y,cons(r,z)))"
 	  "reverse(NIL,NIL)"
 	  "AxAyAzAe.(reverse(x,z) & append(z,cons(e,NIL),y) > reverse(cons(e,x),y))")
-	 "Ex.reverse(cons(A,cons(B,cons(C,cons(D,cons(E,cons(F,cons(G,cons(H,NIL)))))))),x)"
+	 "Ex.reverse(cons(A,cons(B,cons(C,NIL))),x)"
 	 )
+
+
+  
 
 	((
 	"Ax.sum(ZERO,x,x)"
@@ -318,8 +323,10 @@
 	"AmAkAr.(mult(m,s(k),r) & fact(k,m) > fact(s(k),r))"
 		)
 	
-	 "Ex.fact(s(s(s(ZERO))),x)"
+	 "Ex.fact(s(s(ZERO)),x)"
 	 )
+
+  #|
 
 
 	(("Ax.(P(x) & Q(x))"
@@ -333,6 +340,7 @@
 		"P & R"
 		"~(Q V S)")
 	 "T")
+  |#
 
 
 	))

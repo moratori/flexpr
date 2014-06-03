@@ -77,7 +77,8 @@
         (terms1 (%literal-terms x))
         (terms2 (%literal-terms y)))
     (cond 
-      ((eq +EQUAL+ pred1)
+      ((and (not (%literal-negation x))
+            (eq +EQUAL+ pred1))
        (let* ((left (first terms1))
              (rec-rule (some (lambda (x)(rec-match left x)) terms2)))
          (if (null rec-rule) (values nil nil nil)
@@ -86,21 +87,57 @@
              y 
              (update-term rec-rule left)
              (update-term rec-rule (second terms1)) ))))
-      ((eq +EQUAl+ pred2)
+      ((and (not (%literal-negation y))
+            (eq +EQUAl+ pred2))
        (eliminate-paramod? y x))
       (t (values nil nil nil)))))
 
 
 
+;; ドメインが fterm だった場合の置換
+;;
+(defun substitute-fterm (tar old new)
+  (cond 
+    ((vterm-p tar)
+     tar)
+    ((term= tar old) new)
+    (t 
+     (assert (fterm-p tar))
+     (apply #'fterm 
+            (fterm-fsymbol tar)
+            (mapcar 
+              (lambda (each)
+                (substitute-fterm each old new)
+                ) 
+              (fterm-terms tar))))))
+
+
+
 ;; ここを直せばおｋ
 ;; rule のドメインには fterm が含まれる
+;; unify と違い %literal を返すので注意
 @export
-(defun paramod-unify (rule clause)
-  (unify rule clause)
+(defun paramod-unify (pair lit)
+  ;; ここでの clause は clause といいつつも
+  ;; リテラルが一個入ってるだけであることを
+  ;; 仮定していい
+
+  (assert (typep lit '%literal))
+  
+  (destructuring-bind (old . new) pair
+    (%literal
+      (%literal-negation lit)
+      (%literal-pred lit)
+      (let ((targets (%literal-terms lit)))
+        (if (vterm-p old) 
+          (mapcar
+            (lambda (t-term)
+              (substitute-term t-term old new)) 
+            targets)
+          (mapcar 
+            (lambda (t-term)
+              (substitute-fterm t-term old new))
+            targets))) 
+      (%literal-used lit)))
+  
   )
-
-
-
-
-
-

@@ -101,14 +101,15 @@
               
               (clause 
                 (cons 
-                  (car 
-                    (clause-%literals 
-                      (paramod-unify 
+                  (paramod-unify 
                         ;; ここの unify で old を new にするんだけど
                         ;; old が fterm である場合って上手く動かなくね
                         ;; unifyだと -> ここ直せばおｋ
-                        (list (cons old new)) 
-                        (clause (list target) 0)))) others)
+
+                        (cons old new)
+                        target
+                        
+                        ) others)
                 0) 
               ) 
               )
@@ -302,16 +303,14 @@
 					;; ここでの clause が selected-clause とペアになる節					
 					(destructuring-bind (clause (flag resolted mgu)) each-choice
 
-            #|
             (format t "ParentClause: ~%~A~%" 
                     (flexpr.system.dump:clause->string clause (operator +OR+)))
             (format t "ParentClause: ~%~A~%" 
                     (flexpr.system.dump:clause->string selected-clause (operator +OR+)))
             (format t "CClause: ~%~A~%~%" 
                     (flexpr.system.dump:clause->string resolted (operator +OR+)))
-            |#
 
-            ;(sleep 1)
+            (sleep 1)
                     
 						(special-let* 
 						  ((selected-clause-name (funcall lookup selected-clause))

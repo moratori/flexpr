@@ -273,7 +273,8 @@
 					   :sue-val term
 					   :sue-where 'unify))))))
 			   (mapcar #'main (%literal-terms x)))
-			 0))
+			 (%literal-used x)
+        ))
 		 (clause-%literals clause))
 	   0))  ) 
 

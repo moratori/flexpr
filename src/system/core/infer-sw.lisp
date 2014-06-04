@@ -4,6 +4,8 @@
 	(:use :cl
 		  :flexpr.system.constant
 		  :flexpr.system.struct)
+  (:import-from :flexpr.system.util
+   :equal-included-clause-form? )
 	(:import-from :flexpr.system.infer.general
 				  :resolution-gen)
 	(:import-from :flexpr.system.infer.snl
@@ -88,15 +90,18 @@
 										 (rule-clause? x)))
 							 premises-clause-form)))
 		(cond 
+      ((or (equal-included-clause-form? premises-clause-form)
+           (equal-included-clause-form? conseq-clause-form))
+       (values (cons #'resolution-gen "Linear (for equality)") nil))
 			((and check-rule 
 						(goal-clause-form? conseq-clause-form))
-			 (values (cons #'resolution-gen "SNL (for horn clause)") nil))
+			 (values (cons #'resolution-snl "SNL (for horn clause)") nil))
 			((and check-rule 
 						(some #'goal-clause? conseq-clause-form)
 						(every 
 							(lambda (x) (or (rule-clause? x) (fact-clause? x)))
 							(remove-if #'goal-clause? conseq-clause-form)))
-			 (values (cons #'resolution-gen "SNL (for horn clause)") t))
+			 (values (cons #'resolution-snl "SNL (for horn clause)") t))
 			(t 
 				(values (cons #'resolution-gen "Linear (default)") nil)))))
 

@@ -339,3 +339,23 @@
 	(format out "}")))
 
 
+
+@export
+(defun deb-trace (p1 p2 child)
+  (destructuring-bind (flag . mode) +TRACE+
+    (when flag 
+      (format t "~%Inference --------")
+      (format t "~%ParentClause: ~%~2t~A~%" 
+              (clause->string p1 (operator +OR+)))
+      (format t "ParentClause: ~%~2t~A~%" 
+              (clause->string p2 (operator +OR+)))
+      (format t "Resolvent (or Paramodulant): ~%~2t~A~%" 
+              (clause->string child (operator +OR+)))
+      (format t "------------------~%")
+      (if (integerp mode)
+        (sleep mode)
+        (progn 
+          (format t "Enter...")
+          (force-output *standard-output*)
+          (read-line *standard-input*))))))
+

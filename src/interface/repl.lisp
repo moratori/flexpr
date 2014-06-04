@@ -3,6 +3,7 @@
 (ns:defns flexpr.interface.repl
 	(:use :cl
 		  :flexpr.interface.constant
+      :flexpr.system.constant
 		  :flexpr.system.error)
 	(:import-from 
 	  :flexpr.interface.load
@@ -47,15 +48,16 @@
 
 (defcompo help ()
   (format t "Command Help~%")
-  (format t "~2t :load <Filename>               load a definition file~%")
-  (format t "~2t :save <Axiomatic system name>  save current system~%")
-  (format t "~2t :desc <Axiomatic system name>  describe axiomatic system~%")
-	(format t "~2t :def  <Axiomatic system name>  define new axiomatic system~%")
-  (format t "~2t :set  <Axiomatic system name>  change current axiomatic system~%")
-  (format t "~2t :form <Formula>                convert it into formal form~%")
-  (format t "~2t :add  <Formula>                add formula to current axiomatic system~%")
-  (format t "~2t :out  <Formula>                execute resolution and outputs the proof figure~%")
-  (format t "~2t :fgen <Boolean>                force (not) to use general method~%")
+  (format t "~2t :load  <Filename>               load a definition file~%")
+  (format t "~2t :save  <Axiomatic system name>  save current system~%")
+  (format t "~2t :desc  <Axiomatic system name>  describe axiomatic system~%")
+	(format t "~2t :def   <Axiomatic system name>  define new axiomatic system~%")
+  (format t "~2t :set   <Axiomatic system name>  change current axiomatic system~%")
+  (format t "~2t :form  <Formula>                convert it into formal form~%")
+  (format t "~2t :add   <Formula>                add formula to current axiomatic system~%")
+  (format t "~2t :out   <Formula>                execute resolution and outputs the proof figure~%")
+  (format t "~2t :trace <Second>                 step execution~%")
+  (format t "~2t :untrace                        disable trace mode~%")
   (format t "~2t :list  enumerate the axiomatic system that are currently defined~%")
   (format t "~2t :help  show this help~%")
   (format t "~2t :exit  exit from REPL~%")
@@ -324,13 +326,16 @@
 	))
 
 
-(defun fgen (line)
-  (if (or (string= line "")
-            (string= line "t"))
-    (setf *GENERAL-MODE* t)
-    (setf *GENERAL-MODE* nil))
-  (format t "general mode: ~A~%" *GENERAL-MODE*)
+(defun deb-trace (line)
+  (setf +TRACE+ (cons t (parse-integer line :junk-allowed t)))
+  (format t "trace: ~A~%" (car +TRACE+))
+    
   )
+
+(defun deb-untrace (line)
+  (setf +TRACE+ (cons nil nil))
+  (format t "trace: ~A~%" (car +TRACE+)))
+
 
 (defvar *case*
   (list 
@@ -346,7 +351,9 @@
 	 (cons ":quit"  #'quit)
 	 (cons ":exit"  #'quit)
 	 (cons ":def" #'defax)
-   (cons ":fgen" #'fgen)))
+   (cons ":trace" #'deb-trace)
+   (cons ":untrace" #'deb-untrace)))
+
 
 
 

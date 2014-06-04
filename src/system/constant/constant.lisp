@@ -84,5 +84,9 @@
 @export
 (defvar +NODE-COLOR+ "ee500a")
 
+@export
+(defvar +TRACE+ (cons nil nil))
+
+
 
 

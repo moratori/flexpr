@@ -26,6 +26,7 @@
 				  :maximum-depth-exceeded-error
 				  :undeterminable-error)
 	(:import-from :flexpr.system.dump
+          :deb-trace
 				  :clause->string
 				  :mgu->string)
 	)
@@ -252,6 +253,9 @@
 	fuse-list))
 
 
+
+
+
 @export
 (defun resolution-gen (premises-clause-form 
 					   conseq-clause-form 
@@ -260,7 +264,6 @@
 					        (func (newdupf depth)) 
 							(output nil))
 
-(format t "HERE!!!!!!! GEN MODE!!~%")
 
   (labels 
 		  ((main 
@@ -302,15 +305,9 @@
 
 					;; ここでの clause が selected-clause とペアになる節					
 					(destructuring-bind (clause (flag resolted mgu)) each-choice
-
-            (format t "ParentClause: ~%~A~%" 
-                    (flexpr.system.dump:clause->string clause (operator +OR+)))
-            (format t "ParentClause: ~%~A~%" 
-                    (flexpr.system.dump:clause->string selected-clause (operator +OR+)))
-            (format t "CClause: ~%~A~%~%" 
-                    (flexpr.system.dump:clause->string resolted (operator +OR+)))
-
-            (sleep 1)
+            
+            (deb-trace clause selected-clause resolted)  
+            
                     
 						(special-let* 
 						  ((selected-clause-name (funcall lookup selected-clause))
@@ -338,12 +335,11 @@
 									  original-exist-terms 
 									  (reverse-unify  exist-terms mgu))))
 							  (if output 
-								(append 
-								  base 
-								  (list 
-									(funcall lookup nil)
-									relation 
-										))
+                  (append 
+                    base 
+                    (list 
+                      (funcall lookup nil)
+                      relation ))
 								base)))
 							
 							(t 
@@ -414,7 +410,20 @@
 						 clause-form
 						 depth
 						 original-exist-terms))))
-		  (unless (or res1 res2)
-			(error (make-condition 'undeterminable-error)))
-		  (or res1 res2))))
+		  
+		  (or
+        (some 
+          (lambda (clause)
+            (when (equal-contap? clause)
+                  (list t nil nil nil nil))) clause-form)
+        res1 
+        res2
+        (error (make-condition 'undeterminable-error))))))
+
+
+
+
+
+
+
 

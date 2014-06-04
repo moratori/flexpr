@@ -10,6 +10,7 @@
 	(:import-from :flexpr.system.formalize.mat
 				  :rename-clause)
 	(:import-from :flexpr.system.dump
+          :deb-trace
 				  :clause->string)
 	(:import-from :flexpr.system.unifier
 				  :eliminate-gen?
@@ -183,6 +184,10 @@
 					
 				(lambda (cand)
 				  (destructuring-bind (clause (flag resolted mgu)) cand
+
+           (deb-trace clause goal-clause resolted) 
+            
+            
 					(special-let* 
 						  ((selected-clause-name (funcall lookup goal-clause))
 						   (opposite-clause-name (funcall lookup clause))

@@ -430,6 +430,14 @@
     x)
   )
 
+@export 
+(defun equal-included-clause? (clause)
+  (some #'equal-literal? (clause-%literals clause)))
+
+@export
+(defun equal-included-clause-form? (clause-form)
+  (some #'equal-included-clause? clause-form))
+
 
 ;; ~=(x,x) みたいなのだったら t
 @export
@@ -441,7 +449,7 @@
       (equal-literal? lit)
       (%literal-negation lit)
       (let ((terms (%literal-terms lit)))
-        (print lit)
+        lit
         (term= 
           (first terms)
           (second terms))))))

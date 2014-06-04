@@ -306,7 +306,7 @@
 	  "AxAyAzAr.(append(x,y,z) > append(cons(r,x),y,cons(r,z)))"
 	  "reverse(NIL,NIL)"
 	  "AxAyAzAe.(reverse(x,z) & append(z,cons(e,NIL),y) > reverse(cons(e,x),y))")
-	 "Ex.reverse(cons(A,cons(B,cons(C,NIL))),x)"
+	 "Ex.reverse(cons(A,cons(B,cons(C,cons(D,cons(E,cons(F,cons(G,NIL))))))),x)"
 	 )
 
 
@@ -326,7 +326,6 @@
 	 "Ex.fact(s(s(ZERO)),x)"
 	 )
 
-  #|
 
 
 	(("Ax.(P(x) & Q(x))"
@@ -340,7 +339,6 @@
 		"P & R"
 		"~(Q V S)")
 	 "T")
-  |#
 
 
 	))

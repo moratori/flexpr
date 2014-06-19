@@ -300,6 +300,7 @@
 								   (when (or app-flag checked)
 										 (choices selected-clause r-clause-form)))))
 
+
 				   (some
 					 (lambda (each-choice)
 
@@ -413,10 +414,10 @@
 		  
 		  (or
         (some 
-          (lambda (clause)
+         (lambda (clause)
             (when (equal-contap? clause)
                   (list t nil nil nil nil))) clause-form)
-        res1 
+        res1
         res2
         (error (make-condition 'undeterminable-error))))))
 

@@ -213,7 +213,6 @@
 	   "R(T,K) & sibling(K,W)")
 
 
-   #|
 	 ((
 	   "Ax.=(x,x)"
 	   "AxAy.(=(x,y) - =(y,x))"
@@ -227,7 +226,6 @@
 	   )
 
 	   "=(f(ZERO,ZERO),ZERO)")
-   |#
 
 
 	 (("Ax.sum(x,ZERO,x)"
@@ -339,6 +337,9 @@
 		"P & R"
 		"~(Q V S)")
 	 "T")
+
+ 
+  
 
 
 	))

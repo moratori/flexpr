@@ -185,7 +185,7 @@
 				(lambda (cand)
 				  (destructuring-bind (clause (flag resolted mgu)) cand
 
-           (deb-trace clause goal-clause resolted) 
+           (deb-trace clause goal-clause (list resolted)) 
             
             
 					(special-let* 

@@ -221,10 +221,11 @@
 	   (destructuring-bind (status exist spec . more) 
 		(hook (lambda () (resolution obj (string->lexpr line) :output flag)))
 		(declare (ignore exist))
-		(format t "resolution method: ~A~%" (car (last more)))
+		
 		(format t "~A is ~A under the ~A~%" 
 				line (if status "PROVABLE" "NOT provable")
 				*current*)
+    (format t "resolution method: ~A~%" (car (last more)))
 		(unless (null spec)
 		  (format t "specific term: ")
 		  (dolist (each spec)

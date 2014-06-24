@@ -13,10 +13,7 @@
 (defvar *or* (flexpr.system.struct:operator flexpr.system.constant:+OR+))
 
 
-;; テストデータ作るのが死ぬほど大変なので
-;; 意味論的に同値であるかを判定する機能つけなきゃやってられない
-;; => けど述語論理に対応できなくなる
-;; => けど今でもPLのテストはしてない
+
 (defvar *formalize-test-data*
   '(("P - Q > P" nil "(P & ~Q) V (Q & ~P) V P" 
 	 			 nil "(P & ~Q) V (Q & ~P) V (P)")
@@ -346,18 +343,25 @@
 
 
 
-#|
-  paramodulant を求めるときに
-  マッチした全てを置き換えてしまうのでだめだ
-
 	(("=(A,B)"
 	  "=(B,C)"
 	  "P(B,C)")
 	"P(A,A)")
 
-  |#
- 
-  
+    #|
+    (("=(A,B)"
+      "=(B,C)"
+      "Ax.=(f(x),h(g(x),C))")
+    "Ex.=(f(x),h(x,A))")
+    
+
+    (("R(A) V R(B)"
+      "Ay.(~D(y) V L(A,y))"
+      "AxAy.(~R(x) V ~Q(y) V ~L(x,y))"
+      "D(A) V ~Q(A)"
+      "Q(B) V ~R(B)")
+    "~=(A,B)")
+	|#
 
 
 	))

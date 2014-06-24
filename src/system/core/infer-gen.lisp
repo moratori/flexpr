@@ -36,6 +36,31 @@
 
 
 
+(defun get-rule (clause1 clause2)
+  (loop named exit
+        for x in (clause-%literals clause1)
+        do 
+        (loop for y in (clause-%literals clause2 )
+              for rule-g = (eliminate-gen? x y)
+              for (rule-p target old new) = (multiple-value-list (eliminate-paramod? x y))
+              do 
+              ;; 導出原理が使える時は
+              ;; paramodulationよりもそっちを優先
+              ;; ずーっと導出原理のほうに偏って詰む
+              ;; どちらも等号でかつ導出原理が使えるなら
+              ;; 導出原理を優先なぜなら消えるから
+             (cond 
+               ((and (equal-literal? x)
+                     (equal-literal? y)
+                     rule-g)
+                 (return-from exit (list nil rule-g x y)))
+               (rule-p
+                 ;(setf paramod-flag t)
+                 (return-from exit (list t rule-p x y target old new)))
+               (rule-g
+                 (return-from exit (list nil rule-g x y)))))))
+
+
 ;; (values flag result)
 ;; flag で導出できたかいなか
 ;; result clause1 と clause2 を融合した結果
@@ -46,57 +71,30 @@
   ;; clause1 と clause2 を走査して お互いに単一化によって逆になるもの
   ;; 最初の物を考える
   (assert (and (typep clause1 'clause)
-			   (typep clause2 'clause)))
-  (let* ((paramod-flag nil)
-         (res 
-   ;; -- dirty code --
-   (loop named exit
-		 for x in (clause-%literals clause1)
-		 do 
-		 (loop for y in (clause-%literals clause2 )
-           for rule-g = (eliminate-gen? x y)
-           for (rule-p target old new) = (multiple-value-list (eliminate-paramod? x y))
-           do 
-           ;; 導出原理が使える時は
-           ;; paramodulationよりもそっちを優先
-           ;; ずーっと導出原理のほうに偏って詰む
-           
-           ;; どちらも等号でかつ導出原理が使えるなら
-           ;; 導出原理を優先なぜなら消えるから
-           (cond 
-             ((and (equal-literal? x)
-                   (equal-literal? y)
-                   rule-g)
-              (return-from exit (list rule-g x y)))
-             (rule-p
-              (setf paramod-flag t)
-              (return-from exit (list rule-p x y target old new)))
-             (rule-g
-               (return-from exit (list rule-g x y))))
-  
-           ))))
-	(if (null res)
-	  (values nil nil nil)
-	  (destructuring-bind (rule lit1 lit2 . more) res
-      (let ((others 
-              (remove-if 
-                (lambda (x) 
-                  (or (%literal= x lit1)
-                      (%literal= x lit2))) 
-                (append 
-                  (clause-%literals clause1)
-                  (clause-%literals clause2)))))
-        (values 
-          t
-          (if paramod-flag 
-            (destructuring-bind (target old new) more
-              ;; ここに来たって事は rule は rec-matchで生成されたもの
-              ;; だよね
-              ;; ここらへんでの clause 生成しまくるのかなり無駄だ
-              (let ((target (car (clause-%literals (unify rule (clause (list target) 0))))))
-               (assert (typep target '%literal)) 
+               (typep clause2 'clause)))
 
-               
+  (let ((res (get-rule clause1 clause2)))
+
+    (when res
+      (destructuring-bind (paramod-flag rule lit1 lit2 . more) res
+        (let ((others 
+                (remove-if 
+                  (lambda (x) 
+                    (or (%literal= x lit1)
+                        (%literal= x lit2))) 
+                  (append 
+                    (clause-%literals clause1)
+                    (clause-%literals clause2)))))
+          (values 
+            t
+
+            (if paramod-flag 
+              (destructuring-bind (target old new) more
+                ;; ここに来たって事は rule は rec-matchで生成されたもの
+                ;; だよね
+                ;; ここらへんでの clause 生成しまくるのかなり無駄だ
+                (let ((target (car (clause-%literals (unify rule (clause (list target) 0))))))
+                  (assert (typep target '%literal)) 
 
                ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                ;;;;; ここで target 中の old を new に置き換えてやればいい   ;;;;;;
@@ -105,20 +103,19 @@
                ;;;;; -> 単に全部置き換える方針だと問題発生                  ;;;;;;
                ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-              
-              (clause 
-                (cons 
-                  (paramod-unify 
-                        ;; ここの unify で old を new にするんだけど
-                        ;; old が fterm である場合って上手く動かなくね
-                        ;; unifyだと -> ここ直せばおｋ
 
-                        (cons old new)
-                        target
-                        
-                        ) others)
-                0)))
-            (unify rule (clause others 0)))
+               (let ((unified (paramod-unify (cons old new) target)))
+                 (mapcar 
+                   (lambda (lit)
+                     (clause (cons lit others) 0))
+                   unified))
+               
+               
+               )
+                
+                )
+
+              (list (unify rule (clause others 0))))
           rule))))))
 
 
@@ -132,7 +129,9 @@
 
 
 (defun clause*-len (clause*)
-  (length (clause-%literals (second (second clause*)))))
+  (length 
+    (clause-%literals 
+      (car (second (second clause*))))))
 
 
 ;;; 導出後の節が最も小さくなるものを優先(これ必ずしもよくないので後で改良)
@@ -145,13 +144,9 @@
 		(primary-unused clause-form*)
 		(sort clause-form*
 			  (lambda (x y)
-				(< 
-				  (length
-					(clause-%literals 
-					  (second (second x))))
-				  (length 
-					(clause-%literals
-					  (second (second y)))))))))))
+          (< 
+            (clause*-len x)
+            (clause*-len y))))))))
 
 ;; 複雑度という指数をいれたらより
 ;; ヒューリスティックな探索ができるかも
@@ -161,11 +156,14 @@
 
 
 (defun choices (selected-clause all) 
-	(cf-sort
+
+  (cf-sort
 	  (loop for each-c in all
-			for rule = (multiple-value-list (resolution? each-c selected-clause)) 
-			if (first rule)
-			  collect (list each-c rule))))
+			    for rule = (multiple-value-list (resolution? each-c selected-clause)) 
+			    if (first rule)
+			    collect (list each-c rule)))
+  
+  )
 
 ;; 前までは 深度が1深まる毎にlimitを1減らしてたけど
 ;; 深くなればなるほどその枝の重要度を減らして行く事にする
@@ -270,6 +268,7 @@
 							(output nil))
 
 
+
   (labels 
 		  ((main 
 				 (clause-form     ;; 節集合
@@ -307,87 +306,95 @@
 
 
 				   (some
-					 (lambda (each-choice)
+             (lambda (each-choice)
 
 					;; ここでの clause が selected-clause とペアになる節					
 					(destructuring-bind (clause (flag resolted mgu)) each-choice
+            ;; resolted は導出された節のリストであることにした
+            ;; なぜなら paramodulation で全てのパターンの置き換えパターンが生じるから
+            (assert (typep resolted 'list))
             
             (deb-trace clause selected-clause resolted)  
             
                     
 						(special-let* 
-						  ((selected-clause-name (funcall lookup selected-clause))
-						   (opposite-clause-name (funcall lookup clause))
-						   (resolted-clause-name (funcall lookup resolted))
-						   (relation 
-							 (append 
-							   (list (list selected-clause-name 
-										   resolted-clause-name)
+						  ((selected-clause-name 
+                 (funcall lookup selected-clause))
+						   (opposite-clause-name 
+                 (funcall lookup clause))
+						   (resolted-clause-name-list 
+                 (mapcar (lambda (x)(funcall lookup x) ) resolted))
+						   (relation
+                 (append 
+                   (list (list selected-clause-name 
+                               (car resolted-clause-name-list))
 									 (list opposite-clause-name 
-										   resolted-clause-name))
-							   node-relation)))
+                         (car resolted-clause-name)))
+                   node-relation)))
 					  
-						  (cond 
+              (let ((resolted1 (car resolted)))
+                
+                (cond 
                 ;; 空節がでるか
                 ;; ~=(x,x) が出たら終了
-							((or 
-                 (and flag 
-                    (null (clause-%literals resolted)))
-                 (equal-contap? resolted)) 
-							 
-							 (let ((base 
-									(list 
-									  t 
-									  original-exist-terms 
-									  (reverse-unify  exist-terms mgu))))
-							  (if output 
-                  (append 
-                    base 
-                    (list 
-                      (funcall lookup nil)
-                      relation ))
-								base)))
-							
-							(t 
-							  
-							  (handler-case 
-							   (main 
-									 ;; 節 clause は selected-clause と導出に使われる親節であり
-									 ;; resolted-clause を生むもの
-									 ;; この辺で吸収戦略したい
+                ((or (and flag (null (clause-%literals resolted1)))
+                     (equal-contap? resolted1)) 
+                 (let ((base (list t original-exist-terms (reverse-unify  exist-terms mgu))))
+                   (if output 
+                     (append 
+                       base 
+                       (list (funcall lookup nil) relation))
+                     base)))
+                
+                (t 
+                 (handler-case 
+                   (main 
+                     ;; 節 clause は selected-clause と導出に使われる親節であり
+									   ;; resolted-clause を生むもの
+									   ;; この辺で吸収戦略したい
 
+                     (if (member clause clause-form :test #'%clause=)
 
-									 (if (member clause clause-form :test #'%clause=)
-								   (append 
-										 (remove clause clause-form :test #'%clause=)
-										 (list ;; append するための list
+                       (append 
+                         (remove clause clause-form :test #'%clause=)
+                         (list ;; append するための list
+                           (set-defined-flag
+                             (clause 
+                               (rename-clause (clause-%literals clause)) 
+                               (1+ (clause-used clause)))
+                             (clause-defined clause))))
+
+                       clause-form)
+                     
+                     (append 
+                       (adjoin 
                        (set-defined-flag
                          (clause 
-                           (rename-clause (clause-%literals clause)) 
-                           (1+ (clause-used clause)))
-                         (clause-defined clause))))
-									 clause-form)
+                           (clause-%literals selected-clause)
+                           (1+ (clause-used selected-clause)))
+                         (clause-defined selected-clause)) 
+                       r-clause-form
+                       :test #'%clause=)
+                       (cdr resolted)
+                       )
+                     
+                     resolted1
 
+                     (funcall func  dep)
 
-								(adjoin 
-								   (set-defined-flag
-                     (clause 
-								       (clause-%literals selected-clause)
-								       (1+ (clause-used selected-clause)))
-                     (clause-defined selected-clause)) 
-								   r-clause-form
-								   :test #'%clause=)
-								
+                     (reverse-unify exist-terms mgu)
 
-							     resolted
-							     (funcall func  dep)
-							     (reverse-unify exist-terms mgu)
-							     lookup
-							     relation
-								 (or app-flag checked))
-							 (maximum-depth-exceeded-error (c)
-								(declare (ignore c)) nil))))))) 
-					 choices*))))
+                     lookup
+
+                     relation
+
+                     (or app-flag checked))
+
+                   (maximum-depth-exceeded-error (c)
+                     (declare (ignore c)) nil))))
+                
+                )
+						  ))) choices*))))
 
 
 		(let* ((clause-form (append premises-clause-form conseq-clause-form))

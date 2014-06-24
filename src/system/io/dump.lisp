@@ -349,9 +349,11 @@
               (clause->string p1 (operator +OR+)))
       (format t "ParentClause: ~%~2t~A~%" 
               (clause->string p2 (operator +OR+)))
-      (format t "Resolvent (or Paramodulant): ~%~2t~A~%" 
-              (clause->string child (operator +OR+)))
-      (format t "------------------~%")
+      (format t "Resolvent (or Paramodulant): ~%~{~2t~A~}~%" 
+              (mapcar 
+                (lambda (x) 
+                  (clause->string x (operator +OR+))) child))
+      (format t "-----------~%")
       (if (integerp mode)
         (sleep mode)
         (progn 

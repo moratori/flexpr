@@ -7,6 +7,7 @@
       :flexpr.system.unifier)
 	(:import-from :flexpr.system.util
           :substitute-term
+          :%literal=
 				  :term=)
   (:import-from :flexpr.system.unifier
    :mgu
@@ -78,7 +79,9 @@
         (terms2 (%literal-terms y)))
     (cond 
       ((and (not (%literal-negation x))
-            (eq +EQUAL+ pred1))
+            (eq +EQUAL+ pred1)
+            (not (term= (first terms1) (second terms1)))
+            )
        (let* ((left (first terms1))
              (rec-rule (some (lambda (x)(rec-match left x)) terms2)))
          (if (null rec-rule) (values nil nil nil)
@@ -107,21 +110,79 @@
             (fterm-fsymbol tar)
             (mapcar 
               (lambda (each)
-                (substitute-fterm each old new)
-                ) 
+                (substitute-fterm each old new)) 
               (fterm-terms tar))))))
 
+
+(defun make-mask (n)
+  (labels 
+    ((parseint (x)
+       (parse-integer (string x)))
+     (padding (x)
+       (let ((len (length x)))
+         (if (not (= len n))
+           (nconc (make-list (- n len) :initial-element 0) x)
+           x))))
+    (loop for i from 1 to (1- (expt 2 n))
+          collect 
+          (padding 
+            (map 'list 
+                 (lambda (x) (parseint x)) (format nil "~B" i))))))
 
 
 ;; ここを直せばおｋ
 ;; rule のドメインには fterm が含まれる
 ;; unify と違い %literal を返すので注意
+(defun substitute-term-recursive (pair t-term)
+  (destructuring-bind (old . new) pair
+    (if (vterm-p old) 
+          (substitute-term t-term old new)
+          (substitute-fterm t-term old new))))
+
+@export
+(defun paramod-unify (pair lit)
+; P(B,B) ¬ P(B,C) B = C
+  ;; があるときに P(B,B) の B を全て C に置きけると
+  ;; P(C,C) になってしまって 空にならなくなる
+  ;; 本当は全てのパターンについて置き換える置き換えないを考えればいい
+  ;; または 線形導出やめてしまえばよい
+  ;; -> これの解決のために全ての置き換えパターンを考えることにした
+  ;;
+  ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; 
+  ;; ただし、関数項にかんしての実装が適当(引数は全て置き換えてしまう)
+  ;; 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (let* ((targets (%literal-terms lit))
+         (mask (make-mask (length targets))))
+    (remove lit
+      (remove-duplicates
+        (mapcar 
+          (lambda (each-mask)
+            (%literal 
+              (%literal-negation lit)
+              (%literal-pred lit)
+              (loop for each in targets
+                    for bit  in each-mask
+                    collect 
+                    (if (zerop bit) each 
+                      (substitute-term-recursive pair each)))
+                   0)) mask)
+        :test #'%literal=)
+      :test #'%literal=)))
+
+
+#|
 @export
 (defun paramod-unify (pair lit)
   ;; ここでの clause は clause といいつつも
   ;; リテラルが一個入ってるだけであることを
   ;; 仮定していい
 
+  
+  ; 
+  
   (assert (typep lit '%literal))
   
   (destructuring-bind (old . new) pair
@@ -138,6 +199,6 @@
             (lambda (t-term)
               (substitute-fterm t-term old new))
             targets))) 
-      (%literal-used lit)))
-  
-  )
+      (%literal-used lit))))
+
+|#

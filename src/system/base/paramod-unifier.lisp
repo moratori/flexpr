@@ -8,6 +8,7 @@
 	(:import-from :flexpr.system.util
           :substitute-term
           :%literal=
+          :term-using?
 				  :term=)
   (:import-from :flexpr.system.unifier
    :mgu
@@ -39,7 +40,8 @@
   (cond 
     ((and (typep term1 'vterm)
           (typep term2 'vterm))
-     (mgu term1 term2))
+     (when (term-using? term1 term2)
+       (mgu term1 term2)))
     ((or 
        (and (typep term1 'vterm)
             (typep term2 'fterm))
@@ -83,7 +85,7 @@
             (not (term= (first terms1) (second terms1)))
             )
        (let* ((left (first terms1))
-             (rec-rule (some (lambda (x)(rec-match left x)) terms2)))
+              (rec-rule (some (lambda (x)(rec-match left x)) terms2)))
          (if (null rec-rule) (values nil nil nil)
            (values 
              rec-rule 
@@ -156,6 +158,7 @@
 
   (let* ((targets (%literal-terms lit))
          (mask (make-mask (length targets))))
+    
     (remove lit
       (remove-duplicates
         (mapcar 
@@ -170,35 +173,8 @@
                       (substitute-term-recursive pair each)))
                    0)) mask)
         :test #'%literal=)
-      :test #'%literal=)))
+       :test #'%literal=)
+    
+    ))
 
 
-#|
-@export
-(defun paramod-unify (pair lit)
-  ;; ここでの clause は clause といいつつも
-  ;; リテラルが一個入ってるだけであることを
-  ;; 仮定していい
-
-  
-  ; 
-  
-  (assert (typep lit '%literal))
-  
-  (destructuring-bind (old . new) pair
-    (%literal
-      (%literal-negation lit)
-      (%literal-pred lit)
-      (let ((targets (%literal-terms lit)))
-        (if (vterm-p old) 
-          (mapcar
-            (lambda (t-term)
-              (substitute-term t-term old new)) 
-            targets)
-          (mapcar 
-            (lambda (t-term)
-              (substitute-fterm t-term old new))
-            targets))) 
-      (%literal-used lit))))
-
-|#

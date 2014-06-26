@@ -104,11 +104,17 @@
                ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-               (let ((unified (paramod-unify (cons old new) target)))
+               
+               (let ((tmp 
+                       (let ((unified (paramod-unify (cons old new) target)))
                  (mapcar 
                    (lambda (lit)
                      (clause (cons lit others) 0))
                    unified))
+                       ))
+                 (assert (not (null tmp)))
+                 tmp
+                 )
                
                
                )

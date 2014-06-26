@@ -340,13 +340,20 @@
 	"=(f(g(A)),h(B))"
 	)
   
-
-
-
-	(("=(A,B)"
+  (("=(A,B)"
 	  "=(B,C)"
 	  "P(B,C)")
 	"P(A,A)")
+
+   ((
+
+"human(John)"
+"=(grade(John),F)"
+"Ex.(human(x) & =(grade(x),A))"
+"~=(A,F)"
+"Ax.~human(grade(x))")
+   "Ex.(human(x) & ~=(x,John))")
+
 
     #|
     (("=(A,B)"

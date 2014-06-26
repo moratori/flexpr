@@ -345,6 +345,7 @@
 	  "P(B,C)")
 	"P(A,A)")
 
+  #|
    ((
 
 "human(John)"
@@ -355,7 +356,6 @@
    "Ex.(human(x) & ~=(x,John))")
 
 
-    #|
     (("=(A,B)"
       "=(B,C)"
       "Ax.=(f(x),h(g(x),C))")
@@ -470,9 +470,11 @@
 	(dolist (each *resolution-test-data*)
 ;		(format t "~%----- TEST CASE -----~%~A~%-----           -----~%" each)
 		(assert-true 
-				(flexpr.system.infer.wrap::resolution
+      (progn 
+        (format t "~A~%~%" each)
+       	(flexpr.system.infer.wrap::resolution
 					(apply #'pl (first each))
-					(parse (second each))))))
+					(parse (second each)))))))
 
 (define-test resolution-error-test 
 	(dolist (each *resolution-error*)

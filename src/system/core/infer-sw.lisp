@@ -107,15 +107,41 @@
 
 
 
+(defun make-equal-axiom ()
+  (let* ((eqv (gensym "EV"))
+         (var (vterm eqv nil)))
+
+  
+  
+    (clause 
+    (list (%literal nil +EQUAL+ (list var var) 0))
+    0
+    )
+  
+  
+  
+  )
+  )
+
+
 @export
 (defun resolution (premises conseq &key (depth +DEPTH+) (output nil))
   (multiple-value-bind 
 	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
-
-	;; フラグが t だったら SNL 導出のために変形が必要
-	;; ユーザのクエリを
-	(multiple-value-bind (pair flag)
+  
+  (let ((premises-clause-form 
+          ;; 等号の式集合だったら等号公理をぶち込む
+          ;; このおかげで resolution-gen のなかでの equal-contap?は本質的には必要なくなるけど
+          ;; 効率化のためにとっておくべき(等号の矛盾がワンステップ早く終わる)
+          (if (or (equal-included-clause-form? premises-clause-form)
+                  (equal-included-clause-form? conseq-clause-form)) 
+            (append premises-clause-form (list (make-equal-axiom))) 
+            premises-clause-form)))
+    
+;; フラグが t だったら SNL 導出のために変形が必要
+	;; ユーザのクエリを 
+    (multiple-value-bind (pair flag)
 			(which? premises-clause-form conseq-clause-form)	
 			(destructuring-bind (func . id) pair
 				(append 
@@ -141,6 +167,6 @@
 							exist-terms
 							:depth depth 
 							:output output))
-					(list id))))))
+					(list id)))))))
 
 

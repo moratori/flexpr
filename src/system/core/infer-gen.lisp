@@ -343,6 +343,8 @@
                 (cond 
                 ;; 空節がでるか
                 ;; ~=(x,x) が出たら終了
+                ;; equal-contap? によって矛盾であるかを調べるのは 等号公理を入れればいらないのでは
+                ;; ただ、これで特化してる方がこれはこれでいい気もする
                 ((or (and flag (null (clause-%literals resolted1)))
                      (equal-contap? resolted1)) 
                  (let ((base (list t original-exist-terms (reverse-unify  exist-terms mgu))))
@@ -397,10 +399,8 @@
                      (or app-flag checked))
 
                    (maximum-depth-exceeded-error (c)
-                     (declare (ignore c)) nil))))
-                
-                )
-						  ))) choices*))))
+                     (declare (ignore c)) nil)))))))) 
+             choices*))))
 
 
 		(let* ((clause-form (append premises-clause-form conseq-clause-form))
@@ -438,11 +438,5 @@
         res1
         res2
         (error (make-condition 'undeterminable-error))))))
-
-
-
-
-
-
 
 

@@ -142,7 +142,7 @@
 (defstruct (clause (:constructor clause (%literals used)))
   (%literals nil :type list)
   (used 0 :type integer)
-  (defined nil :type t))
+  (defined nil :type t)) ;; ?
 
 
 

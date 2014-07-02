@@ -75,15 +75,27 @@
 (defun eliminate-paramod? (x y)
   (assert (and (typep x '%literal) (typep y '%literal)))
 
+
+  
   (let ((pred1 (%literal-pred x))
         (pred2 (%literal-pred y))
         (terms1 (%literal-terms x))
         (terms2 (%literal-terms y)))
     (cond 
+      ;; x = x
+      ;; A = A 
+      ;; みたいなパターンと導出かけても意味ない
+      ;;
+      ((and 
+         (eq +EQUAL+ pred1)
+         (eq +EQUAL+ pred2)
+         (term= (first terms1) (second terms1))
+         (term= (first terms2) (second terms2)))
+       (values nil nil nil))
+      
       ((and (not (%literal-negation x))
             (eq +EQUAL+ pred1)
-            (not (term= (first terms1) (second terms1)))
-            )
+            (not (term= (first terms1) (second terms1))))
        (let* ((left (first terms1))
               (rec-rule (some (lambda (x)(rec-match left x)) terms2)))
          (if (null rec-rule) (values nil nil nil)
@@ -95,7 +107,9 @@
       ((and (not (%literal-negation y))
             (eq +EQUAl+ pred2))
        (eliminate-paramod? y x))
-      (t (values nil nil nil)))))
+      (t (values nil nil nil))))
+  
+  )
 
 
 
@@ -155,8 +169,7 @@
   ;; ただし、関数項にかんしての実装が適当(引数は全て置き換えてしまう)
   ;; 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-  (let* ((targets (%literal-terms lit))
+(let* ((targets (%literal-terms lit))
          (mask (make-mask (length targets))))
     
     (remove lit
@@ -175,6 +188,6 @@
         :test #'%literal=)
        :test #'%literal=)
     
-    ))
+    )  )
 
 

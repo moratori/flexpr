@@ -345,7 +345,6 @@
 	  "P(B,C)")
 	"P(A,A)")
 
-  #|
    ((
 
 "human(John)"
@@ -362,14 +361,15 @@
     "Ex.=(f(x),h(x,A))")
     
 
+    #|
     (("R(A) V R(B)"
       "Ay.(~D(y) V L(A,y))"
       "AxAy.(~R(x) V ~Q(y) V ~L(x,y))"
       "D(A) V ~Q(A)"
       "Q(B) V ~R(B)")
     "~=(A,B)")
-	|#
 
+    |#
 
 	))
 

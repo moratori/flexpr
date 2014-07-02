@@ -37,9 +37,10 @@
 
 
 (defun get-rule (clause1 clause2)
+ 
   (loop named exit
-        for x in (clause-%literals clause1)
-        do 
+                for x in (clause-%literals clause1)
+                do 
         (loop for y in (clause-%literals clause2 )
               for rule-g = (eliminate-gen? x y)
               for (rule-p target old new) = (multiple-value-list (eliminate-paramod? x y))
@@ -58,7 +59,9 @@
                  ;(setf paramod-flag t)
                  (return-from exit (list t rule-p x y target old new)))
                (rule-g
-                 (return-from exit (list nil rule-g x y)))))))
+                 (return-from exit (list nil rule-g x y))))))
+  
+  )
 
 
 ;; (values flag result)
@@ -74,6 +77,7 @@
                (typep clause2 'clause)))
 
   (let ((res (get-rule clause1 clause2)))
+    (force-output *standard-output*)
 
     (when res
       (destructuring-bind (paramod-flag rule lit1 lit2 . more) res
@@ -85,6 +89,7 @@
                   (append 
                     (clause-%literals clause1)
                     (clause-%literals clause2)))))
+
           (values 
             t
 
@@ -93,33 +98,18 @@
                 ;; ここに来たって事は rule は rec-matchで生成されたもの
                 ;; だよね
                 ;; ここらへんでの clause 生成しまくるのかなり無駄だ
-                (let ((target (car (clause-%literals (unify rule (clause (list target) 0))))))
+                (let ((target 
+                        (car (clause-%literals (unify rule (clause (list target) 0))))
+                        ))
                   (assert (typep target '%literal)) 
 
-               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-               ;;;;; ここで target 中の old を new に置き換えてやればいい   ;;;;;;
-               ;;;;; けどどこを置き換えてやるかがかなり問題                 ;;;;;;
-               ;;;;; とりあえず全部置き換える                               ;;;;;;
-               ;;;;; -> 単に全部置き換える方針だと問題発生                  ;;;;;;
-               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
                
-               (let ((tmp 
-                       (let ((unified (paramod-unify (cons old new) target)))
+               (let ((unified 
+                               (paramod-unify (cons old new) target)))
                  (mapcar 
                    (lambda (lit)
                      (clause (cons lit others) 0))
-                   unified))
-                       ))
-                 (assert (not (null tmp)))
-                 tmp
-                 )
-               
-               
-               )
-                
-                )
+                   unified))))
 
               (list (unify rule (clause others 0))))
           rule))))))
@@ -297,8 +287,11 @@
 
 				 ;; choices には今までの導出で出てきた節は含まれていない
 				 ;; choices* にはそれらが含まれている
+
+
 				 (let*  ((choices  
-									 (choices selected-clause clause-form))
+									 (choices selected-clause clause-form)
+                   )
 								 (checked  
 									 (unless app-flag 
 										 (every (lambda (x) (> (clause-used x)  0)) clause-form)))
@@ -335,8 +328,9 @@
                    (list (list selected-clause-name 
                                (car resolted-clause-name-list))
 									 (list opposite-clause-name 
-                         (car resolted-clause-name)))
+                         (car resolted-clause-name-list)))
                    node-relation)))
+
 					  
               (let ((resolted1 (car resolted)))
                 
@@ -346,7 +340,8 @@
                 ;; equal-contap? によって矛盾であるかを調べるのは 等号公理を入れればいらないのでは
                 ;; ただ、これで特化してる方がこれはこれでいい気もする
                 ((or (and flag (null (clause-%literals resolted1)))
-                     (equal-contap? resolted1)) 
+                     (equal-contap? resolted1)
+                     ) 
                  (let ((base (list t original-exist-terms (reverse-unify  exist-terms mgu))))
                    (if output 
                      (append 
@@ -354,14 +349,14 @@
                        (list (funcall lookup nil) relation))
                      base)))
                 
-                (t 
+                (t
                  (handler-case 
                    (main 
                      ;; 節 clause は selected-clause と導出に使われる親節であり
 									   ;; resolted-clause を生むもの
 									   ;; この辺で吸収戦略したい
 
-                     (if (member clause clause-form :test #'%clause=)
+                    (if (member clause clause-form :test #'%clause=)
 
                        (append 
                          (remove clause clause-form :test #'%clause=)
@@ -372,7 +367,7 @@
                                (1+ (clause-used clause)))
                              (clause-defined clause))))
 
-                       clause-form)
+                       clause-form) 
                      
                      (append 
                        (adjoin 
@@ -390,7 +385,7 @@
 
                      (funcall func  dep)
 
-                     (reverse-unify exist-terms mgu)
+                    (reverse-unify exist-terms mgu) 
 
                      lookup
 

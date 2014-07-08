@@ -43,7 +43,6 @@
 (defvar *resolution-test-data*
   '(
 
-    #|
 	(()
 	 "P V ~P")
 	(() 
@@ -358,21 +357,20 @@
    "Ex.(human(x) & ~=(x,John))")
 
 
-   |#
 
+   #|
     ;証明できなければおかしい?
     (("=(A,B)"
       "=(B,C)"
       "Ax.=(f(x),h(g(x),C))")
     "Ez.=(f(z),h(z,A))")
+    |#
     
 
-    #|
 
     (("=(A,B)"
       "Ax.=(g(x,B),f(C,x))")
      "=(B,C) > Ax.=(f(A,x),g(x,C))")
-    |#
 
 
     #|
@@ -383,8 +381,8 @@
       "D(A) V ~Q(A)"
       "Q(B) V ~R(B)")
     "~=(A,B)")
-    |#
 
+    |#
     
 
 	))
@@ -487,7 +485,7 @@
 ;		(format t "~%----- TEST CASE -----~%~A~%-----           -----~%" each)
 		(assert-true 
       (progn 
-        ;(format t "~A~%~%" each)
+        (format t "~A~%~%" each)
        	(first
           (flexpr.system.infer.wrap::resolution
 					(apply #'pl (first each))

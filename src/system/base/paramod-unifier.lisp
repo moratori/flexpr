@@ -11,7 +11,7 @@
           :term-using?
 				  :term=)
   (:import-from :flexpr.system.unifier
-   :mgu
+   :safe-mgu
    :unify)
   )
 
@@ -41,7 +41,7 @@
     ((and (typep term1 'vterm)
           (typep term2 'vterm))
      (when (term-using? term1 term2)
-       (mgu term1 term2)))
+       (safe-mgu term1 term2)))
     ((or 
        (and (typep term1 'vterm)
             (typep term2 'fterm))
@@ -52,7 +52,7 @@
      ;; 全ては見ない
      ;; recmatch(a,f(b,x,y))
      ;; とかだったら x -> a のみを返す
-     (let ((first-order-mgu (mgu term1 term2)))
+     (let ((first-order-mgu (safe-mgu term1 term2)))
        (if first-order-mgu 
          first-order-mgu
          (some 
@@ -61,7 +61,7 @@
     ((and (typep term1 'fterm)
           (typep term2 'vterm))
      ;(rec-match term2 term1)
-     (mgu term2 term1))))
+     (safe-mgu term2 term1))))
 
 
 (defun update-term (rule init)

@@ -341,10 +341,19 @@
 
 
 @export
-(defun deb-trace (p1 p2 child)
+(defun deb-trace (mgu p1 p2 child)
   (destructuring-bind (flag . mode) +TRACE+
     (when flag 
+
       (format t "~%Inference --------")
+      (if (eq t mgu) 
+        (format t "~%MGU: ~A~%" mgu)
+        (format t "~%MGU~%~{~2t~A~%~}~%"
+                (mapcar 
+                  (lambda (each)
+                    (format nil "~A -> ~A" 
+                            (term->string (car each))
+                            (term->string (cdr each)))) mgu)))
       (format t "~%ParentClause: ~%~2t~A~%" 
               (clause->string p1 (operator +OR+)))
       (format t "ParentClause: ~%~2t~A~%" 
@@ -353,7 +362,9 @@
               (mapcar 
                 (lambda (x) 
                   (clause->string x (operator +OR+))) child))
-      (format t "-----------~%")
+      (format t "-------------------~%")
+
+
       (if (integerp mode)
         (sleep mode)
         (progn 

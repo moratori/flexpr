@@ -227,6 +227,32 @@
 	)
 
 
+
+;; subst-new-rule とか subst-old-rule とかで
+;; 置換規則が変更された後に規則がおかしくなっているかまでチェックするバージョンの
+;; mgu
+;; a -> f(a) とかを許さない
+(defun safe-mgu (obj1 obj2)
+  (let ((result (mgu obj1 obj2)))
+    (cond 
+      ((eq result t) t)
+      ((some 
+        (lambda (rule)
+          (destructuring-bind (src . dst) rule
+            (occurrence? src dst))) result) nil)
+      ((some 
+         (lambda (r1)
+           (some 
+             (lambda (r2)
+               (destructuring-bind (s1 . d1) r1
+                 (destructuring-bind (s2 . d2) r2
+                   (and 
+                     (term= s1 s2)
+                     (not (term= d1 d2)))))) result)) result) 
+       nil)
+      (t result))))
+ 
+
 @export
 (defun eliminate-gen? (lit1 lit2)
   ;(format t "ELIMINATE(X,Y) = <~A,~A>~%" (type-of lit1) (type-of lit2))
@@ -236,7 +262,7 @@
 	((eq (%literal-negation lit1)
 		 (%literal-negation lit2)) nil)
 	(t 
-	 (mgu 
+	 (safe-mgu 
 		 (apply #'atomic-lexpr 
 		   (%literal-pred lit1) (%literal-terms lit1))
 		 (apply #'atomic-lexpr 

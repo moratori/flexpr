@@ -145,7 +145,7 @@
   ;; which-resolution? で全て分類できないのが悔しい!
 
   (let ((rule (special-equality? premises-clause-form conseq-clause-form)))
-    (if (and t rule)
+    (if rule
       
       (list 
         (prove-special-equality conseq-clause-form rule)

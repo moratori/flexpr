@@ -449,7 +449,6 @@
       (equal-literal? lit)
       (%literal-negation lit)
       (let ((terms (%literal-terms lit)))
-        lit
         (term= 
           (first terms)
           (second terms))))))

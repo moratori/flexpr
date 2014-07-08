@@ -290,8 +290,7 @@
 
 
 				 (let*  ((choices  
-									 (choices selected-clause clause-form)
-                   )
+									 (choices selected-clause clause-form))
 								 (checked  
 									 (unless app-flag 
 										 (every (lambda (x) (> (clause-used x)  0)) clause-form)))
@@ -313,8 +312,7 @@
             ;; なぜなら paramodulation で全てのパターンの置き換えパターンが生じるから
             (assert (typep resolted 'list))
             
-            (deb-trace clause selected-clause resolted)  
-            
+            (deb-trace mgu clause selected-clause resolted)  
                     
 						(special-let* 
 						  ((selected-clause-name 
@@ -340,14 +338,12 @@
                 ;; equal-contap? によって矛盾であるかを調べるのは 等号公理を入れればいらないのでは
                 ;; ただ、これで特化してる方がこれはこれでいい気もする
                 ((or (and flag (null (clause-%literals resolted1)))
-                     (equal-contap? resolted1)
-                     ) 
-                 (let ((base (list t original-exist-terms (reverse-unify  exist-terms mgu))))
-                   (if output 
-                     (append 
-                       base 
-                       (list (funcall lookup nil) relation))
-                     base)))
+                     (some #'equal-contap? resolted)) 
+                 
+                   (let ((base (list t original-exist-terms (reverse-unify  exist-terms mgu))))
+                     (if output 
+                         (append base (list (funcall lookup nil) relation))
+                         base)))
                 
                 (t
                  (handler-case 

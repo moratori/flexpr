@@ -16,7 +16,7 @@
    :subst-term
    :subst-old-rule
    :subst-new-rule
-   :mgu
+   :safe-mgu
    :absurd)
   (:import-from :flexpr.system.paramod-unifier
    :substitute-fterm
@@ -60,7 +60,7 @@
   ;; どの規則のドメインにも合致しないなら
   ;; やってみて、変わってたらもっかいにした方がよくないか？
   ;; fterm版ではそうする
-  (if (every (lambda (rule) (not (mgu (rw-rule-left rule) term))) rules)
+  (if (every (lambda (rule) (not (safe-mgu (rw-rule-left rule) term))) rules)
     term
     
     (get-regular
@@ -69,7 +69,7 @@
       (lambda (res each)
         (let* ((left (rw-rule-left each))
                (right (rw-rule-right each))
-               (unifier (mgu res left)))
+               (unifier (safe-mgu res left)))
           (cond 
             ((null unifier) res)
             ((eq unifier t) right)

@@ -9,6 +9,7 @@
 					flexpr.system.util:tautology?
 					))
 
+;(setf *print-failures* t)
 (defvar *and* (flexpr.system.struct:operator flexpr.system.constant:+AND+))
 (defvar *or* (flexpr.system.struct:operator flexpr.system.constant:+OR+))
 
@@ -42,6 +43,7 @@
 (defvar *resolution-test-data*
   '(
 
+    #|
 	(()
 	 "P V ~P")
 	(() 
@@ -345,6 +347,7 @@
 	  "P(B,C)")
 	"P(A,A)")
 
+
    ((
 
 "human(John)"
@@ -355,18 +358,25 @@
    "Ex.(human(x) & ~=(x,John))")
 
 
+   |#
+
+    ;証明できなければおかしい?
     (("=(A,B)"
       "=(B,C)"
       "Ax.=(f(x),h(g(x),C))")
-    "Ex.=(f(x),h(x,A))")
+    "Ez.=(f(z),h(z,A))")
     
+
+    #|
 
     (("=(A,B)"
       "Ax.=(g(x,B),f(C,x))")
-	"=(B,C) > Ax.=(f(A,x),g(x,C))")
+     "=(B,C) > Ax.=(f(A,x),g(x,C))")
+    |#
 
-    
+
     #|
+    
     (("R(A) V R(B)"
       "Ay.(~D(y) V L(A,y))"
       "AxAy.(~R(x) V ~Q(y) V ~L(x,y))"
@@ -477,10 +487,11 @@
 ;		(format t "~%----- TEST CASE -----~%~A~%-----           -----~%" each)
 		(assert-true 
       (progn 
-        (format t "~A~%~%" each)
-       	(flexpr.system.infer.wrap::resolution
+        ;(format t "~A~%~%" each)
+       	(first
+          (flexpr.system.infer.wrap::resolution
 					(apply #'pl (first each))
-					(parse (second each)))))))
+					(parse (second each))))))))
 
 (define-test resolution-error-test 
 	(dolist (each *resolution-error*)
@@ -493,7 +504,7 @@
 (print-errors 
 	(run-tests '(resolution-error-test)))
 
-(print-errors 
+(print-errors
 	(run-tests '(resolution-test)))
 
 

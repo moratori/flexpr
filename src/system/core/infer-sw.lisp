@@ -4,6 +4,10 @@
 	(:use :cl
 		  :flexpr.system.constant
 		  :flexpr.system.struct)
+  (:import-from :flexpr.system.infer.equal
+   :special-equality?
+   :prove-special-equality
+   )
   (:import-from :flexpr.system.util
    :equal-included-clause-form? )
 	(:import-from :flexpr.system.infer.general
@@ -83,7 +87,7 @@
 
 ;; t -> snl
 ;; nil -> gen
-(defun which? (premises-clause-form conseq-clause-form)
+(defun which-resolution? (premises-clause-form conseq-clause-form)
 	(let ((check-rule 
 					(every (lambda (x) 
 								 (or (fact-clause? x)
@@ -124,13 +128,32 @@
   )
 
 
+
+
+
+
 @export
 (defun resolution (premises conseq &key (depth +DEPTH+) (output nil))
+
+  
   (multiple-value-bind 
 	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
-  
-  (let ((premises-clause-form 
+
+  ;; ここの special-equality? で 完備で甘美な項書換え系での
+  ;; 等式証明が可能が判定する
+  ;; which-resolution? で全て分類できないのが悔しい!
+
+  (let ((rule (special-equality? premises-clause-form conseq-clause-form)))
+    (if (and t rule)
+      
+      (list 
+        (prove-special-equality conseq-clause-form rule)
+        nil 
+        nil
+        "Term Rewriting (for special equality)")
+      
+      (let ((premises-clause-form 
           ;; 等号の式集合だったら等号公理をぶち込む
           ;; このおかげで resolution-gen のなかでの equal-contap?は本質的には必要なくなるけど
           ;; 効率化のためにとっておくべき(等号の矛盾がワンステップ早く終わる)
@@ -139,10 +162,10 @@
             (append premises-clause-form (list (make-equal-axiom))) 
             premises-clause-form)))
     
-;; フラグが t だったら SNL 導出のために変形が必要
+  ;; フラグが t だったら SNL 導出のために変形が必要
 	;; ユーザのクエリを 
     (multiple-value-bind (pair flag)
-			(which? premises-clause-form conseq-clause-form)	
+			(which-resolution? premises-clause-form conseq-clause-form)	
 			(destructuring-bind (func . id) pair
 				(append 
 					(if flag 
@@ -167,6 +190,10 @@
 							exist-terms
 							:depth depth 
 							:output output))
-					(list id)))))))
+					(list id)))))
+      )
+    )
+  
+  ))
 
 

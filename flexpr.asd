@@ -51,6 +51,7 @@
 				  :components 
 					((:file "infer-gen")
 					 (:file "infer-snl")
+					 (:file "infer-equal")
 					 (:file "infer-sw")))))
 			 (:module "interface"
 			  :serial t

@@ -24,6 +24,16 @@
   ())
 
 @export
+(define-condition endless-critical-pair-error () ())
+
+@export
+(define-condition endless-regularization-error () ())
+
+@export
+(define-condition same-complexity-error () ())
+ 
+
+@export
 (define-condition maximum-depth-exceeded-error (error)
   ((mde-val   :initarg :mde-val
 		      :reader   mde-val-of)

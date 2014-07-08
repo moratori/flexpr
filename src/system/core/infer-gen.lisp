@@ -26,7 +26,7 @@
 				  :maximum-depth-exceeded-error
 				  :undeterminable-error)
 	(:import-from :flexpr.system.dump
-          :deb-trace
+          :deb-trace-resolution
 				  :clause->string
 				  :mgu->string)
 	)
@@ -312,7 +312,7 @@
             ;; なぜなら paramodulation で全てのパターンの置き換えパターンが生じるから
             (assert (typep resolted 'list))
             
-            (deb-trace mgu clause selected-clause resolted)  
+            (deb-trace-resolution mgu clause selected-clause resolted)  
                     
 						(special-let* 
 						  ((selected-clause-name 

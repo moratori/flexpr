@@ -10,7 +10,7 @@
 	(:import-from :flexpr.system.formalize.mat
 				  :rename-clause)
 	(:import-from :flexpr.system.dump
-          :deb-trace
+          :deb-trace-resolution
 				  :clause->string)
 	(:import-from :flexpr.system.unifier
 				  :eliminate-gen?
@@ -185,7 +185,7 @@
 				(lambda (cand)
 				  (destructuring-bind (clause (flag resolted mgu)) cand
 
-           (deb-trace mgu clause goal-clause (list resolted)) 
+           (deb-trace-resolution mgu clause goal-clause (list resolted)) 
             
             
 					(special-let* 

@@ -52,6 +52,14 @@
 		:lexpr-p
 		:lexpr-qpart
 		:lexpr-expr
+
+    :rw-rule-p
+    :rw-rule-left
+    :rw-rule-right
+    
+    :eqexpr-p
+    :eqexpr-left
+    :eqexpr-right
 	  ))
 
 
@@ -118,6 +126,20 @@
 		   :type symbol)
   (terms   nil
 		   :type terms-type))
+
+
+
+@export
+(defstruct (rw-rule (:constructor rw-rule (left right)))
+  left
+  right)
+
+@export
+(defstruct (eqexpr (:constructor eqexpr (left right)))
+  left
+  right)
+ 
+
 
 @export
 (defstruct (atomic-lexpr (:constructor atomic-lexpr (pred-sym &rest terms)))

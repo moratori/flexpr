@@ -339,9 +339,36 @@
 	(format out "}")))
 
 
+@export
+(defun deb-trace-kbcompl (eqexpr left right ruleset)
+  (destructuring-bind (flag . mode) +TRACE+
+    (declare (ignore mode))
+    (when flag
+      (format t "~%Inference ----------------------")
+      (format t "~%Rewriting Rule:~%~{~2t~A~%~}"
+              (mapcar 
+                (lambda (each)
+                  (format nil "~A -> ~A"
+                          (term->string (rw-rule-left each)) 
+                          (term->string (rw-rule-right each)))) ruleset))
+      (format t "~%equation:~%~2t~A = ~A" 
+              (term->string (eqexpr-left eqexpr) )
+              (term->string (eqexpr-right eqexpr)))
+      (format t "~%formal form of left side: ~%~2t~A"
+              (term->string left)
+              )
+      (format t "~%formal form of right side: ~%~2t~A"
+              (term->string right))
+
+      (format t   "~%--------------------------------~%")
+
+      )
+    )
+  )
+
 
 @export
-(defun deb-trace (mgu p1 p2 child)
+(defun deb-trace-resolution (mgu p1 p2 child)
   (destructuring-bind (flag . mode) +TRACE+
     (when flag 
 

@@ -22,19 +22,13 @@
    :substitute-fterm
    :substitute-term-recursive
    :rec-match)
+  (:import-from :flexpr.system.dump
+   :deb-trace-kbcompl)
   )
 
 
 
 (defvar +LIMIT+ 50)
-
-(defstruct (rw-rule (:constructor rw-rule (left right)))
-  left
-  right)
-
-(defstruct (eqexpr (:constructor eqexpr (left right)))
-  left
-  right)
 
 
 
@@ -234,14 +228,17 @@
 
 
 (defun prove-eqexpr% (eqexpr ruleset)
-  (term= 
-       (get-regular%
+  (let ((left (get-regular%
          (eqexpr-left eqexpr)
-         ruleset)
-       (get-regular% 
+         ruleset))
+        (right
+          (get-regular% 
          (eqexpr-right eqexpr)
-         ruleset)
-       ))
+         ruleset)))
+
+    (deb-trace-kbcompl eqexpr left right ruleset)
+
+    (term= left right)))
 
 
 (defun prove-eqexpr (eqexpr axioms)

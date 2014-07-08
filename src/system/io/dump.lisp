@@ -345,10 +345,10 @@
   (destructuring-bind (flag . mode) +TRACE+
     (when flag 
 
-      (format t "~%Inference --------")
+      (format t "~%Inference ----------------------")
       (if (eq t mgu) 
         (format t "~%MGU: ~A~%" mgu)
-        (format t "~%MGU~%~{~2t~A~%~}~%"
+        (format t "~%MGU:~%~{~2t~A~%~}"
                 (mapcar 
                   (lambda (each)
                     (format nil "~A -> ~A" 
@@ -358,11 +358,11 @@
               (clause->string p1 (operator +OR+)))
       (format t "ParentClause: ~%~2t~A~%" 
               (clause->string p2 (operator +OR+)))
-      (format t "Resolvent (or Paramodulant): ~%~{~2t~A~}~%" 
+      (format t "Resolvent (or Paramodulant): ~%~{~2t~A~%~}" 
               (mapcar 
                 (lambda (x) 
                   (clause->string x (operator +OR+))) child))
-      (format t "-------------------~%")
+      (format t   "--------------------------------~%")
 
 
       (if (integerp mode)

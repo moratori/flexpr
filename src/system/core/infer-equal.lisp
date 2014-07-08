@@ -290,7 +290,6 @@
 
 @export
 (defun prove-special-equality (conseq-clause-form rule)  
-  (dump-rules rule)
   (prove-eqexpr% 
     (apply #'eqexpr 
              (%literal-terms (car (clause-%literals (car conseq-clause-form)))))

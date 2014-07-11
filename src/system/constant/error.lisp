@@ -31,6 +31,9 @@
 
 @export
 (define-condition same-complexity-error () ())
+
+@export
+(define-condition set-of-equation-required-error () ())
  
 
 @export

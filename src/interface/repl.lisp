@@ -223,7 +223,7 @@
 		(declare (ignore exist))
 		
 		(format t "~A is ~A under the ~A~%" 
-				line (if status "PROVABLE" "NOT provable")
+				(string-trim '(#\space) line) (if status "PROVABLE" "NOT provable")
 				*current*)
     (format t "resolution method: ~A~%" (car (last more)))
 		(unless (null spec)

@@ -140,12 +140,17 @@
 	(premises-clause-form conseq-clause-form exist-terms)
 	(preproc premises conseq)
 
+  ;(print (car conseq-clause-form))
+
   ;; ここの special-equality? で 完備で甘美な項書換え系での
   ;; 等式証明が可能が判定する
   ;; which-resolution? で全て分類できないのが悔しい!
 
-  (let ((rule (special-equality? premises-clause-form conseq-clause-form)))
-    (if rule
+  
+  
+  (multiple-value-bind (flag rule) (special-equality? premises-clause-form conseq-clause-form)
+
+    (if flag
       
       (list 
         (prove-special-equality conseq-clause-form rule)
@@ -190,10 +195,4 @@
 							exist-terms
 							:depth depth 
 							:output output))
-					(list id)))))
-      )
-    )
-  
-  ))
-
-
+					(list id)))))))))

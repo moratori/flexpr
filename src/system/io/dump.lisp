@@ -350,7 +350,7 @@
                 (lambda (each)
                   (format nil "~A -> ~A"
                           (term->string (rw-rule-left each)) 
-                          (term->string (rw-rule-right each)))) ruleset))
+                          (term->string (rw-rule-right each)))) (reverse ruleset)))
       (format t "~%equation:~%~2t~A = ~A" 
               (term->string (eqexpr-left eqexpr) )
               (term->string (eqexpr-right eqexpr)))

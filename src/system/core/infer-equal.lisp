@@ -6,12 +6,14 @@
   (:import-from :flexpr.system.error
    :endless-critical-pair-error
    :endless-regularization-error
+   :set-of-equation-required-error
    :same-complexity-error)
   (:import-from :flexpr.system.util
     :equal-literal?
     :term-using?
     :substitute-term 
-    :term=)
+    :term=
+    :fuzzy-term=)
   (:import-from :flexpr.system.unifier
    :subst-term
    :subst-old-rule
@@ -111,17 +113,14 @@
             (cons 
               (matching r-left unifier) 
               (matching r-right unifier))
-            res)
-          )))
+            (matching res unifier)
+
+            ))))
     rules
-    :initial-value term)
-          ))
+    :initial-value term)))
     (if (term= result term) result
-      (get-regular result rules (1- cnt))
-      )
-    
-    )
-  )
+      (get-regular result rules (1- cnt)))))
+
  
 
 (defmethod show ((term vterm))
@@ -145,7 +144,10 @@
     (loop for r1 in r do 
       (loop for r2 in r do
         (loop for target in r
-           if (and (not (rule= r1 r2)) (not (rule= r2 target))) do
+           if (and (not (rule= r1 r2)) 
+                   (not (rule= r1 target))
+                   (not (rule= r2 target))
+                   ) do
            (let* ((left (rw-rule-left target))
                   (reg-left1 (get-regular% left (list r1)))
                   (reg-left2 (get-regular% left (list r2)))
@@ -193,13 +195,15 @@
 
   (if (null E) R
     (let* ((eqexpr (first E))
-           (left (get-regular% (eqexpr-left eqexpr) r))
+           (left  (get-regular% (eqexpr-left eqexpr) r))
            (right (get-regular% (eqexpr-right eqexpr) r))
            (lo (get-order left))
            (ro (get-order right))) 
       (if (term= left right) 
         (completion (cdr e) r (1- limit))
         (cond 
+          ;; 順序づけできない場合は失敗にスべきだけど...
+          ;; 失敗無し完備化を実装しなければ...
           ((>= lo ro)
            (let ((next-r (regular-rule  (cons (rw-rule left right) r))))
              (completion
@@ -238,7 +242,8 @@
 
     (deb-trace-kbcompl eqexpr left right ruleset)
 
-    (term= left right)))
+    (fuzzy-term= left right)))
+
 
 
 (defun prove-eqexpr (eqexpr axioms)
@@ -247,43 +252,48 @@
 
 
 
+
+
 @export
 (defun special-equality? (premises-clause-form conseq-clause-form) 
-  (force-output *standard-output*)
+
   (when 
     (and 
-    (every 
-    (lambda (clause)
-      (let ((literals (clause-%literals clause)))
+      (every 
+        (lambda (clause)
+          (let ((literals (clause-%literals clause)))
+            (and 
+              (= 1 (length literals))
+              (equal-literal? (car literals))
+              (not (%literal-negation (car literals))))))
+        premises-clause-form)
+      (let ((literals (clause-%literals (car conseq-clause-form))))
         (and 
           (= 1 (length literals))
           (equal-literal? (car literals))
-          (not (%literal-negation (car literals))))))
-    premises-clause-form)
-    (let ((literals (clause-%literals (car conseq-clause-form))))
-      (and 
-        (= 1 (length literals))
-        (equal-literal? (car literals))
-        (%literal-negation (car literals)))))
+          (%literal-negation (car literals)))))
 
-    (force-output *standard-output*)
+
     (handler-case
-      (completion 
-      (mapcar 
-        (lambda (clause)
-          (let ((terms (%literal-terms (car (clause-%literals clause)))))
-            (eqexpr (first terms) (second terms)) 
-            ))
-        premises-clause-form))
-      (endless-critical-pair-error (e)
-         (declare (ignore e))
-         nil)
-      (endless-regularization-error (e)
-         (declare (ignore e))
-         nil)
+      (values 
+        t
+        (completion 
+          (mapcar 
+            (lambda (clause)
+              (let ((terms (%literal-terms (car (clause-%literals clause)))))
+                (eqexpr 
+                  (first terms) 
+                  (second terms))))
+            premises-clause-form))) 
       (same-complexity-error (e)
-         (declare (ignore e))
-         nil))))
+        (values nil nil))
+      (set-of-equation-required-error (e)
+        (values nil nil))
+      (endless-critical-pair-error (e)
+        (values nil nil))
+      (endless-regularization-error (e)
+        (values nil nil)))))
+
 
 @export
 (defun prove-special-equality (conseq-clause-form rule)  

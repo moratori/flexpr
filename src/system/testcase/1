@@ -1,0 +1,6 @@
+human(John)
+=(grade(John),F)
+Ex.(human(x) & =(grade(x),A))
+=(A,F)
+Ax.~human(grade(x))
+# Ex.(human(x) & ~=(x,John))

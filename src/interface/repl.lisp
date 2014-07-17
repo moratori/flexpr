@@ -115,7 +115,11 @@
 (defun prompt () 
   (if +SILENT+
 	(format t "~%")
-	(format t "(~A)>>> " (current)))
+  ;(format t "(~A)>>> " (current))
+  (format t "~C[~Am~A~C[0m" (code-char #o33) "1" 
+          (format nil "(~A)>>> " (current))
+          (code-char #o33))
+  )
   (force-output *standard-output*))
 
 

@@ -111,15 +111,18 @@
 (defun current ()
   (string-upcase *current*))
 
+(defun make-bold (str)
+  (format nil "~C[~Am~A~C[0m" 
+          (code-char #o33) 
+          "1" 
+          str
+          (code-char #o33)))
 
 (defun prompt () 
   (if +SILENT+
 	(format t "~%")
   ;(format t "(~A)>>> " (current))
-  (format t "~C[~Am~A~C[0m" (code-char #o33) "1" 
-          (format nil "(~A)>>> " (current))
-          (code-char #o33))
-  )
+  (format t (make-bold (format nil "(~A)>>> " (current)))))
   (force-output *standard-output*))
 
 
@@ -227,7 +230,12 @@
 		(declare (ignore exist))
 		
 		(format t "~A is ~A under the ~A~%" 
-				(string-trim '(#\space) line) (if status "PROVABLE" "NOT provable")
+				(string-trim '(#\space) line) 
+        (if status 
+          (make-bold "PROVABLE") 
+          (concatenate 'string 
+                       (make-bold "NOT")
+                       " provable"))
 				*current*)
     (format t "resolution method: ~A~%" (car (last more)))
 		(unless (null spec)

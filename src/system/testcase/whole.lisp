@@ -16,7 +16,9 @@
 
 
 (defvar *formalize-test-data*
-  '(("P - Q > P" nil "(P & ~Q) V (Q & ~P) V P" 
+  '(
+    
+    ("P - Q > P" nil "(P & ~Q) V (Q & ~P) V P" 
 	 			 nil "(P & ~Q) V (Q & ~P) V (P)")
 	("P V ~Q > R" "(R V ~P) & (R V Q)" nil
 	 			  "(R V ~P) & (R V Q)" nil)
@@ -42,6 +44,10 @@
 
 (defvar *resolution-test-data*
   '(
+
+ (("AxAs.(major(x,s) & interested_in(x,s) > =(S,grade(x,s)))"
+  "AxAs.(major(x,s) > interested_in(x,s) V unwilling(x,s))")
+     "AxAs.(major(x,s) & ~=(S,grade(x,s)) > ~interested_in(x,s))")
 
 	(()
 	 "P V ~P")
@@ -369,6 +375,7 @@
    
    (() "ExEy.=(x,y)")
 
+   
 
     #|
     
@@ -382,13 +389,15 @@
     |#
     
 
-	))
+	)
+  )
 
 
 
 (defvar *resolution-error*
   '(
 
+  
 	(("P > Q" 
 	  "Q") 
 	  "P")
@@ -421,6 +430,7 @@
 	 "Ax.P(x)")
 
 	
+
 	
 	))
 
@@ -479,10 +489,9 @@
 
 (define-test resolution-test
 	(dolist (each *resolution-test-data*)
-;		(format t "~%----- TEST CASE -----~%~A~%-----           -----~%" each)
 		(assert-true 
       (progn 
-        (format t "~A~%~%" each)
+   ;     (format t "~A~%~%" each)
        	(first
           (flexpr.system.infer.wrap::resolution
 					(apply #'pl (first each))
@@ -501,5 +510,3 @@
 
 (print-errors
 	(run-tests '(resolution-test)))
-
-

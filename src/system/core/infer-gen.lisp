@@ -77,7 +77,6 @@
                (typep clause2 'clause)))
 
   (let ((res (get-rule clause1 clause2)))
-    (force-output *standard-output*)
 
     (when res
       (destructuring-bind (paramod-flag rule lit1 lit2 . more) res
@@ -90,26 +89,27 @@
                     (clause-%literals clause1)
                     (clause-%literals clause2)))))
 
+
           (values 
             t
 
             (if paramod-flag 
+
               (destructuring-bind (target old new) more
                 ;; ここに来たって事は rule は rec-matchで生成されたもの
                 ;; だよね
                 ;; ここらへんでの clause 生成しまくるのかなり無駄だ
-                (let ((target 
-                        (car (clause-%literals (unify rule (clause (list target) 0))))
-                        ))
+                (let ((target (car (clause-%literals (unify rule (clause (list target) 0))))))
                   (assert (typep target '%literal)) 
+                  
+                  (let ((unified (paramod-unify (cons old new) target)))
+                    ;;; unified はリテラルのリスト
 
-               
-               (let ((unified 
-                               (paramod-unify (cons old new) target)))
-                 (mapcar 
-                   (lambda (lit)
-                     (clause (cons lit others) 0))
-                   unified))))
+                    (if (null unified)
+                      (list (clause others 0))
+                      (mapcar 
+                      (lambda (lit)
+                        (clause (cons lit others) 0)) unified)))))
 
               (list (unify rule (clause others 0))))
           rule))))))
@@ -124,10 +124,9 @@
 			(clause-used (first y))))))
 
 
+;;;;;;;;; ENBAG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 (defun clause*-len (clause*)
-  (length 
-    (clause-%literals 
-      (car (second (second clause*))))))
+  (length (clause-%literals (car (second (second clause*))))))
 
 
 ;;; 導出後の節が最も小さくなるものを優先(これ必ずしもよくないので後で改良)
@@ -135,31 +134,34 @@
 ;;; 節を優先して使う
 (defun primary-short (clause-form*)
   (if (null clause-form*) nil
+    
 	(let ((flen (clause*-len (car clause-form*))))
-	  (if (every (lambda (x) (= (clause*-len x) flen)) clause-form*) 
-		(primary-unused clause-form*)
-		(sort clause-form*
+    (if (every (lambda (x) (= (clause*-len x) flen)) clause-form*)
+
+      (primary-unused clause-form*)
+      (sort clause-form*
 			  (lambda (x y)
           (< 
             (clause*-len x)
-            (clause*-len y))))))))
+            (clause*-len y))))
+      )
+	  )
+  ))
 
 ;; 複雑度という指数をいれたらより
 ;; ヒューリスティックな探索ができるかも
 
 (defun cf-sort (clause-form*)
-  (primary-short clause-form*))
+  (primary-short clause-form*)
+  )
 
 
 (defun choices (selected-clause all) 
-
   (cf-sort
-	  (loop for each-c in all
+  (loop for each-c in all
 			    for rule = (multiple-value-list (resolution? each-c selected-clause)) 
 			    if (first rule)
-			    collect (list each-c rule)))
-  
-  )
+			    collect (list each-c rule))))
 
 ;; 前までは 深度が1深まる毎にlimitを1減らしてたけど
 ;; 深くなればなるほどその枝の重要度を減らして行く事にする
@@ -279,6 +281,7 @@
 
 
 
+
 				 (when (> 1 dep)
 				   (error (make-condition 'maximum-depth-exceeded-error
 										  :mde-val depth
@@ -290,17 +293,27 @@
 
 
 				 (let*  ((choices  
-									 (choices selected-clause clause-form))
+
+									 (choices selected-clause clause-form)
+
+                   )
 								 (checked  
+
 									 (unless app-flag 
-										 (every (lambda (x) (> (clause-used x)  0)) clause-form)))
-								 (choices* (append choices 
+										 (every (lambda (x) (> (clause-used x)  0)) clause-form))
+                   
+                   )
+								 (choices* 
+                   
+                   (append choices 
 									;; clause-form の節がすでに一度以上使われた節であるなら
 									;; いままでに導出されたやつをくっつける
 									;; 毎回 every で clause-form を走査するのは非効率的なので
 									;; 一回ここにきたらフラグたてる
 								   (when (or app-flag checked)
-										 (choices selected-clause r-clause-form)))))
+										 (choices selected-clause r-clause-form)))
+                   
+                   ))
 
 
 				   (some

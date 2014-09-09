@@ -420,6 +420,9 @@
 	(("Ax.(P(x) V Q(x))")
 	 "Ax.P(x)")
 
+  (("AxAs.(major(x,s) > interested_in(x,s) V unwilling(x,s))"
+    "AxAs.(major(x,s) & interested_in(x,s) > =(S,grade(x,s)))")
+   "AxAs.(major(x,s) & ~=(S,grade(x,s)) > ~interested_in(x,s))")
 	
 	
 	))

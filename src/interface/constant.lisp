@@ -26,6 +26,9 @@
 (defvar +SILENT+ nil)
 
 @export
+(defvar +AUTO-FIGURE+ nil)
+
+@export
 (defvar +UGLY-PRINTING+ t)
 
 @export

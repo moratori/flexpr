@@ -11,6 +11,7 @@
 	:depends-on (
 				 :optima 
 				 :namespace 
+         :trivial-shell
 				 )
 	:serial t
 	:version "1.0"

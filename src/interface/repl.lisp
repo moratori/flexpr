@@ -31,6 +31,8 @@
 				  :+FORALL+)
 	(:import-from :flexpr.system.struct
 				  :operator)
+  (:import-from :trivial-shell
+                :shell-command)
 	)
 
 
@@ -271,17 +273,20 @@
 		(format t "input filename: ")
 		(force-output *standard-output*)
 		(let ((name (loop for name = (read-line *standard-input* nil nil)
-				while (string= name "")
-				finally (return name))))
+                      while (string= name "")
+                      finally (return name))))
 		  (if (null name)
-			(format t "~%aborted~%")
-			(out-tree name defnode relation)
-			)
-		  )
-		  )
-	  )
-	)
-  )
+        (format t "~%aborted~%")
+        (handler-case
+          (progn
+            (out-tree name defnode relation)
+            (when +AUTO-FIGURE+
+              (shell-command 
+                (format nil "dot -Tpng ~A -o ~A.png" 
+                        name name)))
+            nil)
+          (condition (a) 
+            (declare (ignore a))))))))))
 
 (defun conv-formal (lexpr)
   (handler-case

@@ -31,10 +31,14 @@
 			 (setf +UGLY-PRINTING+ (when (string= x "True") t))))
    (cons "NODE_COLOR"
          (lambda (x)
-           (setf +NODE-COLOR+ x)))))
+           (setf +NODE-COLOR+ x)))
+   (cons "AUTO_FIGURE"
+         (lambda (x)
+           (setf +AUTO-FIGURE+ (string= x "True"))))
+   ))
 
 (defvar +DEFAULT-CONFIG+
-  (format nil "~A~%~A~%~A~%~A~%~A~%~A~%~A~%"
+  (format nil "~A~%~A~%~A~%~A~%~A~%~A~%~A~%~A~%"
 
    "VARIABLE_PREFIX = v_"
    "SKOLEM_CONSTANT_PREFIX = SC_"
@@ -43,6 +47,7 @@
    "NOREPL = False"
    "UGLY_PRINTING = True"
    "NODE_COLOR = ee500a"
+   "AUTO_FIGURE = False"
 
    ))
 

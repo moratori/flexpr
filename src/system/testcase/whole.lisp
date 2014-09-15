@@ -397,10 +397,16 @@
 (defvar *resolution-error*
   '(
 
+    (("((P>~(C)) & (C>M) &(PVS)&(S>(M&~(P))))")
+     "M")
+
+    (("((PVQ)&(~(P)V~(Q)))")
+     "P")
   
 	(("P > Q" 
 	  "Q") 
 	  "P")
+
 
 	(("P V Q")
 	 "P")
